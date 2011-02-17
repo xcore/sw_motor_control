@@ -1,0 +1,16 @@
+*****************************************************************
+* DSC Basic BLDC Demo CHANGELOG
+*****************************************************************
+
+
+Version 0v9 -- 2010-09-09
+===========================================
+
+Changes / Notes:
+-----------------
+* First release of the basic BLDC motor demo includes:
+	- Simple commutation using Hall sensors
+
+Known Issues:
+-----------------
+* None
