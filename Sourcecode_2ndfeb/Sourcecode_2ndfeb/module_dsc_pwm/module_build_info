@@ -1,0 +1,13 @@
+MODULE_DSC_PWM_DIRS = src
+MODULE_DSC_PWM_DIRS += src/dsc_pwm_cli
+MODULE_DSC_PWM_DIRS += src/dsc_pwm_inc
+MODULE_DSC_PWM_DIRS += src/dsc_pwm_svr
+MODULE_DSC_PWM_DIRS += src/dsc_pwm_svr/bldc_svr
+MODULE_DSC_PWM_DIRS += src/dsc_pwm_svr/inv_svr
+MODULE_DSC_PWM_DIRS += src/dsc_pwm_svr/noinv_svr
+MODULE_DSC_PWM_DIRS += src/dsc_pwm_cli/pwm_cli_noinv
+MODULE_DSC_PWM_DIRS += src/dsc_pwm_cli/pwm_cli_inv
+MODULE_DSC_PWM_DIRS += src/dsc_pwm_cli/pwm_cli_bldc
+
+SOURCE_DIRS += $(MODULE_DSC_PWM_DIRS)
+INCLUDE_DIRS += $(MODULE_DSC_PWM_DIRS)
