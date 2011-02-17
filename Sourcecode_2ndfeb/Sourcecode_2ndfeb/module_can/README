@@ -1,0 +1,18 @@
+XMOS CAN SOURCE DIRECTORIES
+---------------------------
+
+  * src          - All source files
+
+GETTING STARTED
+---------------
+
+The CAN controller is virtually all contained within the CanPhy.xc source file.
+There are a points it is worth noting:
+
+  * The CAN PHY thread requires 100MIPS to run correctly. It is therefore
+    currently not possible to have more than 4 threads active on the core with
+    the PHY.
+  * The CAN PHY thread is given packets to send over a channel. It sends
+    valid packets it has received over a channel. These channel transactions
+    need to not pause in order for the CAN PHY to continue to function 
+    correctly.

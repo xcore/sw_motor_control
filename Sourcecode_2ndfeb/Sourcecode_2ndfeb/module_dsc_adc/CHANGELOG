@@ -1,0 +1,16 @@
+*****************************************************************
+* DSC ADC Module CHANGELOG
+*****************************************************************
+
+
+Version 0v9 -- 2010-09-09
+===========================================
+
+Changes / Notes:
+-----------------
+* First release of ADC module
+
+Known Issues:
+-----------------
+* Synchronisation not quite central to the PWM
+* MAX1379 code never verified on hardware
