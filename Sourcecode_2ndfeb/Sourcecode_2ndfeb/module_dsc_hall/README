@@ -1,4 +1,0 @@
-XMOS DSC Hall Effect Module
-================================================
-
-This module intefaces to the hall effect sensor. It performs the function of theta generation from the hall sensor input.

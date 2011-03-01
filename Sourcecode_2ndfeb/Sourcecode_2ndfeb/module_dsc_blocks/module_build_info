@@ -1,9 +1,0 @@
-MODULE_DSC_BLOCKS_DIRS = src
-MODULE_DSC_BLOCKS_DIRS += src/control_blocks
-MODULE_DSC_BLOCKS_DIRS += src/control_blocks/pi_regulator
-MODULE_DSC_BLOCKS_DIRS += src/control_blocks/PWM
-MODULE_DSC_BLOCKS_DIRS += src/control_blocks/transforms
-MODULE_DSC_BLOCKS_DIRS += src/util
-
-SOURCE_DIRS += $(MODULE_DSC_BLOCKS_DIRS)
-INCLUDE_DIRS += $(MODULE_DSC_BLOCKS_DIRS)

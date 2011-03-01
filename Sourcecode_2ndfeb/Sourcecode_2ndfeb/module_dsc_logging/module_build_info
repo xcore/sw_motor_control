@@ -1,3 +1,0 @@
-SOURCE_DIRS += src
-
-INCLUDE_DIRS += $(SOURCE_DIRS)
