@@ -1,0 +1,25 @@
+XTCP_SOURCE_DIRS =  src/uip/uip \
+	       src/uip/xcore \
+               src/uip/apps/dhcpc \
+               src/uip/apps/autoip \
+               src/uip/apps/igmp \
+               src/xtcp 
+
+SOURCE_DIRS += $(XTCP_SOURCE_DIRS)
+
+INCLUDE_DIRS += $(XTCP_SOURCE_DIRS)
+
+EXCLUDE_FILES += uip-fw.c uip-neighbor.c
+
+ifeq ($(USE_XTCP_MAC_CUSTOM_FILTER),1)
+INCLUDE_DIRS += src/mac_custom_filter
+SOURCE_DIRS += src/mac_custom_filter
+endif
+
+
+$(call SET_XCC_XC_FLAGS, $(XTCP_SOURCE_DIRS), $(XCC_FLAGS) -g -Os)
+$(call SET_XCC_C_FLAGS, $(XTCP_SOURCE_DIRS), $(XCC_FLAGS) -Os)
+
+XCC_FLAGS_xcoredev.xc = $(XCC_FLAGS) -fsubword-select
+XCC_FLAGS_xtcp_server.xc = $(XCC_FLAGS) -fsubword-select
+XCC_FLAGS_uip_xtcp_support.xc = $(XCC_FLAGS) -fsubword-select

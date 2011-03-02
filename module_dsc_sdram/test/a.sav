@@ -1,0 +1,46 @@
+[timestart] 20490
+[size] 1294 596
+[pos] 14 84
+*-8.972569 21460 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+@200
+-CKE
+@28
+stdcore[0]_XS1_PORT_1E
+@200
+-CLK
+@28
+stdcore[0]_XS1_PORT_1G
+@200
+-A
+@22
+stdcore[0]_XS1_PORT_16B[15:0]
+@200
+-D
+@22
+stdcore[0]_XS1_PORT_16A[15:0]
+@200
+-CS_N
+@29
+stdcore[0]_XS1_PORT_1L
+@200
+-WE_N
+@28
+stdcore[0]_XS1_PORT_1H
+@200
+-RAS_N
+@28
+stdcore[0]_XS1_PORT_1I
+@200
+-CAS_N
+@28
+stdcore[0]_XS1_PORT_1J
+@200
+-DQM_H
+@28
+stdcore[0]_XS1_PORT_1F
+@200
+-DQM_L
+@28
+stdcore[0]_XS1_PORT_1K
+[pattern_trace] 1
+[pattern_trace] 0

@@ -1,0 +1,5 @@
+XCC_FLAGS += -fsubword-select
+
+SOURCE_DIRS += src test
+
+INCLUDE_DIRS += $(SOURCE_DIRS)
