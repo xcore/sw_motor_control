@@ -3,7 +3,7 @@
  * Version: 1v1
  * Build:
  * File:    dsc_config.h
- * Author: 	Srikanth
+ * Author: 	L & T
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 

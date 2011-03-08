@@ -2,8 +2,8 @@
  * Module:  app_basic_bldc
  * Version: 1v1
  * Build:
- * File:    torque_speed_cntrl.xc
- * Author: 	Srikanth
+ * File:    speed_cntrl.xc
+ * Author: 	L & T
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -23,27 +23,22 @@
 #include "dsc_config.h"
 #include "shared_io_motor.h"
 #include "pid_regulator.h"
-#include "print.h"
-#define MSec 100000
 
 /* speed loop settings*/
-int Kp=1*5000, Ki=100, Kd=5;
-int Kp1=1*8000, Ki1=100, Kd1=5;
+static int Kp=1*8000, Ki=40, Kd=0;
 
-/* torque_speed_control1() function updates pwm value based on pid regulator values
+/* speed_control1() function updates pwm value based on pid regulator values
  * and sends the updated values to other threads using channels for motor 1*/
-void torque_speed_control1(chanend c_control, chanend c_lcd, chanend c_adc)
+void speed_control1(chanend c_control, chanend c_lcd )
 {
-	unsigned ts, set_speed = 500, speed = 0, uPwm = 0, temp, cmd, startup = 1,state = 0;
-	int pwm = 0, calced_pwm = 0, pwm_speed=0, Ifb;
+	unsigned ts, set_speed = 500, speed = 0, uPwm = 0, temp, cmd, startup = 1 ;
+	int pwm = 0, calced_pwm = 0 ;
 	/* 32 bit timer declaration */
 	timer t;
 	/* pid variables */
-	pid_data pid, pid_t;
-
+	pid_data pid ;
 	/* initialise PID settings */
 	init_pid( Kp, Ki, Kd, pid );
-	init_pid( Kp1, Ki1, Kd1, pid_t );
 	/* taking current timer value */
 	t :> ts;
 
@@ -56,7 +51,7 @@ void torque_speed_control1(chanend c_control, chanend c_lcd, chanend c_adc)
 	/* delay function for 1ms */
 		t when timerafter (ts + MSec) :> ts;
 	}
-	printstrln(" Motors Running...Counter Clock Wise Direction...");
+
 	/*main loop for speed control */
 	while (1)
 	{
@@ -68,42 +63,14 @@ void torque_speed_control1(chanend c_control, chanend c_lcd, chanend c_adc)
 		/* to get updated speed value from runmotor function */
 			c_control <: 1;
 			c_control :> speed;
-		/* igbt state updates */
-			c_control <: 5;
-			c_control :> state;
-		/* Ia as feedback */
-			if(state == 1)
-			{
-				c_adc <: 0;
-				c_adc :> Ifb;
-			}
-
-		/* Ib as feedback */
-			if(state == 2)
-			{
-				c_adc <: 1;
-				c_adc :> Ifb;
-			}
-
-		/* Ic as feedback */
-			if(state == 3)
-			{
-				c_adc <: 2;
-				c_adc :> Ifb;
-			}
 
 		/* 304 rpm/V - assume 24V maps to PWM_MAX_VALUE */
 			calced_pwm =  (set_speed * PWM_MAX_VALUE) / (304*24);
 
 		/* Updating pwm as per speed feedback and speed reference */
-			pwm_speed = calced_pwm  + pid_regulator_delta_cust_error((int)(set_speed - speed), pid );
-			if (pwm > 4000)
-				pwm = 4000;
-			if (pwm < -4000)
-				pwm = -4000;
+			pwm = calced_pwm  + pid_regulator_delta_cust_error((int)(set_speed - speed), pid );
+		/* Maximum and Minimum PWM limits */
 
-		/* Updating pwm as per current feedback */
-			pwm = pwm_speed + pid_regulator_delta_cust_error((int)(pwm_speed - Ifb), pid_t );
 			if (pwm > 4000)
 				pwm = 4000;
 			if (pwm < 50)
@@ -119,7 +86,6 @@ void torque_speed_control1(chanend c_control, chanend c_lcd, chanend c_adc)
 			{
 				c_lcd <: speed;
 				c_lcd <: set_speed;
-				//c_lcd <: pwm;
 			}
 			else if (cmd == CMD_SET_SPEED)
 			{
@@ -137,20 +103,19 @@ void torque_speed_control1(chanend c_control, chanend c_lcd, chanend c_adc)
 	}
 }
 
-/* torque_speed_control2() function updates pwm value based on pid regulator values
+/* speed_control2() function updates pwm value based on pid regulator values
  * and sends the updated values to other threads using channels for motor 2 */
-void torque_speed_control2 (chanend c_control2, chanend c_lcd2, chanend c_adc2)
+void speed_control2 (chanend c_control2, chanend c_lcd2 )
 {
-	unsigned ts, set_speed = 500, speed = 0, uPwm = 0, temp, cmd, startup = 1,state = 0;
-	int pwm = 0, calced_pwm = 0, pwm_speed=0, Ifb;
+	unsigned ts, set_speed = 500, speed = 0, uPwm = 0, temp, cmd, startup = 1 ;
+	int pwm = 0, calced_pwm = 0 ;
 	/* 32 bit timer declaration */
 	timer t;
 	/* pid variables */
-	pid_data pid, pid_t;
+	pid_data pid;
 
 	/* initialise PID settings */
 	init_pid( Kp, Ki, Kd, pid );
-	init_pid( Kp1, Ki1, Kd1, pid_t );
 	/* taking current timer value */
 	t :> ts;
 
@@ -175,42 +140,13 @@ void torque_speed_control2 (chanend c_control2, chanend c_lcd2, chanend c_adc2)
 		/* to get updated speed value from runmotor function */
 			c_control2 <: 1;
 			c_control2 :> speed;
-		/* igbt state updates */
-			c_control2 <: 5;
-			c_control2 :> state;
-		/* Ia as feedback */
-			if(state == 1)
-			{
-				c_adc2 <: 3;
-				c_adc2 :> Ifb;
-			}
-
-		/* Ib as feedback */
-			if(state == 2)
-			{
-				c_adc2 <: 4;
-				c_adc2 :> Ifb;
-			}
-
-		/* Ic as feedback */
-			if(state == 3)
-			{
-				c_adc2 <: 5;
-				c_adc2 :> Ifb;
-			}
 
 		/* 304 rpm/V - assume 24V maps to PWM_MAX_VALUE */
 			calced_pwm =  (set_speed * PWM_MAX_VALUE) / (304*24);
 
 		/* Updating pwm as per speed feedback and speed reference */
-			pwm_speed = calced_pwm  + pid_regulator_delta_cust_error((int)(set_speed - speed), pid );
-			if (pwm > 4000)
-				pwm = 4000;
-			if (pwm < -4000)
-				pwm = -4000;
+			pwm = calced_pwm  + pid_regulator_delta_cust_error((int)(set_speed - speed), pid );
 
-		/* Updating pwm as per current feedback */
-			pwm = pwm_speed + pid_regulator_delta_cust_error((int)(pwm_speed - Ifb), pid_t );
 			if (pwm > 4000)
 				pwm = 4000;
 			if (pwm < 50)

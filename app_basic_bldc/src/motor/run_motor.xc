@@ -2,8 +2,8 @@
  * Module:  app_basic_bldc
  * Version: 1v1
  * Build:
- * File:    torque_cntrl_run_motor.xc
- * Author: 	Srikanth
+ * File:    run_motor.xc
+ * Author: 	L & T
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -21,12 +21,26 @@
 
 
 
-#include "torque_cntrl_run_motor.h"
+#include "run_motor.h"
 
 /* number of pole pairs are TWO so we are defining that below*/
 #define MOTOR_POLE_PAIRS (NUMBER_OF_POLES>>1)
+
+/* counter clockwise direction commutation sequence for low side of bridge */
+static unsigned bldc_ph_a_lo[6] = {0,1,1,0,0,0};
+static unsigned bldc_ph_b_lo[6] = {0,0,0,1,1,0};
+static unsigned bldc_ph_c_lo[6] = {1,0,0,0,0,1};
+/* counter clockwise direction commutation sequence for high side of bridge */
+const unsigned bldc_high_seq[6] = {1,1,2,2,0,0};
+/* clockwise direction commutation sequence for low side of bridge */
+static unsigned bldc_ph_a_lo1[6] = {0,0,0,0,1,1};
+static unsigned bldc_ph_b_lo1[6] = {1,1,0,0,0,0};
+static unsigned bldc_ph_c_lo1[6] = {0,0,1,1,0,0};
+/* clockwise direction commutation sequence for high side of bridge */
+const unsigned bldc_high_seq1[6] = {2,0,0,1,1,2};
+
 /*
- *torque_cotrolled_run_motor1() function uses hall sensor outputs and finds hall_state. Based on
+ *run_motor1() function uses hall sensor outputs and finds hall_state. Based on
  *the hall state it identifies the rotor position and give the commutation
  *sequence to Upper and Lower IGBT's  then it calculates speed and updates PWM
  *values. This funcntion uses three channels c_wd for watchdog timer, c_control
@@ -34,30 +48,17 @@
  *between the threads for motor 1.
  **/
 
-/* counter clockwise direction commutation sequence for low side of bridge */
-unsigned bldc_ph_a_lo[6] = {0,1,1,0,0,0};
-unsigned bldc_ph_b_lo[6] = {0,0,0,1,1,0};
-unsigned bldc_ph_c_lo[6] = {1,0,0,0,0,1};
-/* counter clockwise direction commutation sequence for high side of bridge */
-const unsigned bldc_high_seq[6] = {1,1,2,2,0,0};
-/* clockwise direction commutation sequence for low side of bridge */
-unsigned bldc_ph_a_lo1[6] = {0,0,0,0,1,1};
-unsigned bldc_ph_b_lo1[6] = {1,1,0,0,0,0};
-unsigned bldc_ph_c_lo1[6] = {0,0,1,1,0,0};
-/* clockwise direction commutation sequence for high side of bridge */
-const unsigned bldc_high_seq1[6] = {2,0,0,1,1,2};
-
-void torque_cotrolled_run_motor1 ( chanend c_wd, chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_lo[])
+void run_motor1 ( chanend c_wd, chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_lo[])
 {
 	unsigned high_chan, hall_state = 0, pin_state = 0, pwm_val = 240, dir_flag=1;
 	unsigned ts, ts0, delta_t, speed = 0, hall_flg = 1, cmd;
-	unsigned state0 = 0, statenot0 =0, igbt_state =0;
+	unsigned state0 = 0, statenot0 =0 ;
 
 	/* 32 bit timer declaration */
 	timer t;
 	t :> ts;
 	/* delay function for 1 sec */
-	t when timerafter(ts+100000000) :> ts;
+	t when timerafter(ts+ SEC ) :> ts;
 	/* allow the WD to get going and enable motor */
 	c_wd <: WD_CMD_START;
 
@@ -68,17 +69,16 @@ void torque_cotrolled_run_motor1 ( chanend c_wd, chanend c_pwm, chanend c_contro
 		{
 		/* wait for a change in the hall sensor - this is what this update loop is locked to */
 		case do_hall_select( hall_state, pin_state, p_hall );
-		/* if we get a change in PWM value (i.e. current) then update it.. */
 
 		case c_control :> cmd:
 			switch (cmd)
 			{
-		/* updates speed changes */
+		/* updates speed changes between threads */
 			case 1:
 				c_control <: speed;
 				break;
 
-		/* upadates pwm values */
+		/* upadates pwm values between threads*/
 			case 2:
 				c_control :> pwm_val;
 				break;
@@ -88,11 +88,6 @@ void torque_cotrolled_run_motor1 ( chanend c_wd, chanend c_pwm, chanend c_contro
 				c_control :> dir_flag;
 				break;
 
-		/* the lower IGBT state changing sequence when the motor starts running */
-			case 5:
-				c_control <: igbt_state;
-            break;
-
 			default:
 			break;
 			}
@@ -100,7 +95,6 @@ void torque_cotrolled_run_motor1 ( chanend c_wd, chanend c_pwm, chanend c_contro
 		}
 
 		/* handling hall states */
-
 		if (hall_state == HALL_INV)
 			hall_state = 0;
 
@@ -112,7 +106,7 @@ void torque_cotrolled_run_motor1 ( chanend c_wd, chanend c_pwm, chanend c_contro
 			t :> ts;
 			delta_t = ts - ts0;
 		/*caculate speed using equation below */
-			speed = 3000000000 / ( delta_t );
+			speed = SPEED_COUNT / ( delta_t );
 			speed = speed * 2;
 			hall_flg = 0;
 			state0 = 0;
@@ -122,10 +116,11 @@ void torque_cotrolled_run_motor1 ( chanend c_wd, chanend c_pwm, chanend c_contro
 		if (hall_flg == 0 && hall_state != 0 )
 			hall_flg = 1;
 
+		/* Check for motor1 halt state */
 		if(hall_flg !=0 )
 		{
 			state0++;
-			if(state0 >= 200)
+			if(state0 >= STATE_LIMIT)
 			{
 				speed = 0;
 				state0 =0;
@@ -134,7 +129,7 @@ void torque_cotrolled_run_motor1 ( chanend c_wd, chanend c_pwm, chanend c_contro
 		else if(hall_flg == 0 )
 		{
 			statenot0++;
-			if(statenot0 >= 200)
+			if(statenot0 >= STATE_LIMIT)
 			{
 				speed = 0;
 				statenot0 =0;
@@ -150,14 +145,6 @@ void torque_cotrolled_run_motor1 ( chanend c_wd, chanend c_pwm, chanend c_contro
 			p_pwm_lo[0] <: bldc_ph_a_lo[hall_state];
 			p_pwm_lo[1] <: bldc_ph_b_lo[hall_state];
 			p_pwm_lo[2] <: bldc_ph_c_lo[hall_state];
-		/* This states are used to send Ia, Ib, or Ic as feed back current in
-		 * speed control thread */
-			if(bldc_ph_a_lo[hall_state] == 1)
-				igbt_state =1;
-			if (bldc_ph_b_lo[hall_state] ==1)
-				igbt_state =2;
-			if (bldc_ph_c_lo[hall_state] == 1)
-				igbt_state =3;
 		}
 		else
 		{
@@ -166,14 +153,6 @@ void torque_cotrolled_run_motor1 ( chanend c_wd, chanend c_pwm, chanend c_contro
 			p_pwm_lo[0] <: bldc_ph_a_lo1[hall_state];
 			p_pwm_lo[1] <: bldc_ph_b_lo1[hall_state];
 			p_pwm_lo[2] <: bldc_ph_c_lo1[hall_state];
-		/* This states are used to send Ia, Ib, or Ic as feed back current in
-		 * speed control thread */
-			if(bldc_ph_a_lo1[hall_state] == 1)
-				igbt_state =1;
-			if (bldc_ph_b_lo1[hall_state] ==1)
-				igbt_state =2;
-			if (bldc_ph_c_lo1[hall_state] == 1)
-				igbt_state =3;
 		}
 
 		/* updates pwm_val */
@@ -183,7 +162,7 @@ void torque_cotrolled_run_motor1 ( chanend c_wd, chanend c_pwm, chanend c_contro
 }
 
 /*
- *torque_cotrolled_run_motor2() function uses hall sensor outputs and finds hall_state. Based on
+ *run_motor2() function uses hall sensor outputs and finds hall_state. Based on
  *the hall state it identifies the rotor position and give the commutation
  *sequence to Upper and Lower IGBT's  then it calculates speed and updates PWM
  *values. This funcntion uses three channels c_wd for watchdog timer, c_control
@@ -191,18 +170,17 @@ void torque_cotrolled_run_motor1 ( chanend c_wd, chanend c_pwm, chanend c_contro
  *between the threads for motor 2.
  **/
 
-void torque_cotrolled_run_motor2 ( chanend c_pwm2, chanend c_control2, port in p_hall2, port out p_pwm_lo2[])
+void run_motor2 ( chanend c_pwm2, chanend c_control2, port in p_hall2, port out p_pwm_lo2[])
 {
 	unsigned high_chan, hall_state = 0, pin_state = 0, pwm_val = 240, dir_flag=1;
 	unsigned ts, ts0, delta_t, speed = 0, hall_flg = 1, cmd;
-	unsigned state0 = 0, statenot0 =0, igbt_state =0;
+	unsigned state0 = 0, statenot0 =0;
 
 	/* 32 bit timer declaration */
 	timer t;
 	t :> ts;
 	/* delay function for 1 sec */
-	t when timerafter(ts+100000000) :> ts;
-	/* allow the WD to get going and enable motor */
+	t when timerafter( ts+ SEC ) :> ts;
 
 	/* main loop */
 	while (1)
@@ -211,17 +189,16 @@ void torque_cotrolled_run_motor2 ( chanend c_pwm2, chanend c_control2, port in p
 		{
 		/* wait for a change in the hall sensor - this is what this update loop is locked to */
 		case do_hall_select( hall_state, pin_state, p_hall2 );
-		/* if we get a change in PWM value (i.e. current) then update it.. */
 
 		case c_control2 :> cmd:
 			switch (cmd)
 			{
-		/* updates speed changes */
+		/* updates speed changes between threads */
 			case 1:
 				c_control2 <: speed;
 				break;
 
-		/* upadates pwm values */
+		/* upadates pwm values between threads*/
 			case 2:
 				c_control2 :> pwm_val;
 				break;
@@ -231,11 +208,6 @@ void torque_cotrolled_run_motor2 ( chanend c_pwm2, chanend c_control2, port in p
 				c_control2 :> dir_flag;
 				break;
 
-		/* the lower IGBT state changing sequence when the motor starts running */
-			case 5:
-				c_control2 <: igbt_state;
-            break;
-
 			default:
 			break;
 			}
@@ -243,7 +215,6 @@ void torque_cotrolled_run_motor2 ( chanend c_pwm2, chanend c_control2, port in p
 		}
 
 		/* handling hall states */
-
 		if (hall_state == HALL_INV)
 			hall_state = 0;
 
@@ -254,8 +225,8 @@ void torque_cotrolled_run_motor2 ( chanend c_pwm2, chanend c_control2, port in p
 			ts0 = ts;
 			t :> ts;
 			delta_t = ts - ts0;
-		/*caculate speed using equation below */
-			speed = 3000000000 / ( delta_t );
+		/*calculate speed using equation below */
+			speed = SPEED_COUNT / ( delta_t );
 			speed = speed * 2;
 			hall_flg = 0;
 			state0 = 0;
@@ -265,10 +236,11 @@ void torque_cotrolled_run_motor2 ( chanend c_pwm2, chanend c_control2, port in p
 		if (hall_flg == 0 && hall_state != 0 )
 			hall_flg = 1;
 
+		/* Check for motor2 halt state */
 		if(hall_flg !=0 )
 		{
 			state0++;
-			if(state0 >= 200)
+			if(state0 >= STATE_LIMIT)
 			{
 				speed = 0;
 				state0 =0;
@@ -277,7 +249,7 @@ void torque_cotrolled_run_motor2 ( chanend c_pwm2, chanend c_control2, port in p
 		else if(hall_flg == 0 )
 		{
 			statenot0++;
-			if(statenot0 >= 200)
+			if(statenot0 >= STATE_LIMIT)
 			{
 				speed = 0;
 				statenot0 =0;
@@ -293,14 +265,6 @@ void torque_cotrolled_run_motor2 ( chanend c_pwm2, chanend c_control2, port in p
 			p_pwm_lo2[0] <: bldc_ph_a_lo[hall_state];
 			p_pwm_lo2[1] <: bldc_ph_b_lo[hall_state];
 			p_pwm_lo2[2] <: bldc_ph_c_lo[hall_state];
-		/* This states are used to send Ia, Ib, or Ic as feed back current in
-		 * speed control thread */
-			if(bldc_ph_a_lo[hall_state] == 1)
-				igbt_state =1;
-			if (bldc_ph_b_lo[hall_state] ==1)
-				igbt_state =2;
-			if (bldc_ph_c_lo[hall_state] == 1)
-				igbt_state =3;
 		}
 		else
 		{
@@ -309,14 +273,6 @@ void torque_cotrolled_run_motor2 ( chanend c_pwm2, chanend c_control2, port in p
 			p_pwm_lo2[0] <: bldc_ph_a_lo1[hall_state];
 			p_pwm_lo2[1] <: bldc_ph_b_lo1[hall_state];
 			p_pwm_lo2[2] <: bldc_ph_c_lo1[hall_state];
-		/* This states are used to send Ia, Ib, or Ic as feed back current in
-		 * speed control thread */
-			if(bldc_ph_a_lo1[hall_state] == 1)
-				igbt_state =1;
-			if (bldc_ph_b_lo1[hall_state] ==1)
-				igbt_state =2;
-			if (bldc_ph_c_lo1[hall_state] == 1)
-				igbt_state =3;
 		}
 
 		/* updates pwm_val */

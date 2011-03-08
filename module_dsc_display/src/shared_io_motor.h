@@ -3,7 +3,7 @@
  * Version: 1v0module_dsc_display3
  * Build:
  * File:    shared_io_motor.h
- * Author: 	Srikanth
+ * Author: 	L & T
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -24,13 +24,6 @@
 	#include <xccompat.h>
 
 	// Individual command interfaces
-	#define ETH_RST_HI 		0
-	#define ETH_RST_LO		1
-
-	#define CAN_TERM_HI		1
-	#define CAN_TERM_LO		2
-	#define CAN_RST_HI		4
-	#define CAN_RST_LO		8
 
 	#define CMD_GET_VALS	1
 	#define CMD_GET_IQ		2
@@ -39,20 +32,20 @@
 	#define CMD_GET_IQ2		5
 	#define CMD_SET_SPEED2	6
 	#define CMD_DIR2        7
+	#define STEP_SPEED 		50
+	#define _30_Msec		3000000
+	#define MSec 100000
 
 	#ifdef __XC__
 		typedef struct lcd_interface_t
 		{
-			//clock clk_lcd_1;
-			//clock clk_lcd_2;
-
 			out port p_lcd_sclk; // buffered port:8
 			out port p_lcd_mosi; // buffered port:8
 			out port p_lcd_cs_n;
 			out port p_core1_shared;
 		} lcd_interface_t;
 
-		void display_shared_io_motor( chanend c_lcd, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns[]);
+		void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns[]);
 	#endif
 
 #endif /* SHARED_IO_MOTOR_H_ */

@@ -3,7 +3,7 @@
  * Version: 1v0module_dsc_display3
  * Build:
  * File:    shared_io_motor.xc
- * Author: 	Srikanth
+ * Author: 	L & T
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -24,10 +24,9 @@
 #include "lcd.h"
 #include "shared_io_motor.h"
 #include "stdio.h"
-#include "print.h"
 
 /* Manages the display, buttons and shared ports. */
-void display_shared_io_motor( chanend c_lcd, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns[])
+void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns[])
 {
 	unsigned int time, MIN_VAL=0, speed1 = 0, speed2 = 0, set_speed = INITIAL_SET_SPEED;
 	/* Default port value on device boot */
@@ -36,7 +35,7 @@ void display_shared_io_motor( chanend c_lcd, chanend c_lcd2, REFERENCE_PARAM(lcd
 	unsigned toggle = 1;
 	char my_string[50];
 	unsigned ts,temp=0;
-	timer t,x;
+	timer timer_1,timer_2;
 
 	/* Initiate the LCD ports */
 	lcd_ports_init(p);
@@ -61,7 +60,7 @@ void display_shared_io_motor( chanend c_lcd, chanend c_lcd2, REFERENCE_PARAM(lcd
 	lcd_comm_out(p, 0x00, port_val);		/* column address lower 4 bits + 0x00 */
 
 	/* Get the initial time value */
-	t :> time;
+	timer_1 :> time;
 
 	/* Loop forever processing commands */
 	while (1)
@@ -69,15 +68,13 @@ void display_shared_io_motor( chanend c_lcd, chanend c_lcd2, REFERENCE_PARAM(lcd
 		select
 		{
 		/* Timer event at 10Hz */
-			case t when timerafter(time + 10000000) :> time:
+			case timer_1 when timerafter(time + 10000000) :> time:
 		/* Get the motor 1 speed and motor 2 speed */
-				c_lcd <: CMD_GET_IQ;
-				c_lcd :> speed1;
-				c_lcd :> set_speed;
-
+				c_lcd1 <: CMD_GET_IQ;
+				c_lcd1 :> speed1;
+				c_lcd1 :> set_speed;
 				c_lcd2 <: CMD_GET_IQ2;
 				c_lcd2 :> speed2;
-
 
 		/* Calculate the strings here */
 		/* Now update the display */
@@ -97,23 +94,22 @@ void display_shared_io_motor( chanend c_lcd, chanend c_lcd2, REFERENCE_PARAM(lcd
 					if ( btn_en[i] != 0)
 						btn_en[i]--;
 				}
-				break;
+			break;
 
 		/* Button A is up */
 			case !btn_en[0] => btns[0] when pinseq(0) :> void:
 		/* Increase the speed, by the increment */
 				set_speed += PWM_INC_DEC_VAL;
-				if (set_speed > 6500)
-					set_speed = 6500;
+				if (set_speed > MAX_RPM)
+					set_speed = MAX_RPM;
 		/* Update the speed control loop */
-				c_lcd <: CMD_SET_SPEED;
-				c_lcd <: set_speed;
-
+				c_lcd1 <: CMD_SET_SPEED;
+				c_lcd1 <: set_speed;
 				c_lcd2 <: CMD_SET_SPEED2;
 				c_lcd2 <: set_speed;
 		/* Increment the debouncer */
 				btn_en[0] = 4;
-				break;
+			break;
 
 		/* Button B is down */
 			case !btn_en[1] => btns[1] when pinseq(0) :> void:
@@ -125,77 +121,70 @@ void display_shared_io_motor( chanend c_lcd, chanend c_lcd2, REFERENCE_PARAM(lcd
 					set_speed = MIN_RPM;
 					MIN_VAL = set_speed;
 				}
-
 		/* Update the speed control loop */
-				c_lcd <: CMD_SET_SPEED;
-				c_lcd <: set_speed;
-
+				c_lcd1 <: CMD_SET_SPEED;
+				c_lcd1 <: set_speed;
 				c_lcd2 <: CMD_SET_SPEED2;
 				c_lcd2 <: set_speed;
 		/* Increment the debouncer */
 				btn_en[1] = 4;
-				break;
+			break;
 
-		/* Button C */
+		/* Button C for Direction Change */
 			case !btn_en[2] => btns[2] when pinseq(0) :> void:
 
 				toggle = !toggle;
 				temp = set_speed;
-
 		/* to avoid jerks during the direction change*/
-				while(set_speed > 100)
+				while(set_speed > MIN_RPM)
 				{
-				set_speed -= 50;
+					set_speed -= STEP_SPEED;
 		/* Update the speed control loop */
-				c_lcd <: CMD_SET_SPEED;
-				c_lcd <: set_speed;
-				c_lcd2 <: CMD_SET_SPEED2;
-				c_lcd2 <: set_speed;
-				x :> ts;
-				x when timerafter(ts+3000000) :> ts;
+					c_lcd1 <: CMD_SET_SPEED;
+					c_lcd1 <: set_speed;
+					c_lcd2 <: CMD_SET_SPEED2;
+					c_lcd2 <: set_speed;
+					timer_2 :> ts;
+					timer_2 when timerafter(ts + _30_Msec) :> ts;
 				}
 				set_speed  =0;
-				if(toggle == 0)
-				printstrln(" Motors Running...Clock Wise Direction...");
-			else
-				printstrln(" Motors Running...Counter Clock Wise Direction...");
 		/* Update the speed control loop */
-				c_lcd <: CMD_SET_SPEED;
-				c_lcd <: set_speed;
+				c_lcd1 <: CMD_SET_SPEED;
+				c_lcd1 <: set_speed;
 				c_lcd2 <: CMD_SET_SPEED2;
 				c_lcd2 <: set_speed;
 		/* Update the direction change */
-				c_lcd <: CMD_DIR;
-				c_lcd <: toggle;
+				c_lcd1 <: CMD_DIR;
+				c_lcd1 <: toggle;
 				c_lcd2 <: CMD_DIR2;
 				c_lcd2 <: toggle;
 		/* to avoid jerks during the direction change*/
 				while(set_speed < temp)
 				{
-					set_speed += 50;
-					c_lcd <: CMD_SET_SPEED;
-					c_lcd <: set_speed;
+					set_speed += STEP_SPEED;
+					c_lcd1 <: CMD_SET_SPEED;
+					c_lcd1 <: set_speed;
 					c_lcd2 <: CMD_SET_SPEED2;
 					c_lcd2 <: set_speed;
-					x :> ts;
-					x when timerafter(ts+3000000) :> ts;
+					timer_2 :> ts;
+					timer_2 when timerafter(ts + _30_Msec) :> ts;
 				}
 				set_speed  = temp;
 		/* Update the speed control loop */
-				c_lcd <: CMD_SET_SPEED;
-				c_lcd <: set_speed;
+				c_lcd1 <: CMD_SET_SPEED;
+				c_lcd1 <: set_speed;
 				c_lcd2 <: CMD_SET_SPEED2;
 				c_lcd2 <: set_speed;
-
 		/* Increment the debouncer */
 				btn_en[2] = 4;
-				break;
+			break;
 
 		/* Button D */
 			case !btn_en[3] => btns[3] when pinseq(0) :> void:
-
 		/* Increment the debouncer */
 				btn_en[3] = 4;
+			break;
+			default:
 				break;
 		}
 	}

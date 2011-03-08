@@ -1,10 +1,9 @@
 /**
- * Module:  module_dsc_adc
+ * Module:  app_basic_bldc
  * Version: 1v1
  * Build:
- * File:    adc_ltc1408_calib_current.h
- * Author: 	Srikanth
- *
+ * File:    speed_cntrl.h
+ * Author: 	L & T
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
  * Terms and conditions covering the use of this code can
@@ -18,14 +17,10 @@
  * copyright notice above.
  *
  **/                                   
-#include <xs1.h>
-#include <xclib.h>
-#include "dsc_config.h"
-#include "adc_common.h"
+#ifndef ___SPEED_CONTROL_H__
+#define ___SPEED_CONTROL_H__
 
-#ifndef ADC_LTC1408_CALIB_CURRENT_H_
-#define ADC_LTC1408_CALIB_CURRENT_H_
-
-void adc_ltc1408_calib_current( chanend c_adc, chanend c_adc2, clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA );
+void speed_control1(chanend c_control, chanend c_lcd );
+void speed_control2(chanend c_control2, chanend c_lcd2 );
 
 #endif
