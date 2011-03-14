@@ -11,6 +11,19 @@ Changes / Notes:
 * First release of the basic BLDC motor demo includes:
 	- Simple commutation using Hall sensors
 
-Known Issues:
+
+
+Version 1v0 -- 2011-03-14
+===========================================
+
+Change / Notes:
 -----------------
-* None
+* First full release of Phase I basic BLDC commutation:
+	- Simple BLDC commutation of 2 motors using Hall sensors
+	- Control via Buttons and LCD
+	- Modules to provide CAN and ethernet control included in release but not demo
+	- Example Java Control apps for CAN and ethernet control
+
+
+
+ 
