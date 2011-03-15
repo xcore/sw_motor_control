@@ -85,11 +85,6 @@ void do_comms_eth( chanend c_speed, chanend tcp_svr )
 		printstr("Didn't get XTCP_IFDOWN!\n");
 	}
 
-	// there seems to be a bug in xtcp that means it never sends this event
-//	slave xtcp_event(tcp_svr, conn);
-//	if (conn.event != XTCP_IFUP)
-//		printf("Didn't get XTCP_IFUP!");
-
 	// Print out the MAC and IP addresses to the user
 	print_mac( tcp_svr );
 	print_ip( tcp_svr );

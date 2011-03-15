@@ -21,6 +21,16 @@
 #define _CAN_PHY
 
 #ifdef __XC__
+
+/**
+ *  \brief This is the thread for the CAN Phy support
+ *
+ *  \param rxChan for data that has been received from the CAN bus
+ *  \param txChan for data to transmit on the CAN bus
+ *  \clk the transmission clock
+ *  \canRx the receive port pins
+ *  \panTx the transmit port pins
+ */
 void canPhyRxTx(chanend rxChan, chanend txChan, clock clk, buffered in port:32 canRx, port canTx);
 #endif
 

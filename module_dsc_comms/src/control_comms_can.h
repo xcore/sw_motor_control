@@ -20,6 +20,16 @@
 #ifndef _CONTROL_COMMS_CAN_H_
 #define _CONTROL_COMMS_CAN_H_
 
-void do_comms_can( chanend c_speed, chanend rxChan, chanend txChan, chanend c_control_can );
+/**
+ *  \brief This is a thread which performs the higher level control for the CAN interface.
+ *
+ *  Use it in conjunction with the thread 'canPhyRxTx' from the module module_can.  The parameters are:
+ *
+ *  \param c_speed Channel for interfacing to the higher level motor control (shared_io_motor)
+ *  \param rxChan Connect to the rxChan port on the canPhyRxTx
+ *  \param txChan Connect to the txChan port on the canPhyRxTx
+ */
+void do_comms_can( chanend c_speed, chanend rxChan, chanend txChan);
 
 #endif /* _CONTROL_COMMS_CAN_H_ */
+

@@ -14,7 +14,7 @@ SOURCE_DIRS += $(DSC_BASIC_BLDC_DIRS)
 INCLUDE_DIRS += $(DSC_BASIC_BLDC_DIRS)
 
 USED_MODULES = module_dsc_hall.1v0alpha4 module_dsc_pwm.1v0alpha4 module_dsc_display.1v0module_dsc_display2 module_dsc_blocks.1v0alpha4
-USED_MODULES += module_ethernet module_locks module_xtcp module_dsc_comms
+USED_MODULES += module_ethernet module_locks module_xtcp module_dsc_comms module_can.0v1alpha1
 
 USE_XTCP_MAC_CUSTOM_FILTER=1
 
