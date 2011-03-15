@@ -96,23 +96,10 @@ void display_shared_io_motor(chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd
 
 		// CAN driver TERM & RST
 			case c_can_reset :> can_reset :
-				switch (can_reset)
+				if (can_reset == 1)
 				{
-				case 1: // CAN_TERM_HI
 					port_val |= 0b0001;
-					break;
-				case 2: // CAN_TERM_LO
-					port_val &= 0b1110;
-					break;
-				case 3: // CAN_RST_HI
-					port_val |= 0b0010;
-					break;
-				case 4: // CAN_RST_LO
 					port_val &= 0b1101;
-					break;
-				default :
-					// ERROR
-					break;
 				}
 
 				// Output the value to the shared port

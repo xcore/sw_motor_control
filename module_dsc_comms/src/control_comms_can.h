@@ -29,7 +29,7 @@
  *  \param rxChan Connect to the rxChan port on the canPhyRxTx
  *  \param txChan Connect to the txChan port on the canPhyRxTx
  */
-void do_comms_can( chanend c_speed, chanend rxChan, chanend txChan);
+void do_comms_can( chanend c_speed, chanend rxChan, chanend txChan, chanend c_reset);
 
 #endif /* _CONTROL_COMMS_CAN_H_ */
 

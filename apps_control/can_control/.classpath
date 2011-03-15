@@ -10,10 +10,6 @@
 	<classpathentry kind="lib" path="lib/junit.jar"/>
 	<classpathentry kind="lib" path="lib/servlet.jar"/>
 	<classpathentry kind="lib" path="lib/swtgraphics2d.jar"/>
-	<classpathentry kind="lib" path="lib/RXTXcomm.jar">
-		<attributes>
-			<attribute name="org.eclipse.jdt.launching.CLASSPATH_ATTR_LIBRARY_PATH_ENTRY" value="Z:/sandbox/apps_dsc_extra/host_apps/can_control/lib"/>
-		</attributes>
-	</classpathentry>
+	<classpathentry kind="lib" path="lib/32bit/RXTXcomm.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

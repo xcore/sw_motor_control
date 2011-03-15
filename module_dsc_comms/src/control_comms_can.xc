@@ -30,12 +30,15 @@
 
 
 // Thread that does the CAN control interface
-void do_comms_can( chanend c_speed, chanend rxChan, chanend txChan)
+void do_comms_can( chanend c_speed, chanend rxChan, chanend txChan, chanend c_reset)
 {
 	struct CanPacket p;
 	unsigned int sender_address, count = 1, value;
 	unsigned int speed = 1000;
 	unsigned int set_speed = 1000;
+
+	// Come out of CAN reset
+	c_reset <: 1;
 
 	// Loop forever processing packets
 	while( 1 )
