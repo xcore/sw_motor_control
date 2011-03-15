@@ -66,12 +66,6 @@
 // Define whether we want a static IP or not. Set to 1 to use DHCP, set to 0 to use static IP
 #define USE_DHCP 0
 
-// Define the IP if a static one is used
-#define STATIC_IP_BYTE_0 10
-#define STATIC_IP_BYTE_1 0
-#define STATIC_IP_BYTE_2 102
-#define STATIC_IP_BYTE_3 33
-
 // Define the port for the control app to connect to
 #define TCP_CONTROL_PORT 9595
 
@@ -80,12 +74,6 @@
 
 // Define the number of poles the motor has
 #define NUMBER_OF_POLES	4
-
-// Define this to enable the CAN interface
-//#define USE_CAN
-
-// Define this to enable the Ethernet interface
-#define USE_ETH
 
 // Define whether or not to use DHCP - default is to not use it
 //#define USE_DHCP
@@ -113,9 +101,6 @@
 
 // Maximum Iq value for the motor
 #define MAX_IQ 8000
-
-// String shown on the display for what is being fed to the motor drive thread (usually Iq or PWM)
-#define LCD_SETTING_STRING "PWM"
 
 /* define the number of clients for the QEI module */
 #define QEI_CLIENT_COUNT 2

@@ -120,18 +120,23 @@ int eth_phy_config(int eth100, smi_interface_t &smi)
         // Write back and validate
         smi_wr(PHY_ADDRESS, AUTONEG_ADVERT_REG, autoNegAdvertReg, smi);
         if (smi_rd(PHY_ADDRESS, AUTONEG_ADVERT_REG, smi) != autoNegAdvertReg)
+	{
           return (1);
+	}
       }
     // Autonegotiate
       {
         int basicControl = smi_rd(PHY_ADDRESS, BASIC_CONTROL_REG, smi);
+
         // clear autoneg bit
         basicControl = basicControl & ( ~(1 << BASIC_CONTROL_AUTONEG_EN_BIT));
         smi_wr(PHY_ADDRESS, BASIC_CONTROL_REG, basicControl, smi);
+
         // set autoneg bit
         basicControl = basicControl | (1 << BASIC_CONTROL_AUTONEG_EN_BIT);
         smi_wr(PHY_ADDRESS, BASIC_CONTROL_REG, basicControl, smi);
-      // restart autoneg
+
+        // restart autoneg
         basicControl = basicControl | (1 << BASIC_CONTROL_RESTART_AUTONEG_BIT);
         smi_wr(PHY_ADDRESS, BASIC_CONTROL_REG, basicControl, smi);
         
@@ -151,7 +156,7 @@ int eth_phy_config(int eth100, smi_interface_t &smi)
       else
         basicControl = basicControl & ( ~(1 << BASIC_CONTROL_100_MBPS_BIT));
       
-    smi_wr(PHY_ADDRESS, BASIC_CONTROL_REG, basicControl, smi);
+      smi_wr(PHY_ADDRESS, BASIC_CONTROL_REG, basicControl, smi);
     
     }
   return 0;  

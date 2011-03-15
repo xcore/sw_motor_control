@@ -28,6 +28,6 @@ void init_tcp_server(chanend c_mac_rx, chanend c_mac_tx, chanend c_xtcp[], chane
 
 
 // Function to initise and run the Ethernet server
-void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl, clock clk_smi, clock clk_mii, smi_interface_t &p_smi, mii_interface_t &p_mii, chanend c_mac_rx[], chanend c_mac_tx[], chanend c_connect_status, chanend c_eth_shared );
+void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl, clock clk_smi, clock clk_mii, smi_interface_t &p_smi, mii_interface_t &p_mii, chanend c_mac_rx[], chanend c_mac_tx[], chanend c_connect_status, chanend c_eth_reset);
 
 #endif /* INITIALISATION_H_ */

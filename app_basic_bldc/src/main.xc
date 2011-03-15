@@ -17,9 +17,16 @@
  * below. The modifications to the code are still covered by the 
  * copyright notice above.
  *
- **/                                   
+ **/
+
+#define USE_ETH
+//#define USE_CAN
+
 #include <xs1.h>
 #include <platform.h>
+
+#include <stdio.h>
+
 #include "hall_input.h"
 #include "pwm_cli.h"
 #include "pwm_service.h"
@@ -28,8 +35,17 @@
 #include "shared_io_motor.h"
 #include "speed_cntrl.h"
 #include "initialisation.h"
-#include <stdio.h>
 
+// CAN control headers
+#include "control_comms_can.h"
+#include "CanPhy.h"
+
+// Ethernet control headers
+#include "control_comms_eth.h"
+#include "xtcp_client.h"
+#include "uip_server.h"
+#include "ethernet_server.h"
+#include "getmac.h"
 
 /* core with LCD and BUTTON interfaces */
 on stdcore[INTERFACE_CORE]: lcd_interface_t lcd_ports = { PORT_DS_SCLK, PORT_DS_MOSI, PORT_DS_CS_N, PORT_CORE1_SHARED };
@@ -49,16 +65,54 @@ on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_hi2[3] = {PORT_M2_HI_A, PORT_
 on stdcore[MOTOR_CORE]: out port p_motor_lo2[3] = {PORT_M2_LO_A, PORT_M2_LO_B, PORT_M2_LO_C};
 on stdcore[MOTOR_CORE]: clock pwm_clk2 = XS1_CLKBLK_4;
 
+// CAN
+on stdcore[INTERFACE_CORE] : clock p_can_clk = XS1_CLKBLK_4;
+on stdcore[INTERFACE_CORE] : buffered in port:32 p_can_rx = PORT_CAN_RX;
+on stdcore[INTERFACE_CORE] : port p_can_tx = PORT_CAN_TX;
+
+// OTP for MAC address
+on stdcore[INTERFACE_CORE]: port otp_data = XS1_PORT_32B;
+on stdcore[INTERFACE_CORE]: out port otp_addr = XS1_PORT_16C;
+on stdcore[INTERFACE_CORE]: port otp_ctrl = XS1_PORT_16D;
+
+// Ethernet Ports
+on stdcore[INTERFACE_CORE]: clock clk_mii_ref = XS1_CLKBLK_REF;
+on stdcore[INTERFACE_CORE]: clock clk_smi = XS1_CLKBLK_3;
+on stdcore[INTERFACE_CORE]: smi_interface_t smi = { PORT_ETH_MDIO, PORT_ETH_MDC, 1 };
+on stdcore[INTERFACE_CORE]: mii_interface_t mii = { XS1_CLKBLK_1, XS1_CLKBLK_2, PORT_ETH_RXCLK, PORT_ETH_RXER, PORT_ETH_RXD, PORT_ETH_RXDV, PORT_ETH_TXCLK, PORT_ETH_TXEN, PORT_ETH_TXD };
+
+
 int main ( void )
 {
-	chan c_wd, c_pwm1, c_control1, c_lcd1, c_control2, c_pwm2, c_lcd2 ;
+	chan c_wd, c_pwm1, c_control1, c_lcd1, c_control2, c_pwm2, c_lcd2, c_ctrl, c_eth_reset, c_can_reset;
+
+#ifdef USE_CAN
+	chan c_rxChan, c_txChan;
+#endif
+
+#ifdef USE_ETH
+	chan c_mac_rx[1], c_mac_tx[1], c_xtcp[1], c_connect_status;
+#endif
 
 	par
 	{
+#ifdef USE_CAN
+		on stdcore[PROCESSING_CORE] : do_comms_can( c_ctrl, c_rxChan, c_txChan, c_can_reset );
+
+		on stdcore[INTERFACE_CORE] : canPhyRxTx( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx );
+#endif
+
+#ifdef USE_ETH
+		on stdcore[PROCESSING_CORE] : init_tcp_server( c_mac_rx[0], c_mac_tx[0], c_xtcp, c_connect_status );
+		on stdcore[PROCESSING_CORE] : do_comms_eth( c_ctrl, c_xtcp[0] );
+
+		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, c_eth_reset); // +4 threads
+#endif
+
 		/* L2 */
 		on stdcore[INTERFACE_CORE]: speed_control1( c_control1, c_lcd1 );
 		on stdcore[INTERFACE_CORE]: speed_control2( c_control2, c_lcd2 );
-		on stdcore[INTERFACE_CORE]: display_shared_io_motor( c_lcd1, c_lcd2, lcd_ports, btns);
+		on stdcore[INTERFACE_CORE]: display_shared_io_motor( c_lcd1, c_lcd2, lcd_ports, btns, c_ctrl, c_eth_reset, c_can_reset);
 
 		/* L1 */
 		on stdcore[MOTOR_CORE]: do_pwm1( c_pwm1, p_pwm_hi1, pwm_clk);

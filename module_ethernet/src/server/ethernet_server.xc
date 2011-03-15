@@ -24,7 +24,7 @@
 #include "eth_phy.h"
 
 
-void phy_init(clock clk_smi,
+int phy_init(clock clk_smi,
               out port ?p_mii_resetn,
               chanend ?c_mii_resetn,
               smi_interface_t &smi0,
@@ -33,7 +33,7 @@ void phy_init(clock clk_smi,
   smi_init(clk_smi, p_mii_resetn, c_mii_resetn, smi0);
   smi_reset( c_mii_resetn, p_mii_resetn, smi0);
   mii_init(mii0);
-  eth_phy_config(1, smi0);
+  return eth_phy_config(1, smi0);
 }
 
 

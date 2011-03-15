@@ -39,7 +39,7 @@
  *  \param mii0          The MII resources to connect to the phy
  *
  **/
-void phy_init(clock clk_smi,
+int phy_init(clock clk_smi,
               out port ?p_mii_resetn,
               chanend ?c_mii_resetn,
               smi_interface_t &smi0,

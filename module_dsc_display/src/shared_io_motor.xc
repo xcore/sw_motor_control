@@ -26,15 +26,25 @@
 #include "stdio.h"
 
 /* Manages the display, buttons and shared ports. */
-void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns[])
+void display_shared_io_motor(chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p),
+                             in port btns[], chanend? c_ctrl, chanend? c_eth_reset, chanend? c_can_reset)
 {
 	unsigned int time, MIN_VAL=0, speed1 = 0, speed2 = 0, set_speed = INITIAL_SET_SPEED;
+
+	unsigned can_reset, eth_reset;
+
 	/* Default port value on device boot */
 	unsigned int port_val = 0b0010;
 	unsigned int btn_en[4] = {0,0,0,0};
 	unsigned toggle = 1;
+
+	/* Command from external controller */
+	unsigned command;
+
+	/* String to display on the LCD */
 	char my_string[50];
 	unsigned ts,temp=0;
+
 	timer timer_1,timer_2;
 
 	/* Initiate the LCD ports */
@@ -67,6 +77,67 @@ void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lc
 	{
 		select
 		{
+		/* Reset peripherals based on module startup */
+
+		// Ethernet PHY reset
+			case c_eth_reset :> eth_reset :
+				if ( eth_reset == 1 )
+				{
+					port_val |= 0b0100;
+				}
+				else
+				{
+					port_val &= 0b1011;
+				}
+
+				// Output the value to the shared port
+				p.p_core1_shared <: port_val;
+				break;
+
+		// CAN driver TERM & RST
+			case c_can_reset :> can_reset :
+				switch (can_reset)
+				{
+				case 1: // CAN_TERM_HI
+					port_val |= 0b0001;
+					break;
+				case 2: // CAN_TERM_LO
+					port_val &= 0b1110;
+					break;
+				case 3: // CAN_RST_HI
+					port_val |= 0b0010;
+					break;
+				case 4: // CAN_RST_LO
+					port_val &= 0b1101;
+					break;
+				default :
+					// ERROR
+					break;
+				}
+
+				// Output the value to the shared port
+				p.p_core1_shared <: port_val;
+				break;
+
+		/* Command from external source */
+			case c_ctrl :> command :
+				switch (command)
+				{
+				case CMD_GET_VALS:
+					c_ctrl <: speed1;
+					c_ctrl <: set_speed;
+					break;
+				case CMD_SET_SPEED:
+					c_ctrl :> set_speed;
+					c_lcd1 <: CMD_SET_SPEED;
+					c_lcd1 <: set_speed;
+					c_lcd2 <: CMD_SET_SPEED2;
+					c_lcd2 <: set_speed;
+					break;
+				}
+				break;
+
+
 		/* Timer event at 10Hz */
 			case timer_1 when timerafter(time + 10000000) :> time:
 		/* Get the motor 1 speed and motor 2 speed */

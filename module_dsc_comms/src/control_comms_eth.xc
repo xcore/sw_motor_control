@@ -21,7 +21,6 @@
 #include <print.h>
 #include "dsc_config.h"
 
-#ifdef USE_ETH
 #include "control_comms_eth.h"
 #include "ethernet_server.h"
 #include "uip_server.h"
@@ -204,4 +203,5 @@ void do_comms_eth( chanend c_speed, chanend tcp_svr )
         }
 	}
 }
-#endif
+
+
