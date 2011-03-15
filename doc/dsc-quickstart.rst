@@ -7,15 +7,14 @@ Setting up the hardware
     The XMOS Brushless DC Motor development platform typically uses two power supplies (24V and 5V), an XMOS JTAG adaptor,
     and one or two motors.
 
-      - Connect the motors to the board first.  The software will run with one motor in either port, or motors in both
-        ports. Since the speed that is reported to the PC control applications is the speed of motor 1, then it is best to have
-        port 1 in use when a single motor is being used.
+      - Connect the motors to the board first.  The software will run with one or two motors. When a single motor is being
+        used, connect to port 1, as this is the port that has its speed reported to the PC control applications.
 
       - Connect the XMOS JTAG adaptor to the appropriate port, and connect it to the PC with a USB cable.
 
       - Connect a 5V power supply to the XMOS processor half of the BLDC board. Do not do this if there are wire links
         between the power and processor sides of the board.  The links will be over the isolation barrier by the text label
-	**5V LINK**
+	**5V LINK**.
 
       - Connect a 24V power supply to the power section of the BLDC board.  Do not have the power section
         of the board powered without the 5V section being powered.
@@ -24,8 +23,9 @@ Configuring the firmware
 ------------------------
   Selecting Ethernet or CAN control
     By default the software is set up to be controlled by the buttons around the LCD, and also by the ethernet interface.
-    If CAN is a preferred choice of control, and an appropriate CAN interface is available (CANUSB T980), then the
-    file **app_basic_bldc/src/main.xc can be modified**.  At the top of the file are two pre-processor directives that allow
+ 
+    If a CAN bus is the preferred choice of control, and an appropriate CAN interface is available (CANUSB T980), then the
+    file **app_basic_bldc/src/main.xc** can be modified.  At the top of the file are two pre-processor directives that allow
     the selection of ethernet or CAN.
 
   Changing the TCP/IP address
@@ -36,7 +36,7 @@ Configuring the firmware
 Building the firmware
 ---------------------
   Once the software is configured as required, the system can be built by executing the following make command in an XMOS
-  Tools Prompt.  The command should be executed in the root directory, or the **app_basic_bldc** directory.
+  Tools Prompt.  The command should be executed in the distribution root directory, or the **app_basic_bldc** directory.
 
     *xmake all*
 
