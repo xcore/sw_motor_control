@@ -81,6 +81,11 @@ Using the ethernet control application
 
 Using the CAN control application
 ---------------------------------
+  Like the ethernet control application, the CAN control application can be built from within the Eclipse IDE, or
+  the prebuilt version can be used.  The prebuilt version is at **apps_control/can_control/CanControl.jar**.  The 
+  application has been designed to work with the CANUSB T980 dongle, which converts commands given to a USB serial
+  port into CAN bus packets.
+
   Installing the CAN drivers
     The user will need to download and install the drivers for the CANUSB T980 dongle.  Once installed, the CAN bug will
     appear to the PC to be a COM port.  A check that this has been done correctly can easily be performed by using the
