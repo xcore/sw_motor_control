@@ -4,18 +4,20 @@ Quickstart guide for the XMOS Brushless DC Motor development platform, version 1
 
 Setting up the hardware
 -----------------------
-    The XMOS Brushless DC Motor development platform typically two power supplies (24V and 5V), an XMOS JTAG adaptor,
+    The XMOS Brushless DC Motor development platform typically uses two power supplies (24V and 5V), an XMOS JTAG adaptor,
     and one or two motors.
 
-      - Connect the motors to the board first.  The software will run with only one motor in either port, or a motor in both
+      - Connect the motors to the board first.  The software will run with one motor in either port, or motors in both
         ports. Since the speed that is reported to the PC control applications is the speed of motor 1, then it is best to have
         port 1 in use when a single motor is being used.
 
-      - Connect the XMOS JTAG adaptor to the appropriate port, and connect it back to the PC with a USB cable.
+      - Connect the XMOS JTAG adaptor to the appropriate port, and connect it to the PC with a USB cable.
 
-      - Connect a 5V power supply to the XMOS processor half of the BLDC board.
+      - Connect a 5V power supply to the XMOS processor half of the BLDC board. Do not do this if there are wire links
+        between the power and processor sides of the board.  The links will be over the isolation barrier by the text label
+	**5V LINK**
 
-      - Connect a 24V power supply to the power section of the BLDC board.  It is not advisable to have the power section
+      - Connect a 24V power supply to the power section of the BLDC board.  Do not have the power section
         of the board powered without the 5V section being powered.
 
 Configuring the firmware
@@ -40,7 +42,7 @@ Building the firmware
 
   The command will build the software and produce an executable file:
   
-    *app_basic_bldc/bin/XP-DSC-BLDC/dsc_basic_bldc.xe*
+    **app_basic_bldc/bin/XP-DSC-BLDC/dsc_basic_bldc.xe**
 
   This can be run on the hardware by executing:
 
@@ -64,7 +66,9 @@ Using the ethernet control application
   An application to drive the ethernet interface is present in the **apps_control/eth_control** directory.  To build it you
   must use the Eclipse IDE.  An appropriate workspace is set up in the directory apps_control.  Alternatively, a pre-built
   JAR file for this application is present at **apps_control/eth_control/EthernetControl.jar**.  Version 6.1 of the Java Runtime
-  Environment is required. Typically the application would be started with *java.exe -jar EthernetControl.jar*
+  Environment is required. Typically the application would be started with
+  
+    *java.exe -jar EthernetControl.jar*
 
   To use the application, type in the ethernet address of the motor control board and click Connect.  Momentarily, the PC
   will connect to the motor control board.  If the debug console of the motor control board is being traced (by starting
@@ -85,12 +89,16 @@ Using the CAN control application
     Next the RXTX Java communcation library will need to be installed.  The directory **apps_control/can_control/lib**
     contains two directories, **32bit** and **64bit**.  In each one are three files:
 
-      **rxTxComm.jar** - This needs to be copied to the Java runtime **lib/ext** directory
-      **rxTxParallel.dll** - This needs to be copied to the Java runtime **bin** directory
-      **rxTxSerial.dll** - This needs to be copied to the Java runtime **bin** directory
+      - **rxTxComm.jar** - This needs to be copied to the Java runtime **lib/ext** directory
+
+      - **rxTxParallel.dll** - This needs to be copied to the Java runtime **bin** directory
+
+      - **rxTxSerial.dll** - This needs to be copied to the Java runtime **bin** directory
 
     Once this is complete, the CanControl.far file should be able to be operated correctly.  Typically you would start the
-    application using *java.exe -jar CanControl.jar*
+    application using
+    
+      *java.exe -jar CanControl.jar*
 
    
   The operation of the CAN control application is much the same as the ethernet application.  It has a dial showing the speed
