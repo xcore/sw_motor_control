@@ -29,7 +29,7 @@ Configuring the firmware
 
 Selecting Ethernet or CAN control
   By default the software is set up to be controlled by the buttons around the LCD, and also by the ethernet interface.
-  If a CAN bus is the preferred choice of control, and an appropriate CAN interface is available (CANUSB T980), then the
+  If a CAN bus is the preferred choice of control, and an appropriate CAN interface is available [www.canusb.com], then the
   file **app_basic_bldc/src/main.xc** can be modified.  At the top of the file are two pre-processor directives that allow
   the selection of ethernet or CAN.
 
@@ -96,9 +96,10 @@ application has been designed to work with the CANUSB T980 dongle, which convert
 port into CAN bus packets.
 
 Installing the CAN drivers
-  The user will need to download and install the drivers for the CANUSB T980 dongle.  Once installed, the CAN bug will
+  The user will need to download and install the drivers for the CANUSB dongle.  Once installed, the CAN bug will
   appear to the PC to be a COM port.  A check that this has been done correctly can easily be performed by using the
-  Windows device manager to check the number and names of the COM ports with the dongle removed, then inserted. 
+  Windows device manager to check the number and names of the COM ports with the dongle removed, then inserted. The drivers
+  are available from the canusb website. [http://www.canusb.com/cdm/CDM_2.08.12_CANUSB.zip]
 
   Next the RXTX Java communcation library will need to be installed.  The directory **apps_control/can_control/lib**
   contains two directories, **32bit** and **64bit**.  In each one are three files:
