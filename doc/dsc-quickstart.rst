@@ -2,6 +2,11 @@
 Quickstart guide for the XMOS Brushless DC Motor development platform, version 1.0
 ==================================================================================
 
+The version 1 software implements a simple brushless DC commutation for two motors, using PWM to energize each coil and
+Hall effect sensors to detect the position of the motors.  It controls two motors simultainiously.  Additional modules are
+provided to demonstrate the use of ADCs, Quadrature encoder interfaceing, transformation algorithms and FOC control.  These
+modules are not, however, used by the demo application.
+
 Setting up the hardware
 -----------------------
     The XMOS Brushless DC Motor development platform typically uses two power supplies (24V and 5V), an XMOS JTAG adaptor,
