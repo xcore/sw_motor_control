@@ -120,4 +120,18 @@ The operation of the CAN control application is much the same as the ethernet ap
 of motor 1, and a slider control to control the demand speed for both motors.
 
 
+Suggestions for further changes
+-------------------------------
+
+* Extend the **shared_io_motor** to control both motors independently. The fourth button, *D*, could be used to switch the
+  first three buttons between controlling motor 1 and motor 2.
+
+* Add independent control to the ethernet or CAN interfaces.  This will require adding code to the control applications as
+  well as the **module_dsc_comms** control modules.
+
+* Use the XScope feature of the tools to trace some internal state.  For instance, add the ADC measurement thread into the
+  system, and use XScope to display the measured currents.  Or, display the speed, the demand speed, and the state of the
+  PID controllers.
+
+
 
