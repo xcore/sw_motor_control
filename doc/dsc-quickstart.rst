@@ -29,9 +29,9 @@ Configuring the firmware
 
 Selecting Ethernet or CAN control
   By default the software is set up to be controlled by the buttons around the LCD, and also by the ethernet interface.
-  If a CAN bus is the preferred choice of control, and an appropriate CAN interface is available [www.canusb.com], then the
-  file **app_basic_bldc/src/main.xc** can be modified.  At the top of the file are two pre-processor directives that allow
-  the selection of ethernet or CAN.
+  If a CAN bus is the preferred choice of control, and an appropriate CAN interface is available [http://www.canusb.com],
+  then the file **app_basic_bldc/src/main.xc** can be modified.  At the top of the file are two pre-processor directives
+  that allow the selection of ethernet or CAN.
 
 Changing the TCP/IP address
   By default the ethernet and TCP/IP interface has a statically allocated IP address of 10.0.102.33, and a net mask of
@@ -99,7 +99,7 @@ Installing the CAN drivers
   The user will need to download and install the drivers for the CANUSB dongle.  Once installed, the CAN bug will
   appear to the PC to be a COM port.  A check that this has been done correctly can easily be performed by using the
   Windows device manager to check the number and names of the COM ports with the dongle removed, then inserted. The drivers
-  are available from the canusb website. [http://www.canusb.com/cdm/CDM_2.08.12_CANUSB.zip]
+  are available from the canusb website. http://www.canusb.com/cdm/CDM_2.08.12_CANUSB.zip
 
   Next the RXTX Java communcation library will need to be installed.  The directory **apps_control/can_control/lib**
   contains two directories, **32bit** and **64bit**.  In each one are three files:
