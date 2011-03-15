@@ -12,24 +12,23 @@ Setting up the hardware
 The XMOS Brushless DC Motor development platform typically uses two power supplies (24V and 5V), an XMOS JTAG adaptor,
 and one or two motors.
 
-    - Connect the motors to the board first.  The software will run with one or two motors. When a single motor is being
-      used connect it to port 1 as this is the port that has its speed reported to the PC control applications.
+- Connect the motors to the board first.  The software will run with one or two motors. When a single motor is being
+  used connect it to port 1 as this is the port that has its speed reported to the PC control applications.
 
-    - Connect the XMOS JTAG adaptor to the appropriate port, and connect it to the PC with a USB cable.
+- Connect the XMOS JTAG adaptor to the appropriate port, and connect it to the PC with a USB cable.
 
-    - Connect a 5V power supply to the XMOS processor half of the BLDC board. Do not do this if there are wire links
-      between the power and processor sides of the board.  The links will be over the isolation barrier by the text label
-      *5V LINK**.
+- Connect a 5V power supply to the XMOS processor half of the BLDC board. Do not do this if there are wire links
+  between the power and processor sides of the board.  The links will be over the isolation barrier by the text label
+  *5V LINK**.
 
-    - Connect a 24V power supply to the power section of the BLDC board.  Do not have the power section
-      of the board powered without the 5V section being powered.
+- Connect a 24V power supply to the power section of the BLDC board.  Do not have the power section
+  of the board powered without the 5V section being powered.
 
 Configuring the firmware
 ------------------------
 
 Selecting Ethernet or CAN control
   By default the software is set up to be controlled by the buttons around the LCD, and also by the ethernet interface.
- 
   If a CAN bus is the preferred choice of control, and an appropriate CAN interface is available (CANUSB T980), then the
   file **app_basic_bldc/src/main.xc** can be modified.  At the top of the file are two pre-processor directives that allow
   the selection of ethernet or CAN.
