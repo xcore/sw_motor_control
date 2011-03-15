@@ -8,7 +8,7 @@ Setting up the hardware
     and one or two motors.
 
       - Connect the motors to the board first.  The software will run with one or two motors. When a single motor is being
-        used, connect to port 1, as this is the port that has its speed reported to the PC control applications.
+        used connect it to port 1 as this is the port that has its speed reported to the PC control applications.
 
       - Connect the XMOS JTAG adaptor to the appropriate port, and connect it to the PC with a USB cable.
 
