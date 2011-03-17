@@ -60,7 +60,25 @@ Tools Prompt.  The command should be executed in the distribution root directory
 Building the firmware using the XDE environment
 -----------------------------------------------
 
-TODO
+To build and run the software within the XMOS Developement Environment, follow these steps:
+
+- Start the XDE, and create/open a workspace to hold the project
+
+- Choose the *File>Import...* menu item, and select *General>Existing Projects into Workspace* from the dialog.
+
+- Select *Browse...* to select the root directory, and choose the **xmos_mc** source code directory.
+
+- Click *Finish* to import all of the listed projects.
+
+- Select *app_basic_bldc* in the *Project Explore* tree.
+
+- Build the project using the shortcut bar, the menu *Project>Build Project* or the context menu in the *Project Explore* tree.
+
+- The project will build.
+
+- The XE file will be present until the *bin* directory in the *app_basic_bldc* project.
+
+- Select the binary and use the shortcut bar, the menu, or the context menu to run it on the target hardware.
 
 Running the firmware
 --------------------
