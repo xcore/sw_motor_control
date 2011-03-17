@@ -2,10 +2,11 @@
 Quickstart guide for the XMOS Brushless DC Motor development platform, version 1.0
 ==================================================================================
 
-The version 1 software implements a simple brushless DC commutation for two motors, using PWM to energize each coil and
-Hall effect sensors to detect the position of the motors.  It controls two motors simultainiously.  Additional modules are
+The version 1 software implements a trapezoidal brushless DC commutation for two motors, using PWM to energize each coil and
+Hall effect sensors to detect the position of the motors.  It controls two motors independently.  Additional modules are
 provided to demonstrate the use of ADCs, Quadrature encoder interfacing, transformation algorithms and FOC control.  These
-modules are not, however, used by the demo application.
+modules are not, however, used by the current demo application. For details of timescales and availability, please
+contact your XMOS representitive.
 
 Setting up the hardware
 -----------------------
@@ -17,15 +18,17 @@ and one or two motors.
 
 - Connect the XMOS JTAG adaptor to the appropriate port, and connect it to the PC with a USB cable.
 
-- Connect a 5V power supply to the XMOS processor half of the BLDC board. Do not do this if there are wire links
-  between the power and processor sides of the board.  The links will be over the isolation barrier by the text label
-  *5V LINK**.
+- Connect a 5V power supply to the XMOS processor half of the BLDC board.  Optionally, 5V may be ontained from the
+  power section by putting wire links across the **5V LINK** bridge.  Full isolation between the two halfs of the board
+  will be lost in this case.
 
 - Connect a 24V power supply to the power section of the BLDC board.  Do not have the power section
   of the board powered without the 5V section being powered.
 
 Configuring the firmware
 ------------------------
+
+The speed control input can be set using the buttons, and an Ethernet or a CAN bus input.
 
 Selecting Ethernet or CAN control
   By default the software is set up to be controlled by the buttons around the LCD, and also by the ethernet interface.
@@ -38,8 +41,8 @@ Changing the TCP/IP address
   255.255.240.0.  To change this, edit the file **app_basic_bldc/src/utilities/initialization.xc**.  Contained in this file
   is the address configuration structure which is passed to the TCP/IP module.
 
-Building the firmware
----------------------
+Building the firmware using the XMOS Desktop Tools Command Line
+---------------------------------------------------------------
 
 Once the software is configured as required, the system can be built by executing the following make command in an XMOS
 Tools Prompt.  The command should be executed in the distribution root directory, or the **app_basic_bldc** directory.
@@ -54,7 +57,10 @@ Tools Prompt.  The command should be executed in the distribution root directory
 
     *xrun --io app_basic_bldc/bin/XP-DSC-BLDC/dsc_basic_bldc.xe*
 
+Building the firmware using the XDE environment
+-----------------------------------------------
 
+TODO
 
 Running the firmware
 --------------------
@@ -71,17 +77,17 @@ Controlling the motor direction
 Using the ethernet control application
 --------------------------------------
 
-An application to drive the ethernet interface is present in the **apps_control/eth_control** directory.  To build it you
-must use the Eclipse IDE.  An appropriate workspace is set up in the directory apps_control.  Alternatively, a pre-built
-JAR file for this application is present at **apps_control/eth_control/EthernetControl.jar**.  Version 6.1 of the Java Runtime
-Environment is required. Typically the application would be started with
+An application to set and monitor speed via the ethernet interface is present in the **apps_control/eth_control** directory.
+To build it you must use the Eclipse IDE.  An appropriate workspace is set up in the directory apps_control.  Alternatively,
+a pre-built JAR file for this application is present at **apps_control/eth_control/EthernetControl.jar**.  Version 6.1 of the
+Java Runtime Environment is required. Typically the application would be started with
   
   *java.exe -jar EthernetControl.jar*
 
 To use the application, type in the ethernet address of the motor control board and click Connect.  Momentarily, the PC
 will connect to the motor control board.  If the debug console of the motor control board is being traced (by starting
 the XE application with the --io flag, or by running from within the XMOS IDE), then the control connection will be
-reported.
+reported in the console when the application starts and when connections are made or lost.
 
 A large dial shows the current motor speeds, and a slider control allows the user to adjust the speed. Both motors have the
 same demand speed, and the speed of motor 1 is reported in the dial.
