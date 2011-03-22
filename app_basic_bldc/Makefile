@@ -1,6 +1,6 @@
 # Custom Stuff
 BUILD_FLAGS=
-XCC_FLAGS= -O3 -g -report
+XCC_FLAGS= -O3 -g -report -lxscope
 
 APP_NAME=dsc_basic_bldc
 

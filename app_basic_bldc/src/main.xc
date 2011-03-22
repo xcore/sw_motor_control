@@ -47,6 +47,10 @@
 #include "ethernet_server.h"
 #include "getmac.h"
 
+#ifdef USE_XSCOPE
+#include <xscope.h>
+#endif
+
 /* core with LCD and BUTTON interfaces */
 on stdcore[INTERFACE_CORE]: lcd_interface_t lcd_ports = { PORT_DS_SCLK, PORT_DS_MOSI, PORT_DS_CS_N, PORT_CORE1_SHARED };
 on stdcore[INTERFACE_CORE]: port in btns[4] = {PORT_BUTTON_A, PORT_BUTTON_B, PORT_BUTTON_C, PORT_BUTTON_D};
@@ -112,7 +116,18 @@ int main ( void )
 		/* L2 */
 		on stdcore[INTERFACE_CORE]: speed_control1( c_control1, c_lcd1 );
 		on stdcore[INTERFACE_CORE]: speed_control2( c_control2, c_lcd2 );
-		on stdcore[INTERFACE_CORE]: display_shared_io_motor( c_lcd1, c_lcd2, lcd_ports, btns, c_ctrl, c_eth_reset, c_can_reset);
+		on stdcore[INTERFACE_CORE]: {
+#ifdef USE_XSCOPE
+			xscope_register(5,
+					XSCOPE_CONTINUOUS, "PWM 1", XSCOPE_UINT , "n",
+					XSCOPE_CONTINUOUS, "PWM 2", XSCOPE_UINT , "n",
+					XSCOPE_CONTINUOUS, "Speed 1", XSCOPE_UINT , "rpm",
+					XSCOPE_CONTINUOUS, "Speed 2", XSCOPE_UINT , "rpm",
+					XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT, "rpm"
+			);
+#endif
+			display_shared_io_motor( c_lcd1, c_lcd2, lcd_ports, btns, c_ctrl, c_eth_reset, c_can_reset);
+		}
 
 		/* L1 */
 		on stdcore[MOTOR_CORE]: do_pwm1( c_pwm1, p_pwm_hi1, pwm_clk);
@@ -120,6 +135,7 @@ int main ( void )
 		on stdcore[MOTOR_CORE]: do_pwm2( c_pwm2, p_pwm_hi2, pwm_clk2);
 		on stdcore[MOTOR_CORE]: run_motor2 ( c_pwm2, c_control2, p_hall2, p_motor_lo2 );
 		on stdcore[MOTOR_CORE]: do_wd(c_wd, i2c_wd);
+
 
 	}
 	return 0;

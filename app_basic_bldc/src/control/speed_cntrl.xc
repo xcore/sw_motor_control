@@ -24,6 +24,10 @@
 #include "shared_io_motor.h"
 #include "pid_regulator.h"
 
+#ifdef USE_XSCOPE
+#include <xscope.h>
+#endif
+
 /* speed loop settings*/
 static int Kp=1*8000, Ki=40, Kd=0;
 
@@ -79,6 +83,9 @@ void speed_control1(chanend c_control, chanend c_lcd )
 			uPwm = (unsigned)pwm;
 			c_control <: 2;
 			c_control <: uPwm;
+#ifdef USE_XSCOPE
+			xscope_probe_data(0, uPwm);
+#endif
 			break;
 
 		case c_lcd :> cmd: /* Process a command received from the display */
@@ -86,6 +93,10 @@ void speed_control1(chanend c_control, chanend c_lcd )
 			{
 				c_lcd <: speed;
 				c_lcd <: set_speed;
+#ifdef USE_XSCOPE
+				xscope_probe_data(2, speed);
+				xscope_probe_data(4, set_speed);
+#endif
 			}
 			else if (cmd == CMD_SET_SPEED)
 			{
@@ -155,12 +166,18 @@ void speed_control2 (chanend c_control2, chanend c_lcd2 )
 			uPwm = (unsigned)pwm;
 			c_control2 <: 2;
 			c_control2 <: uPwm;
+#ifdef USE_XSCOPE
+			xscope_probe_data(1, uPwm);
+#endif
 			break;
 
 		case c_lcd2 :> cmd: /* Process a command received from the display */
 			if (cmd == CMD_GET_IQ2)
 			{
 				c_lcd2 <: speed;
+#ifdef USE_XSCOPE
+				xscope_probe_data(3, speed);
+#endif
 			}
 			else if (cmd == CMD_SET_SPEED2)
 			{
