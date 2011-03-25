@@ -105,6 +105,6 @@
 /* define the number of clients for the QEI module */
 #define QEI_CLIENT_COUNT 2
 
-#define USE_XSCOPE 1
+//#define USE_XSCOPE 1
 
 #endif /* _DSC_CONFIG__H_ */
