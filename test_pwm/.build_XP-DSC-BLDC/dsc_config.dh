@@ -1,0 +1,1 @@
+.build_XP-DSC-BLDC/dsc_config.hstat : $(patsubst %.h,$(TARGET_DIR)/%.hstat,$(filter $(NOTDIR_HEADER_FILES),))

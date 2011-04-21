@@ -1,0 +1,1 @@
+.build_XP-DSC-BLDC/pwm_cli_common.hstat : $(patsubst %.h,$(TARGET_DIR)/%.hstat,$(filter $(NOTDIR_HEADER_FILES),xs1.h dsc_pwm_common_types.h dsc_pwm_common.h ))
