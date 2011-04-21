@@ -26,7 +26,9 @@
 
 #include <xs1.h>
 #include "dsc_pwm_common.h"
+#include "dsc_config.h"
 
+#ifdef PWM_NOINV_MODE
 
 .extern pwm_op_noinv
 .globl pwm_op_noinv.nstackwords
@@ -499,3 +501,4 @@ GO_UPDATE_M7:
 
 .cc_bottom pwm_op_noinv.func
 	
+#endif

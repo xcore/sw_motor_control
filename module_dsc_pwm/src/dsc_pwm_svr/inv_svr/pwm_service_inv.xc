@@ -17,11 +17,13 @@
  * copyright notice above.
  *
  **/                                   
+
 #include <xs1.h>
 #include "pwm_service_inv.h"
-
+#include "dsc_config.h"
 
 #ifdef PWM_INV_MODE
+
 /*
  * Declare buffers - this functionality operates using shared memory
  */

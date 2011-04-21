@@ -18,9 +18,12 @@
  * copyright notice above.
  *
  **/                                   
+
 #include <xs1.h>
 #include "pwm_service_bldc.h"
 #include "dsc_config.h"
+
+#ifdef PWM_BLDC_MODE
 
 /******************************************************/
 /* Basic BLDC commutation just requires PWM on the    */
@@ -28,7 +31,6 @@
 /* bridge needs to be controlled by the application   */
 /******************************************************/
 
-#ifdef PWM_BLDC_MODE
 unsigned chan_id_buf2[2];
 unsigned mode_buf2[2];
 t_out_data pwm_out_data_buf2[2];

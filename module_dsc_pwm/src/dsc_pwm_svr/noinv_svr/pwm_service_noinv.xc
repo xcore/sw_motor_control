@@ -16,9 +16,14 @@
  * below. The modifications to the code are still covered by the 
  * copyright notice above.
  *
- **/                                   
+ **/
+
 #include <xs1.h>
 #include "pwm_service_noinv.h"
+#include "dsc_config.h"
+
+#ifdef PWM_NOINV_MODE
+
 
 /*
  * Assembly PWM operation loop
@@ -86,3 +91,5 @@ void do_pwm_noinv( chanend c_pwm, buffered out port:32 p_pwm[],  clock clk)
 		mode = pwm_op_noinv( chan_id0, chan_id1, chan_id2, pwm_out_data0, pwm_out_data1, pwm_out_data2, mode, p_pwm, c_pwm );
 	}
 }
+
+#endif

@@ -26,6 +26,9 @@
 
 #include <xs1.h>
 #include "dsc_pwm_common.h"
+#include "dsc_config.h"
+
+#ifdef PWM_BLDC_MODE
 
 .extern chan_id_buf
 .extern pwm_out_data_buf
@@ -215,3 +218,4 @@ PWM_MODE_2:
 
 .cc_bottom pwm_op_bldc.func
 	
+#endif
