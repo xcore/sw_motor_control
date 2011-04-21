@@ -1,1 +1,0 @@
-.build_XP-DSC-BLDC/dsc_pwm_common.hstat : $(patsubst %.h,$(TARGET_DIR)/%.hstat,$(filter $(NOTDIR_HEADER_FILES),dsc_config.h adc_common.h ))
