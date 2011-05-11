@@ -24,27 +24,30 @@
 // Do a clarke transform
 void clarke_transform( int *I_alpha, int *I_beta, int Ia, int Ib, int Ic )
 {
-	long long tmp;
+	int tmp;
 
 	*I_alpha = Ia;
 
-	tmp = ((ONE_OVER_ROOT_3 * Ib) - (ONE_OVER_ROOT_3 * Ic)) >> 32;
-	*I_beta = (int)(tmp);
+	tmp = ((ONE_OVER_ROOT_3 * Ib) >> 14) - ((ONE_OVER_ROOT_3 * Ic) >> 14);
+	*I_beta = tmp ;
+
 }
 
 
 // Do an inverse clarke transform
 void inverse_clarke_transform( int *Ia, int *Ib, int *Ic, int alpha, int beta )
 {
-	long long tmp;
+	int tmp ;
 
 	*Ia = alpha;
 
-	tmp = (-alpha) + ((ROOT_THREE * (long long)beta) >> 32);
+	tmp = (-alpha) + ((ROOT_THREE * beta) >> 14);
 	tmp = tmp >> 1;
-	*Ib = (int)tmp;
+	*Ib = tmp;
 
-	tmp = (-alpha) - ((ROOT_THREE * (long long)beta) >> 32);
+	tmp = (-alpha) - ((ROOT_THREE * beta) >> 14);
 	tmp = tmp >> 1;
-	*Ic = (int)tmp;
+	*Ic = tmp;
+
 }
+

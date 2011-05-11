@@ -111,7 +111,9 @@ void adc_ltc1408_test( clock clk, port out SCLK, buffered out port:32 CNVST, in 
     while (1)
     {
     	adc_get_data_ltc1408_singleshot( adc_val, 0, CNVST, DATA, clk );
-   		printhexln(adc_val[0]);
+   		printintln(adc_val[0]);
+   		printintln(adc_val[1]);
+   		printintln(adc_val[2]);
     }
 }
 
@@ -125,7 +127,6 @@ void adc_ltc1408_triggered( chanend c_adc, clock clk, port out SCLK, buffered ou
 	unsigned ts;
 
 	configure_adc_ports_ltc1408(clk, SCLK, CNVST, DATA);
-
 
 	while (1)
 	{

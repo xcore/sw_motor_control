@@ -3,6 +3,8 @@
  * Version: 1v0alpha1
  * Build:   128bfdf87839aeec0e38320c3524102eb996ecd5
  * File:    sine_lookup.h
+ * Modified by : Srikanth
+ * Last Modified on : 04-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -20,14 +22,10 @@
 #ifndef __SINE_LOOKUP_H__
 #define __SINE_LOOKUP_H__
 
-extern long long sine_table[];
+extern int sine_table[];
 
-// Lookup sine value in integer tenths of degrees (so i = 10 is 1 deg)
-// @return sin(x) * (2^32)
-long long sine( unsigned deg );
+int sine( unsigned deg );
 
-// Lookup cosine value in integer tenths of degrees (so i = 10 is 1 deg)
-// @return sin(x) * (2^32)
-long long cosine( unsigned deg );
+int cosine( unsigned deg );
 
 #endif /*__SINE_LOOKUP_H__*/

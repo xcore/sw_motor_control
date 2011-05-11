@@ -3,6 +3,8 @@
  * Version: 1v0alpha1
  * Build:   c9e25ba4f74e9049d5da65cb5c829a3d932ed199
  * File:    pid_regulator.h
+ * Modified by : Srikanth
+ * Last Modified on : 04-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -37,12 +39,18 @@ typedef struct S_PID {
 int pid_regulator( int set_point, int actual, pid_data &d );
 int pid_regulator_delta( int set_point, int actual, pid_data &d );
 int pid_regulator_delta_cust_error( int error, pid_data &d );
+int pid_regulator_delta_cust_error1( int error, pid_data &d );
+int pid_regulator_delta_cust_error2( int error, pid_data &iq );
+int pid_regulator_delta_cust_error3( int error, pid_data &id );
 void init_pid( int Kp, int Ki, int Kd, pid_data &d );
 #else
 // C Version
 int pid_regulator( int set_point, int actual, pid_data *d );
 int pid_regulator_delta( int set_point, int actual, pid_data *d );
 int pid_regulator_delta_cust_error( int error, pid_data *d );
+int pid_regulator_delta_cust_error1( int error, pid_data *d );
+int pid_regulator_delta_cust_error2( int error, pid_data *iq );
+int pid_regulator_delta_cust_error3( int error, pid_data *id );
 void init_pid( int Kp, int Ki, int Kd, pid_data *d );
 #endif
 

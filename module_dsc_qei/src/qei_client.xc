@@ -3,6 +3,8 @@
  * Version: 1v0alpha0
  * Build:   e89e295a87b36dc1ad5ce82058b7434d3df4bb94
  * File:    qei_client.xc
+ * Modified by : Srikanth
+ * Last Modified on : 04-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -24,15 +26,15 @@
 unsigned qei_avg_buffer[QEI_SPEED_AVG] = {0};
 unsigned qei_buf_pos = 0;
 
-int get_qei_position ( chanend c_qei )
+unsigned get_qei_position ( chanend c_qei )
 {
 	unsigned tmp;
-	int r;
+	unsigned r;
 
 	c_qei <: QEI_CMD_POS_REQ;
 	c_qei :> tmp;
 
-	r = (tmp * 3600) / (1024 * 4);
+	r = tmp ;
 	return r;
 }
 
@@ -49,7 +51,7 @@ int get_qei_speed ( chanend c_qei )
 		r = 0;
 	else
 	{
-		r = 3000000000 / ((t2 - t1) * (1024*4));
+		r = 3000000000 / ((t2 - t1) * (500*4));
 		r <<= 1; // double to get RPM
 	}
 
@@ -62,6 +64,7 @@ int get_qei_speed ( chanend c_qei )
 		r += qei_avg_buffer[i];
 
 	r = r / QEI_SPEED_AVG;
+
 	return r;
 }
 

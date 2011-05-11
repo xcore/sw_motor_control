@@ -21,29 +21,29 @@
 #include "transform_constants.h"
 #include "sine_lookup.h"
 
-
 // Do a park transform
 void park_transform( int *Id, int *Iq, int I_alpha, int I_beta, unsigned theta )
 {
-	long long tmp;
+	int tmp;
 
-	tmp = (( (I_alpha * cosine( theta )) + (I_beta * sine( theta ))) >> 32);
-	*Id = (int)tmp;
+	tmp = ((I_alpha * cosine( theta )) >> 14) + ((I_beta * sine( theta )) >> 14);
+	*Id = tmp ;
 
-	tmp = (( (I_beta * cosine( theta )) - (I_alpha * sine( theta ))) >> 32);
-	*Iq = (int)tmp;
+	tmp = ((I_beta * cosine( theta )) >> 14) - ((I_alpha * sine( theta )) >> 14);
+	*Iq = tmp ;
+
 }
 
 
 // Do an inverse park transform
 void inverse_park_transform( int *I_alpha, int *I_beta, int Id, int Iq, unsigned theta )
 {
-	long long tmp;
+	int tmp;
 
-	tmp = (( ((long long)Id * cosine( theta )) - ((long long)Iq *   sine( theta )) ) >> 32);
-	*I_alpha = (int)tmp;
+	tmp = ((Id * cosine( theta )) >> 14) - ((Iq *  sine( theta )) >> 14);
+	*I_alpha = tmp ;
 
-	tmp = (( ((long long)Id *   sine( theta )) + ((long long)Iq * cosine( theta )) ) >> 32);
-	*I_beta = (int)tmp;
+	tmp = (( Id *   sine( theta )) >>14 ) + (( Iq * cosine( theta ))>> 14);
+	*I_beta = tmp  ;
 
 }

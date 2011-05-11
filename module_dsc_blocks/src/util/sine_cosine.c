@@ -3,6 +3,8 @@
  * Version: 1v0alpha1
  * Build:   128bfdf87839aeec0e38320c3524102eb996ecd5
  * File:    sine_cosine.c
+ * Modified by : Srikanth
+ * Last Modified on : 04-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -20,22 +22,18 @@
 #include "sine_lookup.h"
 #include "sine_table_big.h"
 
-inline long long sine( unsigned deg )
+inline int sine( unsigned deg )
 {
-	unsigned x = deg;
-
-	return sine_table[x];
+	return sine_table[deg];
 }
 
-inline long long cosine( unsigned deg )
+inline int cosine( unsigned deg )
 {
-	unsigned x = deg + 900;
-
-	while (x >= 3600)
+	unsigned x = deg + 500;
+	while (x >= 2000)
 	{
-		x = x - 3600;
+		x = x - 2000;
 	}
-
 	return sine_table[x];
 }
 

@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Structure>
+    <Date value="Wed Apr 20 15:12:50 2011"/>
+    <Hierarchy>
+        <Core name="stdcore[0]">
+            <Category name="Ports">
+                <Group name="XS1_PORT_32A">
+                    <Signal name="stdcore[0]_XS1_PORT_32A"/>
+                    <Signal name="stdcore[0]_XS1_PORT_32A_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_32A_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_32A_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_32A_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_32A_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_16A">
+                    <Signal name="stdcore[0]_XS1_PORT_16A"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16A_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16A_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16A_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16A_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16A_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_16B">
+                    <Signal name="stdcore[0]_XS1_PORT_16B"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16B_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16B_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16B_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16B_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16B_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_8A">
+                    <Signal name="stdcore[0]_XS1_PORT_8A"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8A_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8A_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8A_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8A_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8A_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_8B">
+                    <Signal name="stdcore[0]_XS1_PORT_8B"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8B_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8B_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8B_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8B_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8B_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_8C">
+                    <Signal name="stdcore[0]_XS1_PORT_8C"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8C_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8C_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8C_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8C_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8C_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_8D">
+                    <Signal name="stdcore[0]_XS1_PORT_8D"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8D_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8D_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8D_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8D_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_8D_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_4A">
+                    <Signal name="stdcore[0]_XS1_PORT_4A"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4A_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4A_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4A_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4A_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4A_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_4B">
+                    <Signal name="stdcore[0]_XS1_PORT_4B"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4B_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4B_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4B_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4B_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4B_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_4C">
+                    <Signal name="stdcore[0]_XS1_PORT_4C"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4C_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4C_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4C_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4C_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4C_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_4D">
+                    <Signal name="stdcore[0]_XS1_PORT_4D"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4D_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4D_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4D_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4D_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4D_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_4E">
+                    <Signal name="stdcore[0]_XS1_PORT_4E"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4E_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4E_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4E_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4E_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4E_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_4F">
+                    <Signal name="stdcore[0]_XS1_PORT_4F"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4F_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4F_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4F_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4F_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_4F_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1A">
+                    <Signal name="stdcore[0]_XS1_PORT_1A"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1A_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1A_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1A_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1A_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1A_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1B">
+                    <Signal name="stdcore[0]_XS1_PORT_1B"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1B_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1B_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1B_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1B_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1B_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1C">
+                    <Signal name="stdcore[0]_XS1_PORT_1C"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1C_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1C_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1C_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1C_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1C_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1D">
+                    <Signal name="stdcore[0]_XS1_PORT_1D"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1D_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1D_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1D_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1D_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1D_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1E">
+                    <Signal name="stdcore[0]_XS1_PORT_1E"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1E_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1E_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1E_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1E_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1E_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1F">
+                    <Signal name="stdcore[0]_XS1_PORT_1F"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1F_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1F_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1F_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1F_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1F_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1G">
+                    <Signal name="stdcore[0]_XS1_PORT_1G"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1G_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1G_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1G_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1G_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1G_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1H">
+                    <Signal name="stdcore[0]_XS1_PORT_1H"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1H_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1H_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1H_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1H_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1H_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1I">
+                    <Signal name="stdcore[0]_XS1_PORT_1I"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1I_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1I_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1I_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1I_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1I_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1J">
+                    <Signal name="stdcore[0]_XS1_PORT_1J"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1J_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1J_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1J_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1J_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1J_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1K">
+                    <Signal name="stdcore[0]_XS1_PORT_1K"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1K_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1K_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1K_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1K_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1K_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1L">
+                    <Signal name="stdcore[0]_XS1_PORT_1L"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1L_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1L_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1L_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1L_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1L_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1M">
+                    <Signal name="stdcore[0]_XS1_PORT_1M"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1M_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1M_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1M_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1M_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1M_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1N">
+                    <Signal name="stdcore[0]_XS1_PORT_1N"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1N_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1N_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1N_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1N_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1N_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1O">
+                    <Signal name="stdcore[0]_XS1_PORT_1O"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1O_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1O_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1O_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1O_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1O_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_1P">
+                    <Signal name="stdcore[0]_XS1_PORT_1P"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1P_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1P_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1P_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1P_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_1P_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_32B">
+                    <Signal name="stdcore[0]_XS1_PORT_32B"/>
+                    <Signal name="stdcore[0]_XS1_PORT_32B_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_32B_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_32B_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_32B_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_32B_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_16C">
+                    <Signal name="stdcore[0]_XS1_PORT_16C"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16C_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16C_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16C_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16C_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16C_portDetails"/>
+                </Group>
+                <Group name="XS1_PORT_16D">
+                    <Signal name="stdcore[0]_XS1_PORT_16D"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16D_inuse"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16D_tWaiting"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16D_direction"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16D_outputThreadPc"/>
+                    <Signal name="stdcore[0]_XS1_PORT_16D_portDetails"/>
+                </Group>
+            </Category>
+        </Core>
+    </Hierarchy>
+    <ValueAliases>
+    </ValueAliases>
+    <SignalAliases>
+        <SignalAliasMap coreName="stdcore[0]">
+            <Entry name="XS1_PORT_1A" alias="PORT_SPI_MISO"/>
+            <Entry name="XS1_PORT_1B" alias="PORT_SPI_SS"/>
+            <Entry name="XS1_PORT_1C" alias="PORT_SPI_CLK"/>
+            <Entry name="XS1_PORT_1D" alias="PORT_SPI_MOSI"/>
+            <Entry name="XS1_PORT_1E" alias="PORT_SDRAM_CKE"/>
+            <Entry name="XS1_PORT_1F" alias="PORT_SDRAM_DQM_H"/>
+            <Entry name="XS1_PORT_1G" alias="PORT_SDRAM_CLK"/>
+            <Entry name="XS1_PORT_1H" alias="PORT_SDRAM_WE_N"/>
+            <Entry name="XS1_PORT_1I" alias="PORT_SDRAM_RAS_N"/>
+            <Entry name="XS1_PORT_1J" alias="PORT_SDRAM_CAS_N"/>
+            <Entry name="XS1_PORT_1K" alias="PORT_SDRAM_DQM_L"/>
+            <Entry name="XS1_PORT_1L" alias="PORT_SDRAM_CS_N"/>
+            <Entry name="XS1_PORT_16A" alias="PORT_SDRAM_D"/>
+            <Entry name="XS1_PORT_16B" alias="PORT_SDRAM_A"/>
+        </SignalAliasMap>
+        <SignalAliasMap coreName="stdcore[1]">
+            <Entry name="XS1_PORT_1A" alias="PORT_BUTTON_D"/>
+            <Entry name="XS1_PORT_1B" alias="PORT_BUTTON_C"/>
+            <Entry name="XS1_PORT_1C" alias="PORT_BUTTON_B"/>
+            <Entry name="XS1_PORT_1D" alias="PORT_BUTTON_A"/>
+            <Entry name="XS1_PORT_4A" alias="PORT_LEDS"/>
+            <Entry name="XS1_PORT_1E" alias="PORT_CAN_TX"/>
+            <Entry name="XS1_PORT_1I" alias="PORT_CAN_RX"/>
+            <Entry name="XS1_PORT_4C" alias="PORT_CORE1_SHARED"/>
+            <Entry name="XS1_PORT_1F" alias="PORT_ETH_TXEN"/>
+            <Entry name="XS1_PORT_1G" alias="PORT_ETH_RXDV"/>
+            <Entry name="XS1_PORT_1H" alias="PORT_ETH_TXCLK"/>
+            <Entry name="XS1_PORT_1J" alias="PORT_ETH_MDC"/>
+            <Entry name="XS1_PORT_1K" alias="PORT_ETH_RXCLK"/>
+            <Entry name="XS1_PORT_1L" alias="PORT_ETH_RXER"/>
+            <Entry name="XS1_PORT_1M" alias="PORT_ETH_MDIO"/>
+            <Entry name="XS1_PORT_4E" alias="PORT_ETH_TXD"/>
+            <Entry name="XS1_PORT_4F" alias="PORT_ETH_RXD"/>
+            <Entry name="XS1_PORT_1N" alias="PORT_DS_CS_N"/>
+            <Entry name="XS1_PORT_1O" alias="PORT_DS_SCLK"/>
+            <Entry name="XS1_PORT_1P" alias="PORT_DS_MOSI"/>
+        </SignalAliasMap>
+        <SignalAliasMap coreName="stdcore[2]">
+            <Entry name="XS1_PORT_1A" alias="PORT_I2C_SDA"/>
+            <Entry name="XS1_PORT_4A" alias="PORT_I2C_WD_SHARED"/>
+            <Entry name="XS1_PORT_1B" alias="PORT_ADC_CLK"/>
+            <Entry name="XS1_PORT_1C" alias="PORT_ADC_CONV"/>
+            <Entry name="XS1_PORT_1D" alias="PORT_ADC_MISO"/>
+            <Entry name="XS1_PORT_4B" alias="PORT_ADC_SPARE"/>
+            <Entry name="XS1_PORT_1K" alias="PORT_M1_HI_A"/>
+            <Entry name="XS1_PORT_1L" alias="PORT_M1_LO_A"/>
+            <Entry name="XS1_PORT_1O" alias="PORT_M1_HI_B"/>
+            <Entry name="XS1_PORT_1P" alias="PORT_M1_LO_B"/>
+            <Entry name="XS1_PORT_1M" alias="PORT_M1_HI_C"/>
+            <Entry name="XS1_PORT_1N" alias="PORT_M1_LO_C"/>
+            <Entry name="XS1_PORT_4E" alias="PORT_M1_ENCODER"/>
+            <Entry name="XS1_PORT_1I" alias="PORT_M2_HI_A"/>
+            <Entry name="XS1_PORT_1J" alias="PORT_M2_LO_A"/>
+            <Entry name="XS1_PORT_1G" alias="PORT_M2_HI_B"/>
+            <Entry name="XS1_PORT_1H" alias="PORT_M2_LO_B"/>
+            <Entry name="XS1_PORT_1E" alias="PORT_M2_HI_C"/>
+            <Entry name="XS1_PORT_1F" alias="PORT_M2_LO_C"/>
+            <Entry name="XS1_PORT_4C" alias="PORT_M2_ENCODER"/>
+        </SignalAliasMap>
+    </SignalAliases>
+</Structure>

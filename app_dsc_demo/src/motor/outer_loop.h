@@ -1,8 +1,8 @@
 /**
- * Module:  module_dsc_blocks
- * Version: 1v0alpha0
- * Build:   566a9c92ff1894b27c224fb8ed9c01d7af40a119
- * File:    transform_constants.h
+ * Module:  app_dsc_demo
+ * Version: 1v0alpha1
+ * Build:   60a90cca6296c0154ccc44e1375cc3966292f74e
+ * File:    outer_loop.h
  * Modified by : Srikanth
  * Last Modified on : 04-May-2011
  *
@@ -19,18 +19,9 @@
  * copyright notice above.
  *
  **/                                   
-#ifndef TRANSFORM_CONSTANTS_H_
-#define TRANSFORM_CONSTANTS_H_
+#ifndef _OUTER_LOOP_H_
+#define _OUTER_LOOP_H_
 
-#define ROOT_THREE				28377				// root( 3 )
-#define ROOT_2_OVER_2 			11585				//root( 2 ) / 2
-#define ROOT_TWO_THIRDS     	13377				//root( 2/3 )
-#define ROOT_3_OVER_2			14189				//root( 3 ) /2
-#define TWO_THIRDS				10922
-#define ONE_THIRD				5461
-#define ONE_OVER_ROOT_3			9459
-#define THREE_BY_2PU 			24574
-#define ONE_PU 					16383
+void speed_control_loop( chanend c_wd, chanend c_control_out, chanend c_display );
 
-
-#endif /* TRANSFORM_CONSTANTS_H_ */
+#endif /* _OUTER_LOOP_H_ */

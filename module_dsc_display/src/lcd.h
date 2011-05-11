@@ -20,7 +20,7 @@
 #ifndef _LCD_H_
 #define _LCD_H_
 
-#include "shared_io_motor.h"
+#include "shared_io.h"
 
 #define CHAR_BUF_SIZE	21*4
 

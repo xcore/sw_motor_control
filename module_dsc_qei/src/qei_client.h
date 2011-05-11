@@ -20,7 +20,7 @@
 #ifndef __QEI_CLIENT_H__
 #define __QEI_CLIENT_H__
 
-int get_qei_position ( chanend c_qei );
+unsigned get_qei_position ( chanend c_qei );
 
 int get_qei_speed ( chanend c_qei );
 

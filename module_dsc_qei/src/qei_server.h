@@ -22,6 +22,6 @@
 #include <xs1.h>
 #include "dsc_config.h"
 
-void do_qei ( chanend c_qei[QEI_CLIENT_COUNT], port in pQEI );
+void do_qei ( chanend c_qei, port in p_qei );
 
 #endif /*__QEI_SERVER_H__ */

@@ -3,6 +3,8 @@
  * Version: 1v0alpha2
  * Build:   2a548667d36ce36c64c58f05b5390ec71cb253fa
  * File:    adc_client.xc
+ * Modified by : Srikanth
+ * Last Modified on : 04-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -18,16 +20,14 @@
  *
  **/                                   
 #include <xs1.h>
-#include "print.h"
 
 #define ADC_CALIB_POINTS	64
-int Ia_calib = 0, Ib_calib = 0, Ic_calib = 0;
+
+static int Ia_calib = 0, Ib_calib = 0, Ic_calib = 0;
 
 void do_adc_calibration( chanend c_adc )
 {
 	unsigned a,b,c;
-
-
 	for (int i = 0; i < ADC_CALIB_POINTS; i++)
 	{
 		/* get ADC reading */
@@ -35,25 +35,16 @@ void do_adc_calibration( chanend c_adc )
 		slave
 		{
 			c_adc :> a;
-			printintln(a);
 			c_adc :> b;
 			c_adc :> c;
 		}
-
 		Ia_calib += a;
-		Ia_calib += b;
+		Ib_calib += b;
 		Ic_calib += c;
 	}
-
-	/* convert to 16 bit from 14 bit */
-	Ia_calib = Ia_calib << 2;
-	Ib_calib = Ib_calib << 2;
-	Ic_calib = Ic_calib << 2;
-
-	/* calculate average and offset for signed 14bit*/
-	Ia_calib = ((Ia_calib >> 6) - 8192);
-	Ib_calib = ((Ib_calib >> 6) - 8192);
-	Ic_calib = ((Ic_calib >> 6) - 8192);
+	    Ia_calib = (Ia_calib >> 6) ;
+		Ib_calib = (Ib_calib >> 6) ;
+		Ic_calib = (Ic_calib >> 6) ;
 }
 
 {unsigned, unsigned, unsigned} get_adc_vals_raw( chanend c_adc )
@@ -61,6 +52,7 @@ void do_adc_calibration( chanend c_adc )
 	unsigned a, b, c;
 
 	c_adc <: 0;
+
 	slave
 	{
 		c_adc :> a;
@@ -86,19 +78,23 @@ void do_adc_calibration( chanend c_adc )
 		c_adc :> c;
 	}
 
-	/* turn currents into a signed 16 bit number and applies calibrated offset */
-	Ia = a + Ia_calib; /* apply calibration offset */
-	Ia <<= 2; /* convert to 16bit */
-	Ia -= 32768; /* apply vertical offset to make a signed value */
 
-	Ib = b + Ib_calib;
-	Ib <<= 2;
-	Ib -= 32768;
 
-	Ic = c + Ic_calib;
-	Ic <<= 2;
-	Ic -= 32768;
+    Ia = a;
+	Ia = Ia +Ia_calib; /* apply calibration offset */
+	Ia = Ia - 16383;
+
+	Ib = b;
+	Ib = Ib + Ib_calib;
+	Ib = Ib - 16383;
+
+	Ic = c;
+	Ic = Ic + Ic_calib;
+	Ic = Ic - 16383;
 
 	return {Ia, Ib, Ic};
 }
+
+
+
 

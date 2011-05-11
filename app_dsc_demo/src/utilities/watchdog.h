@@ -1,8 +1,8 @@
 /**
- * Module:  module_dsc_blocks
- * Version: 1v0alpha1
- * Build:   7b7eef1756b9212fbbec0f46dcf20389c3e60ffd
- * File:    frac_mul.xc
+ * Module:  app_dsc_demo
+ * Version: 1v0alpha0
+ * Build:   8b9b7f06e54cf08659c20477a643c0cd958c1510
+ * File:    watchdog.h
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -17,18 +17,9 @@
  * copyright notice above.
  *
  **/                                   
-#include <xs1.h>
-#include "pid_regulator.h"
+#define WD_CMD_EN_MOTOR		1
+#define WD_CMD_DIS_MOTOR	2
+#define WD_CMD_TICK		3
+#define WD_CMD_START		4
 
-int frac_mul( int a, int b )
-{
-	int h;
-	unsigned l;
-
-	{h,l} = macs(a,b,0,0);
-
-	l >>= PID_RESOLUTION;
-	l |= h << (32-PID_RESOLUTION);
-
-	return l;
-}
+void do_wd(chanend c_wd, out port wd);
