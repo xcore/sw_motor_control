@@ -32,7 +32,7 @@
 #include "pwm_service.h"
 #include "run_motor.h"
 #include "watchdog.h"
-#include "shared_io_motor.h"
+#include "shared_io.h"
 #include "speed_cntrl.h"
 #include "initialisation.h"
 
@@ -90,6 +90,7 @@ int main ( void )
 {
 	chan c_wd, c_pwm1, c_control1, c_lcd1, c_control2, c_pwm2, c_lcd2, c_ctrl, c_eth_reset, c_can_reset;
 
+
 #ifdef USE_CAN
 	chan c_rxChan, c_txChan;
 #endif
@@ -126,7 +127,7 @@ int main ( void )
 					XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT, "rpm"
 			);
 #endif
-			display_shared_io_motor( c_lcd1, c_lcd2, lcd_ports, btns, c_ctrl, c_eth_reset, c_can_reset);
+			display_shared_io_motor( c_lcd1, c_lcd2, lcd_ports, btns);
 		}
 
 		/* L1 */

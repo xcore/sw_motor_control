@@ -25,7 +25,7 @@
 #include "ethernet_server.h"
 #include "uip_server.h"
 #include "xtcp_client.h"
-#include "shared_io_motor.h"
+#include "shared_io.h"
 
 
 // Print out the current IP address

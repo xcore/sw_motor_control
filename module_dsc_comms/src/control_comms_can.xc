@@ -24,7 +24,7 @@
 #include "control_comms_can.h"
 #include "CanIncludes.h"
 #include "CanFunctions.h"
-#include "shared_io_motor.h"
+#include "shared_io.h"
 
 #define COUNTER_MASK  0xfff
 

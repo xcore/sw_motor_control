@@ -30,11 +30,18 @@
 	#define CAN_TERM_LO		2
 	#define CAN_RST_HI		4
 	#define CAN_RST_LO		8
-	#define	CMD_DIR			10
+	//#define	CMD_DIR			10
 
 	#define CMD_GET_VALS	1
 	#define CMD_GET_IQ		2
 	#define CMD_SET_SPEED	3
+	#define CMD_DIR         4
+	#define CMD_GET_IQ2		5
+	#define CMD_SET_SPEED2	6
+	#define CMD_DIR2       	7
+	#define STEP_SPEED 		50
+	#define _30_Msec		3000000
+	#define MSec 			100000
 
 	#ifdef __XC__
 		typedef struct lcd_interface_t
@@ -49,6 +56,9 @@
 		} lcd_interface_t;
 
 		void display_shared_io_manager( chanend c_control, chanend c_speed, chanend c_can, REFERENCE_PARAM(lcd_interface_t, p), in port btns[] );
+
+		void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns[]);
+
 	#endif
 
 #endif /* SHARED_IO_H_ */
