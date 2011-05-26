@@ -51,7 +51,7 @@ int get_qei_speed ( chanend c_qei )
 		r = 0;
 	else
 	{
-		r = 3000000000 / ((t2 - t1) * (500*4));
+		r = 3000000000 / ((t2 - t1) * (256 * 4));
 		r <<= 1; // double to get RPM
 	}
 

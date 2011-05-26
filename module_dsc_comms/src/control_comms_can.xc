@@ -21,24 +21,27 @@
 #include <print.h>
 #include "dsc_config.h"
 
+#ifdef USE_CAN
 #include "control_comms_can.h"
 #include "CanIncludes.h"
 #include "CanFunctions.h"
 #include "shared_io.h"
 
+
 #define COUNTER_MASK  0xfff
 
 
-// Thread that does the CAN control interface
-void do_comms_can( chanend c_speed, chanend rxChan, chanend txChan, chanend c_reset)
+// Thread that does the Ethernet control interface
+void do_comms_can( chanend c_speed, chanend rxChan, chanend txChan, chanend c_control_can )
 {
 	struct CanPacket p;
 	unsigned int sender_address, count = 1, value;
 	unsigned int speed = 1000;
 	unsigned int set_speed = 1000;
 
-	// Come out of CAN reset
-	c_reset <: 1;
+	// Configure the CAN bus for
+	c_control_can <: CAN_TERM_HI;
+	c_control_can <: CAN_RST_LO;
 
 	// Loop forever processing packets
 	while( 1 )
@@ -121,11 +124,13 @@ void do_comms_can( chanend c_speed, chanend rxChan, chanend txChan, chanend c_re
 						c_speed <: CMD_SET_SPEED;
 						c_speed <: set_speed;
 
+						// FUDGE - Make the set speed = ( speed / 2 )
                			speed = set_speed >> 1;
 
 						break;
 
 					default : // Unknown command - ignore it.
+						//printstr("Unknown\n");
 						break;
 				}
 			}
@@ -140,5 +145,4 @@ void do_comms_can( chanend c_speed, chanend rxChan, chanend txChan, chanend c_re
 		}
 	}
 }
-
-
+#endif

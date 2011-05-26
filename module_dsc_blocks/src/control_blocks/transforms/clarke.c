@@ -3,6 +3,8 @@
  * Version: 1v0alpha1
  * Build:   128bfdf87839aeec0e38320c3524102eb996ecd5
  * File:    clarke.c
+ * Modified by: Upendra
+ * Last Modified on : 18-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -26,10 +28,13 @@ void clarke_transform( int *I_alpha, int *I_beta, int Ia, int Ib, int Ic )
 {
 	int tmp;
 
-	*I_alpha = Ia;
+	tmp = Ia - ((Ib +Ic)>>1);
+	*I_alpha = (tmp * ONE_PU)/THREE_BY_2PU;
 
-	tmp = ((ONE_OVER_ROOT_3 * Ib) >> 14) - ((ONE_OVER_ROOT_3 * Ic) >> 14);
-	*I_beta = tmp ;
+
+	tmp = (ROOT_3_BY_2 * (Ib - Ic))>>14;
+
+	*I_beta = (tmp * ONE_PU)/THREE_BY_2PU;
 
 }
 
@@ -39,13 +44,13 @@ void inverse_clarke_transform( int *Ia, int *Ib, int *Ic, int alpha, int beta )
 {
 	int tmp ;
 
-	*Ia = alpha;
+	*Ia = beta;
 
-	tmp = (-alpha) + ((ROOT_THREE * beta) >> 14);
+	tmp = (-beta ) + ((ROOT_THREE * alpha ) >> 14);
 	tmp = tmp >> 1;
 	*Ib = tmp;
 
-	tmp = (-alpha) - ((ROOT_THREE * beta) >> 14);
+	tmp = (-beta ) - ((ROOT_THREE * alpha ) >> 14);
 	tmp = tmp >> 1;
 	*Ic = tmp;
 

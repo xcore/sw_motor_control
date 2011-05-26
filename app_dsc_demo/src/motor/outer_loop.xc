@@ -34,18 +34,22 @@ void speed_control_loop( chanend c_wd, chanend c_control_out, chanend c_display 
 {
 	unsigned ts, cmd;
 	unsigned set_speed = INITIAL_SET_SPEED;
-	unsigned speed = 0 ;
+	unsigned speed = 0, pwm = 0, calced_pwm = 0 ;
 
-	int iq = 0, Torque = 0;
+	int iq = 0;
+	int Torque = 0;
 
 	timer t;
 
-	//int Kp= (32000), Ki=40, Kd=0;
-	int Kp= (31000 * 25), Ki=3, Kd=2;
+	//int Kp= (32000 * 10), Ki=4000, Kd=1000;
+	//int Kp= 8000, Ki=250, Kd=0;
+	//int Kp= 32000, Ki=0, Kd=0;
+	//int Kp= 7000;
+	//int Ki=20;
+	//int Kd=0;
+	//pid_data pid;
 
-	pid_data pid;
-
-	init_pid( Kp, Ki, Kd, pid );
+	//init_pid( Kp, Ki, Kd, pid );
 
 	/* delay to allow the WD to get going */
 	t :> ts;
@@ -58,7 +62,7 @@ void speed_control_loop( chanend c_wd, chanend c_control_out, chanend c_display 
 	t :> ts;
 
 	/* initialise speed setting */
-	set_speed = 500;
+	set_speed = 2000;
 
 	// Loop forever running the main control loop
 	while (1)
@@ -66,37 +70,49 @@ void speed_control_loop( chanend c_wd, chanend c_control_out, chanend c_display 
 		#pragma ordered
 		select
 		{
-			case t when timerafter (ts + 600000) :> ts: /* Run the main control loop at 6kHz */
+			case t when timerafter (ts + 100000) :> ts: /* Run the main control loop at 6kHz */
 				/* Gets the speed from qei thread */
-				c_control_out <: 1;
-				c_control_out :> speed;
+			//	c_control_out <: 1;
+			//	c_control_out :> speed;
 
 				/* speed in terms of 14 bit */
-				set_speed *= 4;
-				speed *= 4;
+				//set_speed += 100;
+
+			//	if(set_speed >= 2000)
+			// 		set_speed = 2000;
+				calced_pwm =  (set_speed * PWM_MAX_VALUE) / (166*24);
+
+				//speed *= 4;
+				//set_speed *= 4;
 
 				/* calculate required torque */
-				Torque = pid_regulator_delta_cust_error1((int)(set_speed - speed), pid );
+			//	Torque = pid_regulator_delta_cust_error1((int)(set_speed - speed), pid );
+#if 0
+				pwm = calced_pwm + Torque;//pid_regulator_delta_cust_error((int)(set_speed - speed), pid );
+				if (pwm > 4000)
+					pwm = 4000;
+				if (pwm < 20)
+					pwm = 20;
+				pwm = (unsigned)pwm;
+#endif
 				//Torque = pid_regulator((int)set_speed, (int)speed, pid);
 
 				/* iq to Torque conversion */
 				iq = Torque ;
+				//c_control_out <: 0;
+				//c_control_out <: iq;
+			//	c_control_out <: pwm;
 
-				if (iq > 7153)
-					iq = 7153;
+				//speed /= 4;
+				//set_speed /= 4;
 
-				/* Send out the control value to the motor */
-				c_control_out <: 0;
-				c_control_out <: iq;
-
-				set_speed /= 4;
-				speed /= 4;
 				break;
 
 			case c_display :> cmd: /* Process a command received from the display */
 				if (cmd == CMD_GET_IQ)
 				{
 					c_display <: set_speed;
+					//c_display <: set_speed;
 				}
 				else if (cmd == CMD_SET_SPEED)
 				{

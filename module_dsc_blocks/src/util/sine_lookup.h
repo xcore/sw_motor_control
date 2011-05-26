@@ -23,6 +23,7 @@
 #define __SINE_LOOKUP_H__
 
 extern int sine_table[];
+extern int current_table[];
 
 int sine( unsigned deg );
 

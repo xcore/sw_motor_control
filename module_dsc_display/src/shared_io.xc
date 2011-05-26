@@ -29,7 +29,7 @@
 /* This function is used for FOC(Phase2) Release */
 
 // Manages the display, buttons and shared ports.
-void display_shared_io_manager( chanend c_control, chanend c_speed, chanend c_can, REFERENCE_PARAM(lcd_interface_t, p), in port btns[] )
+void display_shared_io_manager( chanend c_control, chanend c_speed, REFERENCE_PARAM(lcd_interface_t, p), in port btns[] )
 {
 	unsigned int can_command, time;
 	unsigned int port_val = 0b0010;		// Default port value on device boot
@@ -74,15 +74,16 @@ void display_shared_io_manager( chanend c_control, chanend c_speed, chanend c_ca
 			case t when timerafter(time + 10000000) :> time:
 
 			// Get the speed
-				c_control <: CMD_GET_IQ;
-				c_control :> set_speed;
+				//c_control <: CMD_GET_VALS;
+				//c_control :> set_speed;
+				//c_control :> pwm[2];
 
 			// Get actual speed
 				c_speed <: 2;
 				c_speed :> speed;
-			//	c_speed :> pwm[0];
-			//	c_speed :> pwm[1];
-			//	c_speed :> pwm[2];
+				c_speed :> pwm[0];
+				c_speed :> pwm[1];
+				c_speed :> set_speed;
 
 			// Calculate the strings here
 
@@ -95,8 +96,8 @@ void display_shared_io_manager( chanend c_control, chanend c_speed, chanend c_ca
 				sprintf(my_string, "  Speed:     %04d RPM\n", speed );
 				lcd_draw_text_row( my_string, 2, port_val, p );
 
-			//	sprintf(my_string, "%d %d %d\n", pwm[0], pwm[1], pwm[2] );
-			//	lcd_draw_text_row( my_string, 3, port_val, p );
+				sprintf(my_string, "%d %d %d\n", pwm[0], pwm[1], pwm[2] );
+				lcd_draw_text_row( my_string, 3, port_val, p );
 
 				// Switch debouncing - run through and decrement their counters.
 				for  ( int i = 0; i < 2; i ++ )
@@ -109,6 +110,7 @@ void display_shared_io_manager( chanend c_control, chanend c_speed, chanend c_ca
 
 				break;
 
+#if 0
 			// CAN driver TERM & RST
 			case c_can :> can_command :
 
@@ -138,7 +140,7 @@ void display_shared_io_manager( chanend c_control, chanend c_speed, chanend c_ca
 				// Output the value to the shared port
 				p.p_core1_shared <: port_val;
 				break;
-
+#endif
 			// Button A is up
 			case !btn_en[0] => btns[0] when pinseq(0) :> void:
 
@@ -152,8 +154,8 @@ void display_shared_io_manager( chanend c_control, chanend c_speed, chanend c_ca
 				}
 
 				// Update the speed control loop
-				c_control <: CMD_SET_SPEED;
-				c_control <: set_speed;
+				c_speed <: CMD_SET_SPEED;
+				c_speed <: set_speed;
 
 				// Increment the debouncer
 				btn_en[0] = 4;
@@ -171,8 +173,8 @@ void display_shared_io_manager( chanend c_control, chanend c_speed, chanend c_ca
 				}
 
 				// Update the speed control loop
-				c_control <: CMD_SET_SPEED;
-				c_control <: set_speed;
+				c_speed <: CMD_SET_SPEED;
+				c_speed <: set_speed;
 
 				// Increment the debouncer
 				btn_en[1] = 4;

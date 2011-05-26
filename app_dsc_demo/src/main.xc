@@ -44,6 +44,9 @@
 #include "xtcp_client.h"
 #include "qei_server.h"
 
+#ifdef USE_XSCOPE
+#include <xscope.h>
+#endif
 
 // SDRAM Ports
 on stdcore[PROCESSING_CORE] : sdram_interface_t sdram_ports =
@@ -96,11 +99,11 @@ on stdcore[INTERFACE_CORE]: port in btns_ports[4] = {PORT_BUTTON_A, PORT_BUTTON_
 #endif
 
 // Motor core ports
-on stdcore[MOTOR_CORE]: port in p_hall = PORT_M1_ENCODER;
-on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_hi[3] = {PORT_M1_HI_A, PORT_M1_HI_B, PORT_M1_HI_C};
-on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_lo[3] = {PORT_M1_LO_A, PORT_M1_LO_B, PORT_M1_LO_C};
+on stdcore[MOTOR_CORE]: port in p_hall = PORT_M2_ENCODER;
+on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_hi[3] = {PORT_M2_HI_A, PORT_M2_HI_B, PORT_M2_HI_C};
+on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_lo[3] = {PORT_M2_LO_A, PORT_M2_LO_B, PORT_M2_LO_C};
 on stdcore[MOTOR_CORE]: clock pwm_clk = (XS1_CLKBLK_REF);
-on stdcore[MOTOR_CORE]: port in p_qei = PORT_M2_ENCODER;
+on stdcore[MOTOR_CORE]: port in p_qei = PORT_M1_ENCODER;
 
 on stdcore[MOTOR_CORE]: out port i2c_wd = PORT_I2C_WD_SHARED;
 
@@ -157,7 +160,7 @@ void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl
 // Program Entry Point
 int main ( void )
 {
-	chan c_control, c_eth_shared, c_can, c_lcd, c_speed, c_commands_can, c_commands_eth;
+	chan c_control, c_eth_shared, c_can, c_lcd, c_speed, c_commands_can, c_commands_eth, c_speed1;
 	chan c_qei;
 #ifdef USE_CAN
 	chan c_rxChan, c_txChan;
@@ -186,7 +189,8 @@ int main ( void )
 
 		// Xcore 1 - INTERFACE_CORE
 		on stdcore[INTERFACE_CORE] : speed_control_loop( c_wd, c_control, c_lcd );
-		on stdcore[INTERFACE_CORE] : display_shared_io_manager( c_lcd, c_speed, c_can, lcd_ports, btns_ports );
+		//on stdcore[INTERFACE_CORE] : display_shared_io_manager( c_lcd, c_speed, c_can, lcd_ports, btns_ports );
+		on stdcore[INTERFACE_CORE] : display_shared_io_manager( c_lcd, c_speed, lcd_ports, btns_ports );
 #ifdef USE_CAN
 		on stdcore[INTERFACE_CORE] : canPhyRxTx( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx );
 #endif
@@ -198,9 +202,26 @@ int main ( void )
 #ifdef USE_MOTOR
 		on stdcore[MOTOR_CORE] : do_wd( c_wd, i2c_wd );
 		on stdcore[MOTOR_CORE] : do_pwm( c_pwm, c_adc_trig, ADC_SYNC_PORT, p_pwm_hi, p_pwm_lo, pwm_clk );
-		on stdcore[MOTOR_CORE] : run_motor ( c_pwm, c_qei, c_adc, c_control, c_speed, c_commands_can );
 		on stdcore[MOTOR_CORE] : adc_ltc1408_triggered( c_adc, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA, c_adc_trig, null, null, null );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei, p_qei );
+
+		//on stdcore[MOTOR_CORE] : run_motor ( c_pwm, c_qei, c_adc, c_control, c_speed, c_commands_can );
+		on stdcore[MOTOR_CORE] : {
+#ifdef USE_XSCOPE
+			xscope_register(9,
+							XSCOPE_CONTINUOUS, "PWM 1", XSCOPE_UINT , "n",
+							XSCOPE_CONTINUOUS, "PWM 2", XSCOPE_UINT , "n",
+							XSCOPE_CONTINUOUS, "PWM 3", XSCOPE_UINT , "n",
+							XSCOPE_CONTINUOUS, "Ia", XSCOPE_UINT , "n",
+							XSCOPE_CONTINUOUS, "Ib", XSCOPE_UINT , "n",
+							XSCOPE_CONTINUOUS, "Ic", XSCOPE_UINT , "n",
+							XSCOPE_CONTINUOUS, "theta", XSCOPE_UINT , "n",
+							XSCOPE_CONTINUOUS, "speed", XSCOPE_UINT , "n",
+							XSCOPE_CONTINUOUS, "iq_set_point", XSCOPE_UINT, "rpm"
+			);
+#endif
+			run_motor ( c_pwm, c_qei, c_adc, c_control, c_speed, c_hall, p_hall );
+		}
 #endif
 	}
 

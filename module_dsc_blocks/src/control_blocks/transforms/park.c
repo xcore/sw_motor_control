@@ -3,6 +3,8 @@
  * Version: 1v0alpha1
  * Build:   128bfdf87839aeec0e38320c3524102eb996ecd5
  * File:    park.c
+ * Modified by: Upendra
+ * Last Modified on : 18-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -26,10 +28,10 @@ void park_transform( int *Id, int *Iq, int I_alpha, int I_beta, unsigned theta )
 {
 	int tmp;
 
-	tmp = ((I_alpha * cosine( theta )) >> 14) + ((I_beta * sine( theta )) >> 14);
+	tmp = (((I_alpha * cosine( theta )) >> 14) + ((I_beta * sine( theta )) >> 14));
 	*Id = tmp ;
 
-	tmp = ((I_beta * cosine( theta )) >> 14) - ((I_alpha * sine( theta )) >> 14);
+	tmp = (((I_beta * cosine( theta )) >> 14) - ((I_alpha * sine( theta ))>> 14));
 	*Iq = tmp ;
 
 }
@@ -40,10 +42,11 @@ void inverse_park_transform( int *I_alpha, int *I_beta, int Id, int Iq, unsigned
 {
 	int tmp;
 
-	tmp = ((Id * cosine( theta )) >> 14) - ((Iq *  sine( theta )) >> 14);
-	*I_alpha = tmp ;
-
-	tmp = (( Id *   sine( theta )) >>14 ) + (( Iq * cosine( theta ))>> 14);
-	*I_beta = tmp  ;
+	tmp = (((Id * cosine( theta ))/16384) - ((Iq *  sine( theta )) /16384));
+	//*I_alpha = (tmp * ONE_PU)/THREE_BY_2PU ;
+	*I_alpha = tmp;
+	tmp = ((( Id *   sine( theta ))/16384)+ ((Iq * cosine( theta ))/16384));
+	//*I_beta = (tmp * ONE_PU)/THREE_BY_2PU ;
+	*I_beta = tmp;
 
 }

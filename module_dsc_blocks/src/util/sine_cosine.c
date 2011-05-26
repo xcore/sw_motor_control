@@ -29,10 +29,10 @@ inline int sine( unsigned deg )
 
 inline int cosine( unsigned deg )
 {
-	unsigned x = deg + 500;
-	while (x >= 2000)
+	unsigned x = deg + 64;
+	while (x >= 1024)
 	{
-		x = x - 2000;
+		x = x - 1024;
 	}
 	return sine_table[x];
 }

@@ -22,7 +22,7 @@
 #ifndef __PI_REGULATOR_H__
 #define __PI_REGULATOR_H__
 
-#define PID_RESOLUTION	15
+#define PID_RESOLUTION	14
 #define PID_MAX_OUTPUT	32768
 #define PID_MIN_OUTPUT  -32767
 

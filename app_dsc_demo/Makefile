@@ -1,6 +1,7 @@
 # Custom Stuff
 BUILD_FLAGS=
-XCC_FLAGS= -fsubword-select -Wall -O3 -g -report
+XCC_FLAGS= -fsubword-select -Wall -O3 -g -report -lxscope
+# add -lxscope to the end of the compiler flags to include xscope library
 
 APP_NAME=dsc_foc_demo
 

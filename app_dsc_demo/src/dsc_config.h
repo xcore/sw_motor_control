@@ -80,10 +80,10 @@
 #define TCP_LOGGING_PORT 9596
 
 // Define the number of poles the motor has
-#define NUMBER_OF_POLES	4
+#define NUMBER_OF_POLES	8
 
 // Define this to enable the CAN interface
-#define USE_CAN
+//#define USE_CAN
 
 // Define this to enable the Ethernet interface
 //#define USE_ETH
@@ -108,11 +108,11 @@
 #define INITIAL_SET_SPEED 0
 
 // Minimum RPM value for the motor
-#define MIN_RPM 300
+#define MIN_RPM 1000
 //#define MIN_RPM 1200
 
 // Maximum RPM value for the motor
-#define MAX_RPM 4000
+#define MAX_RPM 3800
 
 // Maximum Iq value for the motor
 #define MAX_IQ 8000

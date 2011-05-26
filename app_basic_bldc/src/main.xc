@@ -19,7 +19,7 @@
  *
  **/
 
-#define USE_ETH
+//#define USE_ETH
 //#define USE_CAN
 
 #include <xs1.h>

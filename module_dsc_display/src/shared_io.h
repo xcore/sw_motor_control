@@ -55,7 +55,7 @@
 			out port p_core1_shared;
 		} lcd_interface_t;
 
-		void display_shared_io_manager( chanend c_control, chanend c_speed, chanend c_can, REFERENCE_PARAM(lcd_interface_t, p), in port btns[] );
+		void display_shared_io_manager( chanend c_control, chanend c_speed, REFERENCE_PARAM(lcd_interface_t, p), in port btns[] );
 
 		void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns[]);
 

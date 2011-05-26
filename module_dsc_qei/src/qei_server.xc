@@ -157,7 +157,7 @@ static unsigned calc_state ( unsigned A, unsigned B, unsigned I)
 
 static unsigned update_pos( unsigned cur_pos, int delta )
 {
-	#define QEI_COUNT_MAX (500 * 4)
+	#define QEI_COUNT_MAX (256 * 4)
 	int pos;
 
 	pos = cur_pos;

@@ -31,6 +31,6 @@
 #define ONE_OVER_ROOT_3			9459
 #define THREE_BY_2PU 			24574
 #define ONE_PU 					16383
-
+#define ROOT_3_BY_2 			14188
 
 #endif /* TRANSFORM_CONSTANTS_H_ */
