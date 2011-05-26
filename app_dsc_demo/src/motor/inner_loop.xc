@@ -266,18 +266,26 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_control,
 			// Update the PWM values
 			update_pwm( c_pwm, pwm );
 #ifdef USE_XSCOPE
-			xscope_probe_data(0, pwm[0]);
-			xscope_probe_data(1, pwm[1]);
-			xscope_probe_data(2, pwm[2]);
+			{
+				static unsigned count=0;
+				++count;
+				if (count==500){
+					xscope_probe_data(0, pwm[0]);
+					xscope_probe_data(1, pwm[1]);
+					xscope_probe_data(2, pwm[2]);
 
-			xscope_probe_data(3, Ia_in);
-			xscope_probe_data(4, Ib_in);
-			xscope_probe_data(5, Ic_in);
+					xscope_probe_data(3, Ia_in);
+					xscope_probe_data(4, Ib_in);
+					xscope_probe_data(5, Ic_in);
 
-			xscope_probe_data(6, theta);
-			xscope_probe_data(7, speed);
+					xscope_probe_data(6, theta);
+					xscope_probe_data(7, speed);
 
-			xscope_probe_data(8, iq_set_point);
+					xscope_probe_data(8, iq_set_point);
+
+					count=0;
+				}
+			}
 #endif
 			break;
 		//default:
