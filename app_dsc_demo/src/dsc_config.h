@@ -120,4 +120,7 @@
 // define display string for value transmitted to motor control loop (usuall "Iq" or "PWM Value")
 #define LCD_SETTING_STRING "PWM"
 
+#define USE_XSCOPE
+
+
 #endif /* _DSC_CONFIG__H_ */
