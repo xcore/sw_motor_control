@@ -4,7 +4,7 @@
  * Build:   3a9f71a8be03a46f99a43ab12f3b1932762e406f
  * File:    qei_server.xc
  * Modified by : Srikanth
- * Last Modified on : 04-May-2011
+ * Last Modified on : 26-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -22,7 +22,6 @@
 #include <xs1.h>
 #include "qei_commands.h"
 #include "dsc_config.h"
-#include <print.h>
 #include <stdio.h>
 
 #define INVALID_STATE 0xFFFF

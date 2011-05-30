@@ -3,6 +3,8 @@
  * Version: 1v0module_dsc_display0
  * Build:   2dfe7de13fb331bd93dee1a7397dfbf4cac3f053
  * File:    lcd.h
+ * Modified by : Srikanth
+ * Last Modified on : 27-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 

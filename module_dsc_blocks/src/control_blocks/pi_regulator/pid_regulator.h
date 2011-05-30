@@ -18,11 +18,26 @@
  * below. The modifications to the code are still covered by the 
  * copyright notice above.
  *
- **/                                   
+ **/
+
+#include <dsc_config.h>
+
+
 #ifndef __PI_REGULATOR_H__
 #define __PI_REGULATOR_H__
 
-#define PID_RESOLUTION	14
+#ifdef BLDC_BASIC
+
+#define PID_RESOLUTION	15
+
+#endif
+
+#ifdef BLDC_FOC
+
+#define PID_RESOLUTION	13
+
+#endif
+
 #define PID_MAX_OUTPUT	32768
 #define PID_MIN_OUTPUT  -32767
 
@@ -39,18 +54,18 @@ typedef struct S_PID {
 int pid_regulator( int set_point, int actual, pid_data &d );
 int pid_regulator_delta( int set_point, int actual, pid_data &d );
 int pid_regulator_delta_cust_error( int error, pid_data &d );
-int pid_regulator_delta_cust_error1( int error, pid_data &d );
-int pid_regulator_delta_cust_error2( int error, pid_data &iq );
-int pid_regulator_delta_cust_error3( int error, pid_data &id );
+int pid_regulator_delta_cust_error_speed( int error, pid_data &d );
+int pid_regulator_delta_cust_error_Iq_control( int error, pid_data &iq );
+int pid_regulator_delta_cust_error_Id_control( int error, pid_data &id );
 void init_pid( int Kp, int Ki, int Kd, pid_data &d );
 #else
 // C Version
 int pid_regulator( int set_point, int actual, pid_data *d );
 int pid_regulator_delta( int set_point, int actual, pid_data *d );
 int pid_regulator_delta_cust_error( int error, pid_data *d );
-int pid_regulator_delta_cust_error1( int error, pid_data *d );
-int pid_regulator_delta_cust_error2( int error, pid_data *iq );
-int pid_regulator_delta_cust_error3( int error, pid_data *id );
+int pid_regulator_delta_cust_error_speed( int error, pid_data *d );
+int pid_regulator_delta_cust_error_Iq_control( int error, pid_data *iq );
+int pid_regulator_delta_cust_error_Id_control( int error, pid_data *id );
 void init_pid( int Kp, int Ki, int Kd, pid_data *d );
 #endif
 

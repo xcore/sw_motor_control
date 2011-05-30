@@ -4,7 +4,7 @@
  * Build:   1887e6b30ecc00395f02fb3a27027fd6fcf3a300
  * File:    dsc_config.h
  * Modified by : Srikanth
- * Last Modified on : 04-May-2011
+ * Last Modified on : 26-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -108,8 +108,7 @@
 #define INITIAL_SET_SPEED 0
 
 // Minimum RPM value for the motor
-#define MIN_RPM 1000
-//#define MIN_RPM 1200
+#define MIN_RPM 500
 
 // Maximum RPM value for the motor
 #define MAX_RPM 3800
@@ -117,10 +116,9 @@
 // Maximum Iq value for the motor
 #define MAX_IQ 8000
 
+#define BLDC_FOC
+
 // define display string for value transmitted to motor control loop (usuall "Iq" or "PWM Value")
 #define LCD_SETTING_STRING "PWM"
-
-#define USE_XSCOPE
-
 
 #endif /* _DSC_CONFIG__H_ */

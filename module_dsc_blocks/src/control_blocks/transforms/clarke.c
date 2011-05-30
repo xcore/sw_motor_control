@@ -31,9 +31,7 @@ void clarke_transform( int *I_alpha, int *I_beta, int Ia, int Ib, int Ic )
 	tmp = Ia - ((Ib +Ic)>>1);
 	*I_alpha = (tmp * ONE_PU)/THREE_BY_2PU;
 
-
 	tmp = (ROOT_3_BY_2 * (Ib - Ic))>>14;
-
 	*I_beta = (tmp * ONE_PU)/THREE_BY_2PU;
 
 }

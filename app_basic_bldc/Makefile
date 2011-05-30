@@ -1,7 +1,6 @@
 # Custom Stuff
 BUILD_FLAGS=
 XCC_FLAGS= -O3 -g -report
-# additional XCC flags for xscope library '-lxscope'
 
 APP_NAME=dsc_basic_bldc
 

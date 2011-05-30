@@ -4,7 +4,7 @@
  * Build:   2a548667d36ce36c64c58f05b5390ec71cb253fa
  * File:    adc_client.xc
  * Modified by : Srikanth
- * Last Modified on : 04-May-2011
+ * Last Modified on : 26-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -20,7 +20,6 @@
  *
  **/                                   
 #include <xs1.h>
-#include <print.h>
 
 #define ADC_CALIB_POINTS	64
 
@@ -46,9 +45,6 @@ void do_adc_calibration( chanend c_adc )
 	    Ia_calib = (Ia_calib >> 6);
 		Ib_calib = (Ib_calib >> 6);
 		Ic_calib = (Ic_calib >> 6);
-		//printintln(Ia_calib);
-		//printintln(Ib_calib);
-		//printintln(Ic_calib);
 }
 
 {unsigned, unsigned, unsigned} get_adc_vals_raw( chanend c_adc )
@@ -81,20 +77,11 @@ void do_adc_calibration( chanend c_adc )
 		c_adc :> b;
 		c_adc :> c;
 	}
-    //Ia = a;
-	Ia = (int)a - Ia_calib; /* apply calibration offset */
-    //Ia = Ia*4;
-//	  Ia = Ia*4 ;
+	/* apply calibration offset */
 
-	//Ib = b;
-	Ib = (int)b - Ib_calib;
-	//Ib = Ib*10  ;
-	//Ib = Ib*4 ;
-
-	//Ic = c;
+	Ia = (int)a - Ia_calib;
+  	Ib = (int)b - Ib_calib;
 	Ic = (int)c - Ic_calib;
-//	Ic = Ic*10 ;
-	//Ic = Ic*4 ;
 
 	return {Ia, Ib, Ic};
 }

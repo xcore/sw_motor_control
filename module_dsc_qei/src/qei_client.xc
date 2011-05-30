@@ -4,7 +4,7 @@
  * Build:   e89e295a87b36dc1ad5ce82058b7434d3df4bb94
  * File:    qei_client.xc
  * Modified by : Srikanth
- * Last Modified on : 04-May-2011
+ * Last Modified on : 26-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 

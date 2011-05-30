@@ -3,6 +3,8 @@
  * Version: 1v0alpha3
  * Build:   dcbd8f9dde72e43ef93c00d47bed86a114e0d6ac
  * File:    adc_ltc1408.xc
+ * Modified by : Srikanth
+ * Last Modified on : 26-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 

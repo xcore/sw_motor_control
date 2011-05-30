@@ -4,7 +4,7 @@
  * Build:   dcbd8f9dde72e43ef93c00d47bed86a114e0d6ac
  * File:    main.xc
  * Modified by : Srikanth
- * Last Modified on : 04-May-2011
+ * Last Modified on : 26-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -34,7 +34,6 @@
 #include "inner_loop.h"
 #include "logging_comms.h"
 #include "logging_if.h"
-#include "outer_loop.h"
 #include "pos_estimator.h"
 #include "pwm_cli.h"
 #include "pwm_service.h"
@@ -44,9 +43,6 @@
 #include "xtcp_client.h"
 #include "qei_server.h"
 
-#ifdef USE_XSCOPE
-#include <xscope.h>
-#endif
 
 // SDRAM Ports
 on stdcore[PROCESSING_CORE] : sdram_interface_t sdram_ports =
@@ -160,7 +156,7 @@ void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl
 // Program Entry Point
 int main ( void )
 {
-	chan c_control, c_eth_shared, c_can, c_lcd, c_speed, c_commands_can, c_commands_eth, c_speed1;
+	chan c_control, c_eth_shared, c_can, c_speed, c_commands_eth;
 	chan c_qei;
 #ifdef USE_CAN
 	chan c_rxChan, c_txChan;
@@ -188,9 +184,7 @@ int main ( void )
 #endif
 
 		// Xcore 1 - INTERFACE_CORE
-		on stdcore[INTERFACE_CORE] : speed_control_loop( c_wd, c_control, c_lcd );
-		//on stdcore[INTERFACE_CORE] : display_shared_io_manager( c_lcd, c_speed, c_can, lcd_ports, btns_ports );
-		on stdcore[INTERFACE_CORE] : display_shared_io_manager( c_lcd, c_speed, lcd_ports, btns_ports );
+		on stdcore[INTERFACE_CORE] : display_shared_io_manager( c_speed, lcd_ports, btns_ports );
 #ifdef USE_CAN
 		on stdcore[INTERFACE_CORE] : canPhyRxTx( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx );
 #endif
@@ -202,26 +196,9 @@ int main ( void )
 #ifdef USE_MOTOR
 		on stdcore[MOTOR_CORE] : do_wd( c_wd, i2c_wd );
 		on stdcore[MOTOR_CORE] : do_pwm( c_pwm, c_adc_trig, ADC_SYNC_PORT, p_pwm_hi, p_pwm_lo, pwm_clk );
+		on stdcore[MOTOR_CORE] : run_motor ( c_pwm, c_qei, c_adc, c_speed, c_wd, p_hall );
 		on stdcore[MOTOR_CORE] : adc_ltc1408_triggered( c_adc, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA, c_adc_trig, null, null, null );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei, p_qei );
-
-		//on stdcore[MOTOR_CORE] : run_motor ( c_pwm, c_qei, c_adc, c_control, c_speed, c_commands_can );
-		on stdcore[MOTOR_CORE] : {
-#ifdef USE_XSCOPE
-			xscope_register(9,
-							XSCOPE_CONTINUOUS, "PWM 1", XSCOPE_UINT , "n",
-							XSCOPE_CONTINUOUS, "PWM 2", XSCOPE_UINT , "n",
-							XSCOPE_CONTINUOUS, "PWM 3", XSCOPE_UINT , "n",
-							XSCOPE_CONTINUOUS, "Ia", XSCOPE_UINT , "n",
-							XSCOPE_CONTINUOUS, "Ib", XSCOPE_UINT , "n",
-							XSCOPE_CONTINUOUS, "Ic", XSCOPE_UINT , "n",
-							XSCOPE_CONTINUOUS, "theta", XSCOPE_UINT , "n",
-							XSCOPE_CONTINUOUS, "speed", XSCOPE_UINT , "n",
-							XSCOPE_CONTINUOUS, "iq_set_point", XSCOPE_UINT, "rpm"
-			);
-#endif
-			run_motor ( c_pwm, c_qei, c_adc, c_control, c_speed, c_hall, p_hall );
-		}
 #endif
 	}
 

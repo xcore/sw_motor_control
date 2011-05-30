@@ -43,10 +43,9 @@ void inverse_park_transform( int *I_alpha, int *I_beta, int Id, int Iq, unsigned
 	int tmp;
 
 	tmp = (((Id * cosine( theta ))/16384) - ((Iq *  sine( theta )) /16384));
-	//*I_alpha = (tmp * ONE_PU)/THREE_BY_2PU ;
 	*I_alpha = tmp;
+
 	tmp = ((( Id *   sine( theta ))/16384)+ ((Iq * cosine( theta ))/16384));
-	//*I_beta = (tmp * ONE_PU)/THREE_BY_2PU ;
 	*I_beta = tmp;
 
 }

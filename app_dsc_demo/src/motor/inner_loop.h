@@ -4,7 +4,7 @@
  * Build:   60a90cca6296c0154ccc44e1375cc3966292f74e
  * File:    inner_loop.h
  * Modified by : Srikanth
- * Last Modified on : 04-May-2011
+ * Last Modified on : 26-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -23,6 +23,6 @@
 #define _INNER_LOOP_H_
 
 /* run the motor inner loop */
-void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_control, chanend c_speed, chanend c_hall, port in p_hall );
+void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, chanend c_wd, port in p_hall );
 
 #endif /* _INNER_LOOP_H_ */
