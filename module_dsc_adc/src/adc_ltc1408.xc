@@ -4,7 +4,7 @@
  * Build:   dcbd8f9dde72e43ef93c00d47bed86a114e0d6ac
  * File:    adc_ltc1408.xc
  * Modified by : Srikanth
- * Last Modified on : 26-May-2011
+ * Last Modified on : 31-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -121,7 +121,7 @@ void adc_ltc1408_test( clock clk, port out SCLK, buffered out port:32 CNVST, in 
 
 void adc_ltc1408_triggered( chanend c_adc, clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA, chanend c_trig, chanend ?c_logging0, chanend ?c_logging1, chanend ?c_logging2)
 {
-	int adc_val[6] = {0,0,0,0,0,0};
+	int adc_val[6];
 	int cmd;
 	unsigned char ct;
 

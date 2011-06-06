@@ -4,7 +4,7 @@
  * Build:   60a90cca6296c0154ccc44e1375cc3966292f74e
  * File:    inner_loop.xc
  * Modified by : Srikanth
- * Last Modified on : 26-May-2011
+ * Last Modified on : 06-Jun-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -107,6 +107,14 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	timer t;
 	t :> ts;
 
+	/* Zero pwm */
+		pwm[0] = 0;
+		pwm[1] = 0;
+		pwm[2] = 0;
+
+	/* Update PWM */
+	update_pwm( c_pwm, pwm );
+
 	/* allow the WD to get going */
 	t when timerafter(ts+ SEC) :> ts;
 	c_wd <: WD_CMD_START;
@@ -116,19 +124,8 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	init_pid( MOTOR_P, MOTOR_I, MOTOR_D, pid_q);
 	init_pid( Kp, Ki, Kd, pid );
 
-	/* Zero pwm */
-	pwm[0] = 0;
-	pwm[1] = 0;
-	pwm[2] = 0;
-
-	/* Update PWM */
-	update_pwm( c_pwm, pwm );
-
 	/* ADC centrepoint calibration */
 	do_adc_calibration( c_adc );
-
-	/* Update PWM */
-	update_pwm( c_pwm, pwm );
 
 	/* Main loop */
 	while (1)
