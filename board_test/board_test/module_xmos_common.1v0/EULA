@@ -1,0 +1,156 @@
+END USER LICENSE AGREEMENT
+==========================
+
+BY ACCESSING, USING OR DOWNLOADING the Xmos Software, BY INSTALLING
+AND USING IT OR BY USING THE Xmos Hardware or Development Kit, YOU
+AGREE TO BE BOUND BY THE FOLLOWING TERMS. IF YOU DO NOT AGREE TO
+THESE, DO NOT ATTEMPT TO DOWNLOAD, ACCESS OR USE THE Xmos Software OR
+Xmos Hardware AND PROMPTLY RETURN ANY HARDWARE OR THE DEVELOPMENT KIT
+PACKAGE AND ACCOMPANYING ITEMS TO THE PLACE YOU OBTAINED THEM FROM.
+
+1. Agreement This is an agreement ("Agreement") between You and Xmos
+Limited having its registered office at Level 35, Tower 42, 25 Old
+Broad Street, London EC2N 1HQ hereinafter referred to as "Xmos".
+
+2. Definitions
+
+"Application" means any software and source code developed by you
+using the Xmos Development Kit or Xmos Hardware.
+
+"Component" any component of the Xmos Development Kit, whether
+acquired as part of a full kit or as separate components.
+
+"Xmos Development Kit" is made up of the Xmos Software, Xmos Hardware
+and Open Source Software programs (OSS).
+
+"Xmos Hardware" comprises the board and/or chips and any updates, new
+versions or modifications thereof which are subsequently supplied to
+you.
+
+"Xmos Software" comprises the Xmos owned development tools (which
+comprise all circuit designs, schematics, source code, object code and
+reference designs), other third party software and source code, other
+than OSS, and any updates, new versions or modifications thereof which
+are subsequently supplied to or downloaded by you.
+
+"Xmos Technology" comprises the Xmos Software and the Xmos Hardware.
+
+“You” refers to the individual, or if the individual is an employee
+of an entity that has purchased the right to use the Xmos Hardware or
+Development Kit, then the term “You” refers to such individual's
+employer, its affiliates and subsidiaries.
+
+3. Licence Xmos grants you a personal, non-sublicenseable,
+non-transferable and non-exclusive licence to use the Xmos Software
+(including the right to produce Applications). When used in
+conjunction with hardware, the Xmos Software must only be used with
+the Xmos Hardware and all Applications must only be used with Xmos
+Hardware or be developed only for the purpose of being used with the
+Xmos Hardware.
+
+OSS must be used and dealt with in accordance with any licence and
+terms under which OSS is distributed.
+
+4. Restrictions on Use You may not sell, lease, assign, sublicense or
+otherwise transfer the Xmos Software, in whole or in part without the
+prior written approval of Xmos. You agree that you will not export or
+re-export the Xmos Technology or the Xmos Development Kit or any
+direct products thereof or any other items which would violate any
+applicable export control laws and regulations, including but not
+limited to those of the United States or United Kingdom. You agree it
+is your responsibility to obtain copies of and to familiarise yourself
+fully with these laws and regulations to avoid violation.
+
+5. Warranty and Disclaimer The Xmos Software is provided "AS IS"
+without a warranty of any kind. Xmos's and its licensors' entire
+liability and your exclusive remedy under this warranty to be
+determined in Xmos's sole and absolute discretion, will be either (a)
+the corrections of defects in media or replacement of the media, or
+(b) the refund of the licence fee paid by you (if any).
+
+The Xmos Hardware will be free from defects in materials and
+workmanship for a period of 12 months from date of purchase. This
+warranty shall not apply to any defect, failure or damage caused by
+improper use or improper or inadequate maintenance or care.
+
+Whilst XMOS gives You the ability to load your own software and
+applications onto XMOS Hardware, the security of such software and
+applications when on the XMOS Hardware is your own responsibility and
+any breach of security shall not be deemed a defect or failure of the
+hardware. XMOS shall have no liability whatsoever in relation to any
+costs, damages or other losses you may incur as a result of any
+breaches of security in relation to your software or applications.
+
+XMOS AND ITS LICENSORS DISCLAIM ALL OTHER WARRANTIES, EXPRESS OR
+IMPLIED, INCLUDING ANY IMPLIED WARRANTY OF MERCHANTABILITY/SATIFACTORY
+QUALITY, FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT EXCEPT
+TO THE EXTENT THAT THESE DISCLAIMERS ARE HELD TO BE LEGALLY INVALID
+UNDER APPLICABLE LAW.
+
+6. Engineering Samples
+
+Semiconductor components from XMOS that are marked or shipped as
+“Engineering Samples” (with an ES suffix in the part code) are
+pre-production components and have not been subjected to full
+production testing. They are intended for prototyping and design
+verification, and any known deviations from the advanced or
+preliminary datasheets will be indicated in a device errata
+supplement. Engineering sample components are ordered and shipped as
+non-cancellable and non-returnable products8
+
+7. High Risk Activities The Components are not fault-tolerant and are
+not designed, manufactured or intended for use in conjunction with
+on-line control equipment in hazardous environments requiring
+fail-safe performance, including without limitation the operation of
+nuclear facilities, aircraft navigation or communication systems, air
+traffic control, life support machines, or weapons systems
+(collectively "High Risk Activities") in which the failure of
+Components could lead directly to death, personal injury, or severe
+physical or environmental damage. Xmos and its licensors specifically
+disclaim any express or implied warranties relating to use of the
+Components in connection with High Risk Activities.
+
+8. Liability TO THE EXTENT NOT PROHIBITED BY APPLICABLE LAW, NEITHER
+XMOS NOR ITS LICENSORS SHALL BE LIABLE FOR ANY LOST REVENUE, PROFIT,
+CONTRACTS OR DATA, OR FOR SPECIAL, INDIRECT, CONSEQUENTIAL, INCIDENTAL
+OR PUNITIVE DAMAGES HOWEVER CAUSED AND REGARDLESS OF THEORY OF
+LIABILITY ARISING OUT OF THE USE OF OR INABILITY TO USE ANY COMPONENT,
+EVEN IF XMOS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES. In
+no event shall Xmos's liability whether in contract, tort (including
+negligence), or otherwise exceed the licence fee paid (if any) for the
+Xmos Technology or the Xmos Development Kit.
+
+You agree to indemnify, hold harmless, and defend Xmos and its
+licensors from and against any claims or lawsuits, including
+attorneys' fees and any other liabilities relating thereto, that arise
+or result from the use or distribution of the Application.
+
+9. Ownership The copyrights, all other intellectual and industrial
+property rights for the protection of information with respect to the
+Xmos Technology, and the Xmos Development Kit and it (including the
+methods and techniques on which they are based) are retained by XMOS
+and/or its licensors. Nothing in this Agreement serves to transfer
+such rights. Consequently, you may not sell, mortgage, underlet,
+sublease, sublicense, lend or transfer possession of the Xmos
+Technology or the Xmos Development Kit in any way whatsoever to any
+third party who is not bound by this Agreement.
+
+10. Termination You may terminate this Agreement at any time by
+written notice to Xmos. This Agreement will terminate immediately
+without notice from Xmos if you fail to comply with any provision of
+this Agreement. Clauses 4, 5, 6, 7 and 8 shall survive any effective
+termination of this Agreement.
+
+11. Entire Agreement This Agreement is the entire agreement between
+you and Xmos relating to the Xmos Hardware and Development Kit and
+supersedes all prior or contemporaneous oral or written
+communications, proposals and representations with respect to its
+subject matter. Xmos shall be entitled on notice to you to change the
+terms of this Agreement. Notice may be given by email or on the
+www.xmos.com website. Your continuing use of the Xmos Hardware or
+Development Kit or components of it after any changes to this
+Agreement will signify your acceptance of such changed terms.
+
+12. Law & Jurisdiction This licence shall be governed by and construed
+in accordance with English law and each party hereby submits to the
+non-exclusive jurisdiction of the English courts.

@@ -1,0 +1,38 @@
+# This file describes how this module will affect the application
+# using it. The file is included in the Makefile of the main application.
+#
+# The module contributes to the build of the application by extending 
+# the following variables:
+#
+#   SOURCE_DIRS  - directories with source files to be included in the build
+#   INCLUDE_DIRS - directories to be added to the include path during the build 
+#   LIB_DIRS     - directories containing libraries to be linked into the build
+#
+# Note that all the source files in each directory in SOURCE_DIRS 
+# will be compiled (you do not need to name the files individually).
+# 
+
+MODULE_DIRS = ...
+
+SOURCE_DIRS += $(MODULE_DIRS) 
+INCLUDE_DIRS += $(MODULE_DIRS)
+
+# You can change the flags of a set of files using the SET_XCC_[lang]_FLAGS
+# functions. The first argument is a list of directories and the
+# second argument is the value to set the compile flags to. e.g.
+#
+# $(call SET_XCC_C_FLAGS, mydir1 mydir2, $(XCC_FLAGS) -g -O3)
+
+
+# You can change the flags of an individual file by setting the 
+# XCC_FLAGS_[filename] variable. e.g.
+#
+# XCC_FLAGS_myfile.xc = $(XCC_FLAGS) -fsubword-select
+
+
+# You can exclude particular files from the build even if they occur
+# within SOURCE_DIRS by adding the file name (with no path) to the 
+# EXCLUDE_FILES variable e..g
+#
+# EXCLUDE_FILES += myfile.xc
+#
