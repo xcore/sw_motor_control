@@ -138,7 +138,7 @@ xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
       <LinkEndpoint NodeId="1" Link="X0LA"/>
       <LinkEndpoint RoutingId="0x8000" Chanend="1"/>
     </Link>
-    --> 
+      --> 
         
   </Links>
 

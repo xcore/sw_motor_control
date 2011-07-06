@@ -28,3 +28,8 @@ void do_pwm_inv( chanend c_pwm, chanend c_adc_trig, in port dummy_port, buffered
 #else
 void do_pwm_inv( chanend c_pwm, buffered out port:32 p_pwm[],  buffered out port:32 p_pwm_inv[], clock clk);
 #endif
+
+#ifdef USE_PWM_CYCLE_COUNTER
+unsigned get_pwm_cycle_counter();
+#endif
+
