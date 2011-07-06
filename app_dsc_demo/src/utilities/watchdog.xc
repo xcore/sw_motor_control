@@ -27,6 +27,8 @@ void do_wd(chanend c_wd, out port wd)
 	unsigned ts, ts2;
 	timer t;
 
+	t :> ts;
+
 	// Loop forever processing commands
 	while (1)
 	{
