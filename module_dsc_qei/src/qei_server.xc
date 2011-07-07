@@ -156,7 +156,11 @@ static unsigned calc_state ( unsigned A, unsigned B, unsigned I)
 
 static unsigned update_pos( unsigned cur_pos, int delta )
 {
+#ifdef FAULHABER_MOTOR
+	#define QEI_COUNT_MAX (1024 * 4)
+#else
 	#define QEI_COUNT_MAX (256 * 4)
+#endif
 	int pos;
 
 	pos = cur_pos;

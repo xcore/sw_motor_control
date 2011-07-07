@@ -1,6 +1,6 @@
 # Custom Stuff
 BUILD_FLAGS=
-XCC_FLAGS= -fsubword-select -Wall -O3 -g -report
+XCC_FLAGS= -fsubword-select -Wall -O3 -g -report -DFAULHABER_MOTOR
 
 APP_NAME=dsc_foc_demo
 

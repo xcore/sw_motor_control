@@ -22,6 +22,15 @@
 #include "sine_lookup.h"
 #include "sine_table_big.h"
 
+#ifdef FAULHABER_MOTOR
+#define SINE_COSINE_OFFSET 512
+#define SINE_TABLE_LIMIT 4096
+#else
+#define SINE_COSINE_OFFSET 64
+#define SINE_TABLE_LIMIT 1024
+#endif
+
+
 inline int sine( unsigned deg )
 {
 	return sine_table[deg];
@@ -29,13 +38,12 @@ inline int sine( unsigned deg )
 
 inline int cosine( unsigned deg )
 {
-	unsigned x = deg + 64;
-	while (x >= 1024)
+	unsigned x = deg + SINE_COSINE_OFFSET;
+	while (x >= SINE_TABLE_LIMIT)
 	{
-		x = x - 1024;
+		x = x - SINE_TABLE_LIMIT;
 	}
 	return sine_table[x];
 }
-
 
 

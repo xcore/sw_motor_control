@@ -51,7 +51,11 @@ int get_qei_speed ( chanend c_qei )
 		r = 0;
 	else
 	{
+#ifdef FAULHABER_MOTOR
+		r = 3000000000 / ((t2 - t1) * (1024 * 4));
+#else
 		r = 3000000000 / ((t2 - t1) * (256 * 4));
+#endif
 		r <<= 1; // double to get RPM
 	}
 
