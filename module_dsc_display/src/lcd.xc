@@ -84,12 +84,14 @@ void lcd_byte_out(REFERENCE_PARAM(lcd_interface_t, p), unsigned char c, int is_d
 	if (is_data)
 	{
 		// address
-		p.p_core1_shared <: (port_val |= 0b1000);
+		port_val |= 0b1000;
+		p.p_spi_dsa <:1;
 	}
 	else
 	{
 		// command
-		p.p_core1_shared <: (port_val &= 0b0111);
+		port_val &= 0b0111;
+		p.p_spi_dsa<:0;
 	}
 
 	// Loop through all 8 bits

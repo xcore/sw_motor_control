@@ -20,7 +20,7 @@
 #ifndef ___SPEED_CONTROL_H__
 #define ___SPEED_CONTROL_H__
 
-void speed_control1(chanend c_control, chanend c_lcd );
-void speed_control2(chanend c_control2, chanend c_lcd2 );
+void speed_control1(chanend c_control, chanend c_lcd,chanend c_commands_can );
+void speed_control2(chanend c_control2, chanend c_lcd2,chanend c_commands_can2);
 
 #endif

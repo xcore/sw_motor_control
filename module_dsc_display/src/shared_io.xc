@@ -1,10 +1,9 @@
 /**
  * Module:  module_dsc_display
  * Version: 1v0module_dsc_display3
- * Build:
  * File:    shared_io.xc
  * Modified by : Srikanth
- * Last Modified on : 27-May-2011
+ * Last Modified on : 05-Jul-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -44,22 +43,23 @@ void splash(REFERENCE_PARAM(lcd_interface_t, p), unsigned int port_val )
 
 #ifdef BLDC_BASIC
 /* Manages the display, buttons and shared ports. */
-void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns[])
+void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_command,out port p_shared_rs,chanend c_eth_command )
 {
 	unsigned int time, MIN_VAL=0, speed1 = 0, speed2 = 0, set_speed = INITIAL_SET_SPEED;
 	/* Default port value on device boot */
-	unsigned int port_val = 0b0010;
-	unsigned int btn_en[4] = {0,0,0,0};
-	unsigned toggle = 1;
+	unsigned int port_val = 0b0001;
+	unsigned int btn_en = 0;
+	unsigned toggle = 1,  value;
 	char my_string[50];
 	unsigned ts,temp=0;
 	timer timer_1,timer_2;
+	unsigned can_command,eth_command;
 
 	/* Initiate the LCD ports */
 	lcd_ports_init(p);
 
 	/* Output the default value to the port */
-	p.p_core1_shared <: port_val;
+	 p.p_spi_dsa <:0;
 
 	/* Initiate the LCD*/
 	lcd_comm_out(p, 0xE2, port_val);		/* RESET */
@@ -96,7 +96,10 @@ void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lc
 				c_lcd2 <: CMD_GET_IQ2;
 				c_lcd2 :> speed2;
 
-		/* Calculate the strings here */
+				//can commands
+
+
+			    		/* Calculate the strings here */
 		/* Now update the display */
 				lcd_draw_text_row( "  XMOS DSC Demo 2011\n", 0, port_val, p );
 				sprintf(my_string, "  Set Speed: %04d RPM\n", set_speed );
@@ -111,101 +114,132 @@ void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lc
 		/* Switch debouncing - run through and decrement their counters. */
 				for  ( int i = 0; i < 3; i ++ )
 				{
-					if ( btn_en[i] != 0)
-						btn_en[i]--;
+					if ( btn_en != 0)
+						btn_en--;
 				}
-			break;
+			    break;
+			 //Enable CAN PHY
+			case c_can_command :> can_command :
 
-		/* Button A is up */
-			case !btn_en[0] => btns[0] when pinseq(0) :> void:
+					switch (can_command)
+					{
+
+					 case CAN_RS_LO :
+						    port_val &= 0b1110;
+						    p_shared_rs<:port_val;
+							break;
+
+					default :
+						   // ERROR
+							break;
+					 }
+
+            break;
+            //Enable ETHERNET PHY
+		   case c_eth_command :> eth_command :
+
+						switch (eth_command)
+						{
+
+						 case 1 :
+								//port_val &= 0b1101;
+								port_val |= 0b0010;
+								p_shared_rs<:port_val;
+								break;
+
+						default :
+							   // ERROR
+								break;
+						 }
+					break;
+			case !btn_en => btns :> value:
+				value = (~value & 0x0000000F);
+				if(value == 1)
+				{
 		/* Increase the speed, by the increment */
-				set_speed += PWM_INC_DEC_VAL;
-				if (set_speed > MAX_RPM)
-					set_speed = MAX_RPM;
+					set_speed += PWM_INC_DEC_VAL;
+					if (set_speed > MAX_RPM)
+						set_speed = MAX_RPM;
 		/* Update the speed control loop */
-				c_lcd1 <: CMD_SET_SPEED;
-				c_lcd1 <: set_speed;
-				c_lcd2 <: CMD_SET_SPEED2;
-				c_lcd2 <: set_speed;
+					c_lcd1 <: CMD_SET_SPEED;
+					c_lcd1 <: set_speed;
+					c_lcd2 <: CMD_SET_SPEED2;
+					c_lcd2 <: set_speed;
+
+
+
 		/* Increment the debouncer */
-				btn_en[0] = 4;
-			break;
-
-		/* Button B is down */
-			case !btn_en[1] => btns[1] when pinseq(0) :> void:
-
-				set_speed -= PWM_INC_DEC_VAL;
+					btn_en = 8;
+				}
+				if(value == 2)
+				{
+					set_speed -= PWM_INC_DEC_VAL;
 		/* Limit the speed to the minimum value */
-				if (set_speed < MIN_RPM)
-				{
-					set_speed = MIN_RPM;
-					MIN_VAL = set_speed;
-				}
-		/* Update the speed control loop */
-				c_lcd1 <: CMD_SET_SPEED;
-				c_lcd1 <: set_speed;
-				c_lcd2 <: CMD_SET_SPEED2;
-				c_lcd2 <: set_speed;
-		/* Increment the debouncer */
-				btn_en[1] = 4;
-			break;
-
-		/* Button C for Direction Change */
-			case !btn_en[2] => btns[2] when pinseq(0) :> void:
-
-				toggle = !toggle;
-				temp = set_speed;
-		/* to avoid jerks during the direction change*/
-				while(set_speed > MIN_RPM)
-				{
-					set_speed -= STEP_SPEED;
+					if (set_speed < MIN_RPM)
+					{
+						set_speed = MIN_RPM;
+						MIN_VAL = set_speed;
+					}
 		/* Update the speed control loop */
 					c_lcd1 <: CMD_SET_SPEED;
 					c_lcd1 <: set_speed;
 					c_lcd2 <: CMD_SET_SPEED2;
 					c_lcd2 <: set_speed;
-					timer_2 :> ts;
-					timer_2 when timerafter(ts + _30_Msec) :> ts;
+
+		/* Increment the debouncer */
+					btn_en = 8;
 				}
-				set_speed  =0;
+				if(value == 8)
+				{
+					toggle = !toggle;
+					temp = set_speed;
+		/* to avoid jerks during the direction change*/
+					while(set_speed > MIN_RPM)
+					{
+						set_speed -= STEP_SPEED;
 		/* Update the speed control loop */
-				c_lcd1 <: CMD_SET_SPEED;
-				c_lcd1 <: set_speed;
-				c_lcd2 <: CMD_SET_SPEED2;
-				c_lcd2 <: set_speed;
+						c_lcd1 <: CMD_SET_SPEED;
+						c_lcd1 <: set_speed;
+						c_lcd2 <: CMD_SET_SPEED2;
+						c_lcd2 <: set_speed;
+						timer_2 :> ts;
+						timer_2 when timerafter(ts + _30_Msec) :> ts;
+					}
+					set_speed  =0;
+		/* Update the speed control loop */
+					c_lcd1 <: CMD_SET_SPEED;
+					c_lcd1 <: set_speed;
+					c_lcd2 <: CMD_SET_SPEED2;
+					c_lcd2 <: set_speed;
 		/* Update the direction change */
-				c_lcd1 <: CMD_DIR;
-				c_lcd1 <: toggle;
-				c_lcd2 <: CMD_DIR2;
-				c_lcd2 <: toggle;
+					c_lcd1 <: CMD_DIR;
+					c_lcd1 <: toggle;
+					c_lcd2 <: CMD_DIR2;
+					c_lcd2 <: toggle;
 		/* to avoid jerks during the direction change*/
-				while(set_speed < temp)
-				{
-					set_speed += STEP_SPEED;
+					while(set_speed < temp)
+					{
+						set_speed += STEP_SPEED;
+						c_lcd1 <: CMD_SET_SPEED;
+						c_lcd1 <: set_speed;
+						c_lcd2 <: CMD_SET_SPEED2;
+						c_lcd2 <: set_speed;
+						timer_2 :> ts;
+						timer_2 when timerafter(ts + _30_Msec) :> ts;
+					}
+					set_speed  = temp;
+		/* Update the speed control loop */
 					c_lcd1 <: CMD_SET_SPEED;
 					c_lcd1 <: set_speed;
 					c_lcd2 <: CMD_SET_SPEED2;
 					c_lcd2 <: set_speed;
-					timer_2 :> ts;
-					timer_2 when timerafter(ts + _30_Msec) :> ts;
-				}
-				set_speed  = temp;
-		/* Update the speed control loop */
-				c_lcd1 <: CMD_SET_SPEED;
-				c_lcd1 <: set_speed;
-				c_lcd2 <: CMD_SET_SPEED2;
-				c_lcd2 <: set_speed;
 		/* Increment the debouncer */
-				btn_en[2] = 4;
+					btn_en = 8;
+				}
 			break;
 
-		/* Button D */
-			case !btn_en[3] => btns[3] when pinseq(0) :> void:
-		/* Increment the debouncer */
-				btn_en[3] = 4;
-			break;
 			default:
-				break;
+			break;
 		}
 	}
 }

@@ -5,7 +5,7 @@ XCC_FLAGS= -O3 -g -report
 APP_NAME=dsc_basic_bldc
 
 # Standard stuff below here...
-TARGET = XP-DSC-BLDC
+TARGET = XS1-L2A-QF124
 BASE_DIR = .
 
 DSC_BASIC_BLDC_DIRS = src src/motor src/control src/utilities src/ethernet

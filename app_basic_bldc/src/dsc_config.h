@@ -49,14 +49,13 @@
 #define LOGGING_CHANS 6
 
 // Define where everything is
-#define PROCESSING_CORE 0
-#define INTERFACE_CORE 1
-#define MOTOR_CORE 2
+#define INTERFACE_CORE 0
+#define MOTOR_CORE 1
 
 // Define the ethernet OTP core for getting the mac address, this should be the same as the
 // core that the ethernet thread runs on, unless you give the ethernet thread the mac address
 // in some other way
-#define ETHERNET_OTP_CORE 1
+#define ETHERNET_OTP_CORE 0
 
 // Check to prevent error where the OTP is on a different core
 #if ETHERNET_OTP_CORE != INTERFACE_CORE
@@ -78,7 +77,7 @@
 #define TCP_LOGGING_PORT 9596
 
 // Define the number of poles the motor has
-#define NUMBER_OF_POLES	4
+#define NUMBER_OF_POLES	8
 
 // Define whether or not to use DHCP - default is to not use it
 //#define USE_DHCP
@@ -102,7 +101,7 @@
 
 
 // Maximum RPM value for the motor
-#define MAX_RPM 6500
+#define MAX_RPM 4000
 
 // Maximum Iq value for the motor
 #define MAX_IQ 8000
@@ -113,5 +112,8 @@
 #define QEI_CLIENT_COUNT 2
 
 #define BLDC_BASIC
+//Use CAN or ETHERNET communication
+//#define USE_CAN
+#define USE_ETH
 
 #endif /* _DSC_CONFIG__H_ */

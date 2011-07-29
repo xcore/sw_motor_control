@@ -24,7 +24,6 @@
 
 #include <xccompat.h>
 #include <dsc_config.h>
-#include <lcd.h>
 
 	// Individual command interfaces
 #ifdef BLDC_BASIC
@@ -39,8 +38,19 @@
 	#define STEP_SPEED 		50
 	#define _30_Msec		3000000
 	#define MSec 100000
+	#define CAN_RS_LO		2
 
-	void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns[]);
+	#ifdef __XC__
+		typedef struct lcd_interface_t
+		{
+			out port p_lcd_sclk; // buffered port:8
+			out port p_lcd_mosi; // buffered port:8
+			out port p_lcd_cs_n;
+			out port p_spi_dsa;
+		} lcd_interface_t;
+
+		void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_reset,out port p_shared_rs,chanend c_eth_command );
+	#endif
 #endif
 
 #ifdef BLDC_FOC
@@ -57,7 +67,20 @@
 	#define CMD_GET_IQ		2
 	#define CMD_SET_SPEED	3
 
-	void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t, p), in port btns[] );
+	#ifdef __XC__
+		typedef struct lcd_interface_t
+		{
+			//clock clk_lcd_1;
+			//clock clk_lcd_2;
+
+			out port p_lcd_sclk; // buffered port:8
+			out port p_lcd_mosi; // buffered port:8
+			out port p_lcd_cs_n;
+			out port p_core1_shared;
+		} lcd_interface_t;
+
+		void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t, p), in port btns[] );
+	#endif
 #endif
 
 #endif /* SHARED_IO_H_ */

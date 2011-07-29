@@ -48,17 +48,18 @@ const unsigned bldc_high_seq1[6] = {2,0,0,1,1,2};
  *between the threads for motor 1.
  **/
 
-void run_motor1 ( chanend c_wd, chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_lo[])
+void run_motor1 (chanend c_wd, chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_lo[])
 {
 	unsigned high_chan, hall_state = 0, pin_state = 0, pwm_val = 240, dir_flag=1;
 	unsigned ts, ts0, delta_t, speed = 0, hall_flg = 1, cmd;
 	unsigned state0 = 0, statenot0 =0 ;
+	unsigned set_speed=500;
 
 	/* 32 bit timer declaration */
 	timer t;
 	t :> ts;
 	/* delay function for 1 sec */
-	t when timerafter(ts+ SEC ) :> ts;
+	t when timerafter(ts+ 10*SEC ) :> ts;
 	/* allow the WD to get going and enable motor */
 	c_wd <: WD_CMD_START;
 
@@ -107,7 +108,6 @@ void run_motor1 ( chanend c_wd, chanend c_pwm, chanend c_control, port in p_hall
 			delta_t = ts - ts0;
 		/*caculate speed using equation below */
 			speed = SPEED_COUNT / ( delta_t );
-			speed = speed * 2;
 			hall_flg = 0;
 			state0 = 0;
 			statenot0 =0;
@@ -180,7 +180,7 @@ void run_motor2 ( chanend c_pwm2, chanend c_control2, port in p_hall2, port out 
 	timer t;
 	t :> ts;
 	/* delay function for 1 sec */
-	t when timerafter( ts+ SEC ) :> ts;
+	t when timerafter(ts+ 10*SEC ) :> ts;
 
 	/* main loop */
 	while (1)
@@ -227,7 +227,6 @@ void run_motor2 ( chanend c_pwm2, chanend c_control2, port in p_hall2, port out 
 			delta_t = ts - ts0;
 		/*calculate speed using equation below */
 			speed = SPEED_COUNT / ( delta_t );
-			speed = speed * 2;
 			hall_flg = 0;
 			state0 = 0;
 			statenot0 =0;

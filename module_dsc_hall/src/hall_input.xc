@@ -3,6 +3,8 @@
  * Version: 1v0alpha2
  * Build:   280fc2259bcf2719c6b83e517d854c7666e0c448
  * File:    hall_input.xc
+ * Modified by : Upendra
+ * Last Modified on : 01-Jul-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -25,12 +27,12 @@
 
 /* Hall lookup table 							Hall      => Sector  */
 const unsigned hall_pos[8] = { 	HALL_INV,	/* 0bx000 = 0 => INVALID */
-								0,			/* 0bx001 = 1 => 0 */
+								2,			/* 0bx001 = 1 => 0 */
 								4,			/* 0bx010 = 2 => 4 */
-								5,			/* 0bx011 = 3 => 5 */
-								2,			/* 0bx100 = 4 => 2 */
+								3,			/* 0bx011 = 3 => 5 */
+								0,			/* 0bx100 = 4 => 2 */
 								1,			/* 0bx101 = 5 => 1 */
-								3,			/* 0bx110 = 6 => 3 */
+								5,			/* 0bx110 = 6 => 3 */
 								HALL_INV };	/* 0bx111 = 7 => INVALID */
 
 const unsigned rev_pos[6] = { 	0b0001,		/* 0bx001 <= 0 */

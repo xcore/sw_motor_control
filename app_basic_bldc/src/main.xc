@@ -19,9 +19,6 @@
  *
  **/
 
-//#define USE_ETH
-//#define USE_CAN
-
 #include <xs1.h>
 #include <platform.h>
 
@@ -37,86 +34,99 @@
 #include "initialisation.h"
 
 // CAN control headers
+#ifdef USE_CAN
 #include "control_comms_can.h"
 #include "CanPhy.h"
+#endif
 
 // Ethernet control headers
+#ifdef USE_ETH
 #include "control_comms_eth.h"
 #include "xtcp_client.h"
 #include "uip_server.h"
 #include "ethernet_server.h"
 #include "getmac.h"
+#endif
 
 #ifdef USE_XSCOPE
 #include <xscope.h>
 #endif
 
 /* core with LCD and BUTTON interfaces */
-on stdcore[INTERFACE_CORE]: lcd_interface_t lcd_ports = { PORT_DS_SCLK, PORT_DS_MOSI, PORT_DS_CS_N, PORT_CORE1_SHARED };
-on stdcore[INTERFACE_CORE]: port in btns[4] = {PORT_BUTTON_A, PORT_BUTTON_B, PORT_BUTTON_C, PORT_BUTTON_D};
+on stdcore[INTERFACE_CORE]: lcd_interface_t lcd_ports = { PORT_SPI_CLK, PORT_SPI_MOSI, PORT_SPI_SS_DISPLAY, PORT_SPI_DSA };
+on stdcore[INTERFACE_CORE]: in port btns = PORT_BUTTONS;
 
 /* motor1 core ports */
-
-on stdcore[MOTOR_CORE]: port in p_hall = PORT_M1_ENCODER;
+on stdcore[MOTOR_CORE]: port in p_hall = PORT_M1_HALLSENSOR;
 on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_hi1[3] = {PORT_M1_HI_A, PORT_M1_HI_B, PORT_M1_HI_C};
 on stdcore[MOTOR_CORE]: out port p_motor_lo1[3] = {PORT_M1_LO_A, PORT_M1_LO_B, PORT_M1_LO_C};
-on stdcore[MOTOR_CORE]: out port i2c_wd = PORT_I2C_WD_SHARED;
+on stdcore[INTERFACE_CORE]: out port i2c_wd = PORT_WATCHDOG;
 on stdcore[MOTOR_CORE]: clock pwm_clk = XS1_CLKBLK_1;
 
 /* motor2 core ports */
-on stdcore[MOTOR_CORE]: port in p_hall2 = PORT_M2_ENCODER;
+on stdcore[MOTOR_CORE]: port in p_hall2 = PORT_M2_HALLSENSOR;
 on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_hi2[3] = {PORT_M2_HI_A, PORT_M2_HI_B, PORT_M2_HI_C};
 on stdcore[MOTOR_CORE]: out port p_motor_lo2[3] = {PORT_M2_LO_A, PORT_M2_LO_B, PORT_M2_LO_C};
 on stdcore[MOTOR_CORE]: clock pwm_clk2 = XS1_CLKBLK_4;
 
+on stdcore[INTERFACE_CORE] : out port p_shared_rs=PORT_SHARED_RS;
+
 // CAN
+#ifdef USE_CAN
 on stdcore[INTERFACE_CORE] : clock p_can_clk = XS1_CLKBLK_4;
 on stdcore[INTERFACE_CORE] : buffered in port:32 p_can_rx = PORT_CAN_RX;
 on stdcore[INTERFACE_CORE] : port p_can_tx = PORT_CAN_TX;
+#endif
 
 // OTP for MAC address
+#ifdef USE_ETH
 on stdcore[INTERFACE_CORE]: port otp_data = XS1_PORT_32B;
 on stdcore[INTERFACE_CORE]: out port otp_addr = XS1_PORT_16C;
 on stdcore[INTERFACE_CORE]: port otp_ctrl = XS1_PORT_16D;
-
 // Ethernet Ports
 on stdcore[INTERFACE_CORE]: clock clk_mii_ref = XS1_CLKBLK_REF;
 on stdcore[INTERFACE_CORE]: clock clk_smi = XS1_CLKBLK_3;
-on stdcore[INTERFACE_CORE]: smi_interface_t smi = { PORT_ETH_MDIO, PORT_ETH_MDC, 1 };
+on stdcore[INTERFACE_CORE]: smi_interface_t smi = { PORT_ETH_MDIO, PORT_ETH_MDC, 0 };
 on stdcore[INTERFACE_CORE]: mii_interface_t mii = { XS1_CLKBLK_1, XS1_CLKBLK_2, PORT_ETH_RXCLK, PORT_ETH_RXER, PORT_ETH_RXD, PORT_ETH_RXDV, PORT_ETH_TXCLK, PORT_ETH_TXEN, PORT_ETH_TXD };
-
+#endif
 
 int main ( void )
 {
-	chan c_wd, c_pwm1, c_control1, c_lcd1, c_control2, c_pwm2, c_lcd2, c_ctrl, c_eth_reset, c_can_reset;
-
+	chan c_wd, c_pwm1, c_control1, c_lcd1, c_control2, c_pwm2, c_lcd2, c_eth_reset, c_can_reset, c_eth_command;
 
 #ifdef USE_CAN
-	chan c_rxChan, c_txChan;
+	chan c_rxChan, c_txChan,c_commands_can,c_commands_can2;
 #endif
 
 #ifdef USE_ETH
-	chan c_mac_rx[1], c_mac_tx[1], c_xtcp[1], c_connect_status;
+	chan c_mac_rx[1], c_mac_tx[1], c_xtcp[1], c_connect_status,c_commands_eth,c_commands_eth2;
 #endif
 
 	par
 	{
 #ifdef USE_CAN
-		on stdcore[PROCESSING_CORE] : do_comms_can( c_ctrl, c_rxChan, c_txChan, c_can_reset );
+		on stdcore[INTERFACE_CORE] : do_comms_can( c_commands_can, c_rxChan, c_txChan, c_can_reset,c_commands_can2);
 
 		on stdcore[INTERFACE_CORE] : canPhyRxTx( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx );
 #endif
 
 #ifdef USE_ETH
-		on stdcore[PROCESSING_CORE] : init_tcp_server( c_mac_rx[0], c_mac_tx[0], c_xtcp, c_connect_status );
-		on stdcore[PROCESSING_CORE] : do_comms_eth( c_ctrl, c_xtcp[0] );
-
-		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, c_eth_reset); // +4 threads
+		on stdcore[INTERFACE_CORE] : init_tcp_server( c_mac_rx[0], c_mac_tx[0], c_xtcp, c_connect_status );
+		on stdcore[MOTOR_CORE] : do_comms_eth( c_commands_eth,c_commands_eth2, c_xtcp[0] );
+		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, c_eth_command); // +4 threads
 #endif
 
 		/* L2 */
-		on stdcore[INTERFACE_CORE]: speed_control1( c_control1, c_lcd1 );
-		on stdcore[INTERFACE_CORE]: speed_control2( c_control2, c_lcd2 );
+		on stdcore[INTERFACE_CORE]: do_wd(c_wd, i2c_wd);
+#ifdef USE_CAN
+		on stdcore[INTERFACE_CORE]: speed_control1( c_control1, c_lcd1 ,c_commands_can);
+		on stdcore[INTERFACE_CORE]: speed_control2( c_control2, c_lcd2,c_commands_can2 );
+#endif
+
+#ifdef USE_ETH
+		on stdcore[MOTOR_CORE]: speed_control1( c_control1, c_lcd1 ,c_commands_eth);
+		on stdcore[MOTOR_CORE]: speed_control2( c_control2, c_lcd2,c_commands_eth2 );
+#endif
 		on stdcore[INTERFACE_CORE]: {
 #ifdef USE_XSCOPE
 			xscope_register(5,
@@ -127,7 +137,7 @@ int main ( void )
 					XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT, "rpm"
 			);
 #endif
-			display_shared_io_motor( c_lcd1, c_lcd2, lcd_ports, btns);
+		display_shared_io_motor( c_lcd1, c_lcd2, lcd_ports, btns,c_can_reset,p_shared_rs,c_eth_command);
 		}
 
 		/* L1 */
@@ -135,7 +145,6 @@ int main ( void )
 		on stdcore[MOTOR_CORE]: run_motor1 ( c_wd, c_pwm1, c_control1, p_hall, p_motor_lo1 );
 		on stdcore[MOTOR_CORE]: do_pwm2( c_pwm2, p_pwm_hi2, pwm_clk2);
 		on stdcore[MOTOR_CORE]: run_motor2 ( c_pwm2, c_control2, p_hall2, p_motor_lo2 );
-		on stdcore[MOTOR_CORE]: do_wd(c_wd, i2c_wd);
 
 
 	}

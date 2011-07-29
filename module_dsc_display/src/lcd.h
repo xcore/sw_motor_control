@@ -22,17 +22,9 @@
 #ifndef _LCD_H_
 #define _LCD_H_
 
-#include <xccompat.h>
+#include "shared_io.h"
 
 #define CHAR_BUF_SIZE	21*4
-
-typedef struct lcd_interface_t
-{
-	out port p_lcd_sclk; // buffered port:8
-	out port p_lcd_mosi; // buffered port:8
-	out port p_lcd_cs_n;
-	out port p_core1_shared;
-} lcd_interface_t;
 
 void reverse(char s[]);
 void itoa(int n, char s[]);
