@@ -1,23 +1,26 @@
 Motor Control Platform Example Applications
+===========================================
 
 The current release package ships with two example applications.
 
 
-An application showing an example, but non-functioning Field Oriented Control (FOC) control loop (app\_dsc\_demo)
-An application showing speed control of the provided motor using basic BLDC code (app\_basic\_bldc)
+   * An application showing an example, but non-functioning Field Oriented Control (FOC) control loop (app_dsc_demo)
+   * An application showing speed control of the provided motor using basic BLDC code (app_basic_bldc)
 
 
-Basic BLDC Speed Control Application (app\_basic\_demo)
+Basic BLDC Speed Control Application (app_basic_bldc)
++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 This applications makes use of the following functionality.
 
-PWM
-Hall Input
-Display
-Ethernet \& Communications
-Processing Blocks
+   * PWM
+   * Hall Input
+   * Display
+   * Ethernet & Communications
+   * Processing Blocks
 
 Motor Control Loop
+~~~~~~~~~~~~~~~~~~
 
 The main motor control code for this application can be located in src/motor/run_motor.xc. The motor control thread is launched using the following function.
 
@@ -44,6 +47,7 @@ const unsigned bldc_high_seq[6] = {1,2,2,0,0,1};
 The other event that can be responded to is a command from the c_control channel. This can take the form of two commands. The first command is a request to read the current speed value. The second command is a request to change the PWM value that is being sent to the PWM thread and subsequently the motor.
 
 Speed Control Loop
+~~~~~~~~~~~~~~~~~~
 
 The speed control loop for this application can be found in src/control/speed_control.xc. The thread is launched by calling the following function.
 
@@ -57,30 +61,27 @@ The main loop consists of a \verb=select= statement that responds to three event
 
 The second and third events are a request from the LCD and buttons thread or the ethernet thread. This can either be a request from the display for updated speed, set point and PWM demand values or a change in set point. 
 
-FOC Application (app\_dsc\_demo)
+FOC Application (app_dsc_demo)
+++++++++++++++++++++++++++++++
 
 This applications makes use of the following functionality. The FOC application is given as an example only. It is not currently functional with the motor that is provided.
 
-PWM
-Hall Input
-ADC
-Display
-Ethernet \& Communications
-Processing Blocks
+   * PWM
+   * Hall Input
+   * ADC
+   * Display
+   * Ethernet & Communications
+   * Processing Blocks
 
-Current Control Loop
+Control Loop
+~~~~~~~~~~~~
 
-The inner current control loop can be found in src/motor/inner_loop.xc.
+The control loop can be found in src/motor/inner_loop.xc.
 
-The current control loop takes the demand value from the outer loop and applies it via PWM. This utilises the feedback from the ADC and calculations done using the Park and Clarke transforms and application of PID regulation of $I_d$ and $I_q$.  The resulting values of $V_a$, $V_b$ and $V_c$ are output to the PWM.
+The control loop takes input from the encoder or hall sensors, a set speed from the control modules and applies it via PWM. This utilises the feedback from the ADC and calculations done using the Park and Clarke transforms and application of PID regulation of $I_d$ and $I_q$.  The resulting values of $V_a$, $V_b$ and $V_c$ are output to the PWM.
 
 This loop is a simple of how a control loop may be implemented and the function calls that would be used to achieve this.
 
-Speed Control Loop
-
-This speed control loop found in src/motor/outer_loop.xc is in many respects the same in operation as the speed control loop used in the basic BLDC demonstration code and much of the explanation above applies to this application. 
-
-The speed control loop implemented in this application does however have the added feature of allowing the developer to apply step response demands to the inner loop for experimentation purposes. This is done on a timer event that counts through a sequence of time periods. For this to work effectively any requests from the ethernet, CAN or buttons should be ignored. 
 
 
 

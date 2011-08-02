@@ -1,4 +1,5 @@
 Analogue to Digital Converter (ADC) Interface
+=============================================
 
 The analogue to digital interface currently provided is written for the LTC1408. This provides a clocked serial output following a sample and hold conversion trigger signal. The physical interface of the ADC is not covered in detail as the interface for ADC's will vary from manufacturer to manufacturer. An example of the interface for the MAX1379 is also available in this module.
 
@@ -7,6 +8,7 @@ Besides the client and server interfaces the key issue discussed in this section
 The define LOCK_ADC_TO_PWM must be 0 or 1 for off and on respectively. This defines whether the ADC readings are triggered by the PWM so that measurements can be taken at the appropriate point in the PWM cycle.
 
 ADC Server Usage
+++++++++++++++++
 
 The following include and function call are required to operate the ADC software as a server. This server is utilised in the case where the ADC is locked to the PWM.
 
@@ -30,6 +32,8 @@ port out SCLK, buffered out port:32 CNVST and in buffered port:32 DATA are the p
 chanend c_trig is the channel between the PWM and the ADC threads that triggers the conversion of the ADC.
 
 ADC Client Usage
+++++++++++++++++
+
 The functions below are the primary method of collecting ADC data from the ADC service. 
 
 The client can be utilised as follows:
@@ -54,6 +58,7 @@ There is also an example of an experimental server providing continuous ADC read
 
 
 ADC Server Implementation
++++++++++++++++++++++++++
 
 The ADC server implementation discussed here is the triggered variant of the ADC code.
 

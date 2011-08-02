@@ -1,8 +1,10 @@
 Hall Sensor Interface
+=====================
 
 The hall sensor interface is used for measuring speed and estimating the position of the motor. 
 
 Hall Sensor Usage
++++++++++++++++++
 
 The hall sensor input module provides a number of functions and options in its usage. A listing of the available functions is given below.
 
@@ -36,6 +38,7 @@ do_hall_test(...) simply prints out the values received on the hall sensor input
 
 
 Hall Sensor Client
+++++++++++++++++++
 
 When using the hall sensor server thread as described above, the information may be accessed by using the client functions as listed below.
 

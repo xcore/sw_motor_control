@@ -1,19 +1,21 @@
 Pulse Width Modulation
+======================
 
 The PWM driver code is written using a `client server' model. The client functions are designed to be run from either the main control loop or a separate thread that sits between the control loop and the PWM server thread (dependant on timing constraints defined by the speed of the control loop).
 
 The PWM implementation is centre synchronised. This means that the output is of the form shown in figure XYZ
 
 
-images/pwmFig.pdf
-Centrally Synchronised PWM
-
-
+  .. figure:: images/pwmFig.pdf
 
 Configuration
-The PWM module has three modes of operation defined, plus a number of other options. The modes are defined in \verb=dsc_config.h= that is part of the application code. 
++++++++++++++
+
+The PWM module has three modes of operation defined, plus a number of other options. The modes are defined in dsc_config.h that is part of the application code. 
 
 PWM Modes
+~~~~~~~~~
+
 The PWM operation mode can be one of three of the following options:
 
 PWM_INV_MODE - This operates a three leg 180 degree inverter by ensuring that the HI and LO sides of the inverter are switched in a complementary manner
@@ -22,24 +24,27 @@ PWM_BLDC_MODE - Basic BLDC commutation mode operates a three leg inverter by swi
 
 
 Dead Time
+~~~~~~~~~
 
 The dead time for PWM_INV_MODE is defined using the PWM_DEAD_TIME configuration. This is in units of 10ns when using the default reference clock of 100MHz.
 
 PWM Resolution
+~~~~~~~~~~~~~~
 
 PWM resolution is defined using PWM_MAX_VALUE. The value defined here sets the frequency of the PWM. The relationship between PWM_MAX_VALUE, XS1_TIMER_HZ and PWM frequency ($PWM_FREQ$) is defined in equation \ref{eqn_PwmFreq}. XS1_TIMER_HZ is defined at compile time by the ReferenceFrequency identifier in the project XN file. By default this reference frequency is 100MHz so XS1_TIMER_HZ would have a value of 100,000,000.
 
 eqn_PwmFreq
 PWM_FREQ = XS1_TIMER_HZ / PWM_MAX_VAL
 
-
 So with an example value of PWM_MAX_VALUE being 4096 (12 bit resolution), the PWM_FREQ will be 24,414Hz.
 
 Locking the ADC trigger to PWM
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 In some implementations it is desirable to lock the ADC conversion trigger to the PWM. This allows the system to sample the ADC at a specific point in the PWM period (such as when the lower leg is guaranteed to be on). This is enabled using the LOCK_ADC_TO_PWM definition.
 
 Default PWM Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The default configuration for the demonstration application is as follows. 
 
@@ -48,7 +53,9 @@ The default configuration for the demonstration application is as follows.
 #define PWM_MAX_VALUE 4096
 #define LOCK_ADC_TO_PWM 1
 
+
 PWM Server Usage
+++++++++++++++++
 
 The usage for each mode is described below. The PWM server needs to be instantiated on the same core as the PWM client. The following is required to be included.
 
@@ -57,6 +64,7 @@ The usage for each mode is described below. The PWM server needs to be instantia
 
 
 Inverter Mode
+~~~~~~~~~~~~~
 
 To instantiate the PWM service the function described in the listing below needs to be called for the \verb=PWM_INV_MODE= and \verb=LOCK_ADC_TO_PWM= combination.
 
@@ -91,16 +99,16 @@ The argument definitions are as above.
 
 
 Simple three channel PWM mode
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This mode is currently only used for testing. It is similar in operation to the inverter mode, but does not have ADC locking functionality and operates only half of the inverter. 
 
 Basic BLDC commutation mode
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This mode of operation is slightly different to the others as it is designed for simple commutation of a brushless DC motor. An example of the output of this mode is shown in figure \ref{fig_PwmBldcMode}
 
-images/bldcpwm.pdf
-BLDC Mode PWM Output
-
+  .. figure:: images/bldcpwm.pdf
 
 To instantiate the PWM service in this mode the following function needs to be called.
 
@@ -117,6 +125,7 @@ buffered out port:32 p_pwm[] is an array of 1 bit ports with an array length of 
 clock clk is the clock block that the PWM thread uses for timing output.
 
 PWM Client Usage
+++++++++++++++++
 
 The PWM client functions must be operated on the same core as the server. The usage of the client functions in the various operational modes are described below. The following must be included to call the client functions.
 
@@ -125,6 +134,7 @@ The PWM client functions must be operated on the same core as the server. The us
 
 
 Inverter Mode
+~~~~~~~~~~~~~
 
 The only call required to update the PWM values that are currently being output is listed below. It takes only two arguments, the channel to the PWM server and an array of size three containing unsigned integers that must be between 0 and PWM_MAX_VALUE.
 
@@ -133,10 +143,12 @@ void update_pwm( chanend c, unsigned value[]);
 This function will process the values and pass them to the PWM service thread.
 
 Simple three channel PWM mode
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 See details above for the Inverter Mode.
 
 Basic BLDC commutation mode
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The basic BLDC commutation mode client operates slightly differently to achieve the waveform shown in figure \ref{fig_PwmBldcMode}. The function call listed below must be utilised. 
 
@@ -149,6 +161,7 @@ void update_pwm( chanend c,
 
 
 PWM Service Implementation
+++++++++++++++++++++++++++
 
 The PWM service is designed as a continuously running loop that cannot be blocked. This is important to ensure continuous output as stalling an output on an inverter in any application could result in serious failure of the appliance that is being driven.
 
@@ -163,6 +176,7 @@ We will therefore be covering the operation that is found in
 module_dsc_pwm/src/dsc/pwm_svr/inv_svr/. 
 
 PWM service port initialisation (pwm_service_inv.xc)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This file achieves a number of functions. The primary function is a wrapper that is called to start the PWM service running. This configures the port and then enters the main loop for the PWM service.
 
@@ -178,16 +192,14 @@ Once the ports have been configured the output will remain in the initialised st
 
 Once this information is received the main loop is entered.
 
-
 PWM service main loop (pwm_op_inv.S)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The operation of the main loop is best described visually as in the flow chart shown in figure \ref{fig_PwmMainLoopFlow}. The entries in the flow chart relate directly to the labels within the main loop. 
 
 A brief overview of each part of the main loop are given below. These should be consulted alongside the comments that reside in the code itself.
 
-images/pwm_loop.pdf
-PWM Main loop flow chart
-
+  .. figure:: images/pwm_loop.pdf
 
 The code begins at the pwm_op_inv entry point. This begins by running a standard callee save. This preserves any registers that we will clobber as part of the operation of this function. The arguments to the function are then stored on the stack itself in sp[8:11]. This ensures we have access to them later.
 
@@ -196,14 +208,13 @@ Following this the registers are moved around into the configuration we require 
 The code then branches to the appropriate mode according to the mode value that has been read from the data structure provided to it by the client.
 
 Why all these loop modes?
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 It is worth discussing at this point why there are different loop modes and what they achieve. The nature of the central synchronisation point means that there are very rare times when the edges of the PWM coincide - from an electrical noise standpoint this is beneficial, but from and implementation standpoint it complicates things slightly.
 
 To achieve the required output efficiently using the ports the buffers are used to create the extremely short or long pulses as shown in figure \ref{fig_PwmPortBuffering}. The green boxes indicate a buffer of data that is output from the port.
 
-images/bufferedPWM.pdf
-PWM Buffered Port Output
-
+  .. figure:: images/bufferedPWM.pdf
 
 This method of output requires a combination of one or two buffer outputs depending on the length of these pulses. Rather than calculate these during runtime the client will ascertain the particular combination of outputs required and then will define the mode. The different buffering output modes are individually implemented to reduce branching overhead within the loop.
 
@@ -216,15 +227,15 @@ If the ADC to PWM lock is not utilised then the thread will pause on the next se
 If the system branches to update then it will execute a sequence very similar to the entry of the function, reading the data out of the data structure and setting up the relevant memory pointers. The update for PWM_MODE_[1:6] loops are all the same. In the case of PWM_MODE_7 the update sequence is slightly different due to the fact that the even is likely to occur when one of the channels is high. This means that a further output is required before receiving the update from the client.
 
 PWM Client Implementation
++++++++++++++++++++++++++
 
 The PWM client is required to do a number of functions to provide the correct data to the PWM service that outputs the correct values and timings to the ports. The PWM client must:
 
-Calculate the output values
-Calculate the timing values (taking into account dead time)
-Sort the ports into time order
-Ascertain the loop mode required
-Maintain the shared data set, including which buffer is in use and which one can be updated
-
+   * Calculate the output values
+   * Calculate the timing values (taking into account dead time)
+   * Sort the ports into time order
+   * Ascertain the loop mode required
+   * Maintain the shared data set, including which buffer is in use and which one can be updated
 
 Taking the inverter mode as our working example (located in module_dsc_pwm/src/dsc_pwm_cli/pwm_cli_inv) the function update_pwm(...) first saves the PWM values for later use and then initialises the channel ordering array to assume a sequential order of output. 
 

@@ -1,4 +1,5 @@
 Quadrature Encoder Input
+========================
 
 The quadrature encoder input (QEI) module is provided with a library for both running the thread that handles the direct interface to the pins and also for retrieving and calculating the appropriate information from that thread. 
 
@@ -6,11 +7,10 @@ This module is not explicitly utilised in the current reference design, but coul
 
 The particular interface that is implemented utilises three signals comprising of two quadrature output (A and B) and an index output (I). A and B provide incremental information while I indicates a return to 0 or origin. The signals A and B are provided out of phase so that the direction of rotation can be resolved.
 
-images/QeiOutput.pdf
-The quadrature encoder input signals
-
+  .. figure:: images/QeiOutput.pdf
 
 Configuration
++++++++++++++
 
 The QEI module requires the following defines in dsc_config.h
 
@@ -24,6 +24,7 @@ The QEI_CLIENT_COUNT defines the number of clients that the server supports. Thi
 The QEI_LINE_COUNT defines the number of lines the encoder is specified to have. If this is not defined then 1024 is assumed (as used in the example calculations below). This only affects calculations done by the client functions.
 
 QEI Server Usage
+++++++++++++++++
 
 To initiate the service the following include is required as well as the function call shown. This defines the ports that are required to read the interface and the channel that will be utilised by the client thread.
 
@@ -35,6 +36,8 @@ void do_qei( chanend c_qei[QEI_CLIENT_COUNT],
 
 
 QEI Client Usage
+++++++++++++++++
+
 To access the information provided by the quadrature encoder the functions listed below can used.
 
 
@@ -56,12 +59,11 @@ The third function provides the ability to request whether the QEI interface has
 The fourth function will provide a result of 1 if the direction of rotation of the encoder is clockwise.
 
 QEI Service Implementation
+++++++++++++++++++++++++++
 
 The core functionality is shown below in the state machine in figure \ref{fig_QeiStateMachine}. When in a static state the state machine can be interrupted by a request for rotation data.
 
-images/qei-state.pdf
-The QEI state machine showing clockwise and counter clockwise rotation
-
+  .. figure:: images/qei-state.pdf
 
 The request for data will only be served if the event on the channel is enabled. This means that during any state updates the provision of the required data will be a blocked request.
 
@@ -81,19 +83,17 @@ QEI_CMD_CW_REQ
 These are utilised by the client library functions discussed below.
 
 QEI Client Implementation
++++++++++++++++++++++++++
 
 The client library as described above makes requests to the QEI service thread. These requests are made exclusively via channels and may be blocked during a change in state, but will then be serviced appropriately.
 
 The service thread provides speed and position data in the form of the raw count and time information. This means that to calculate the speed of rotation equation \ref{eqn_QeiSpeed} is utilised on the client side.
 
-\begin{equation}\label{eqn_QeiSpeed}
-SPEED =  \frac{60000000}{(t_2 - t_1) \times 1024}
-\end{equation}
+SPEED =  60000000 / (t_2 - t_1) * 1024
+
 
 Calculation of position in tenths of a degree is also performed on the client side and is shown in equation \ref{eqn_QeiPosition}
 
-\begin{equation}\label{eqn_QeiPosition}
-POS = (QEI\_RAW\_POS \times 3600) >> 10 
-\end{equation}
+POS = (QEI_RAW_POS * 3600) >> 10 
 
 Direction and whether an index signal has been received are direct values presented as requested from the QEI service.
