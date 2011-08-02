@@ -9,7 +9,7 @@
 #define D_PROG_STRING	"\nOTP programmer for XP-DSC-BLDC 1V1\n"
 #define D_SERIAL_NUM	29010000
 #define D_SERIAL_START	11
-#define D_SERIAL_STOP	31
+#define D_SERIAL_STOP	41
 #define D_BOARD_IDENT	0x00030111
 #define D_MAC_UPPER		0x00000022
 #define D_MAC_LOWER		0x97003000
