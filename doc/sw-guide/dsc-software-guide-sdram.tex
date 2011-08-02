@@ -1,0 +1,91 @@
+\section{SDRAM Interface}
+This module provides details on the SDRAM interface used in the XMOS Motor Control Development Platform.
+
+The SDRAM is 256Mbit (32MBytes in size) organised as 4 banks x 8192 rows x 512 columns x 16 bits.
+The address structure is: col | (row << log2(SDRAM\_NCOLUMNS)) | (bank << (log2(SDRAM\_NCOLUMNS) + log2(SDRAM\_NROWS))) when addressing SDRAM locations, so for example for a byte-wide SDRAM the address is a byte address.
+
+
+\subsection{Hardware Interface}
+
+The SDRAM interface is implemented using ports on XCore 0 - it uses 39 pins in total, including:
+\begin{itemize}
+\item 1 x 16 bit data bus (this is bi-directional).
+\item 1 x 15 bit address bus (using a 16-bit port and incorporating the bank signals).
+\item 8 x 1-bit ports for control and clock signals.
+\end{itemize}
+
+
+\subsection{Operation}
+
+The SDRAM server which interacts with the hardware is a single thread with a single channel connecting to it.
+The function is called from main with a parameter passing a structure containing the appropriate ports. The server\_thread prototype is:
+
+\lstset{breaklines=true}
+\begin{lstlisting}
+void sdram_server(chanend c_sdram, REFERENCE_PARAM(sdram_interface_t, p))
+\end{lstlisting}
+
+During normal operation, the server only logs entries sent to it over the c\_sdram channel.
+It writes the log entries into specified addresses and puts the SDRAM into self-refresh mode when not in use.
+Writes are short bursts of ``N`` 32-bit words, ``N`` being a compile time option.
+In the current DSC implementation N is 32, making each log entry 128 bytes.
+
+When the entries require reading from the SDRAM, a read operation is performed which returns all the data from the SDRAM.
+
+The implementation operates on 128-byte buffer chunks so that client does not stall the SDRAM inside an I/O loop.
+Self refresh mode is entered between chunks to allow the client to take unlimited time to process data.
+When in this mode, the SDRAM automatically refreshes the data at the required time interval without intervention from the XCore, to prevent data corruption in the memory.
+Note that during debug interrupts (e.g. calls to print.h) the I/O loop may be interrupted, which can in turn corrupt the data if the SDRAM is not in self refresh mode.
+
+When reading the SDRAM after a system failure, the SDRAM driver, Ethernet driver, and related parts of the L2 (services core) must stay in a healthy state for the read request to come through and be processed.
+Shared memory between these parts and the rest of the system is recommended as a means of decoupling (channels are blocking and therefore not suitable for fault tolerance).
+
+
+\subsection{Performance}
+
+The expected write bandwidth is 12.5 MB/s.
+Read bandwidth is lower, which is OK, as when reading the memory, the time it takes to dump the contents is not critical, provided it is not too long.
+
+Log entries are received, written into SRAM and then copied from SRAM into SDRAM.
+This reduces link utilisation and brings overall data rate down to less than a half of the 12.5 MB/s bandwidth.
+
+
+\subsection{Interface}
+
+This details the client interface that other threads must use to read to and write from the SDRAM. c\_sdram is the channel to the sdram\_server(...).
+
+
+\subsection{Client Usage}
+Before using the client interface, following is required to be included.
+
+\begin{lstlisting}
+#include "dsc_sdram.h"
+\end{lstlisting}
+
+
+\subsubsection{Write a packet}
+
+\begin{lstlisting}
+c_sdram <: 1;
+master
+{
+	c_sdram <: address;
+
+	for (i = 0; i < SDRAM_PACKET_NWORDS; i++)
+	{
+		c_sdram <: packet[i];
+	}
+}
+\end{lstlisting}
+
+
+\subsubsection{Read all SDRAM contents}
+
+\begin{lstlisting}
+c_sdram <: 2;
+
+for (i = 0; i < SDRAM_NWORDS; i++)
+{
+	c_sdram :> word;
+}
+\end{lstlisting}

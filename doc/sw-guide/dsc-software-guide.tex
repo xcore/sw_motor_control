@@ -1,0 +1,75 @@
+\documentclass[article]{xmosmodern}
+
+\includeonly{dsc-software-guide-pwm,dsc-software-guide-qei,dsc-software-guide-adc,dsc-software-guide-hsi,dsc-software-guide-apps,dsc-software-guide-blocks,dsc-software-guide-sdram,dsc-software-guide-display,dsc-software-guide-comms-low,dsc-software-guide-comms-high}
+
+\start
+
+\title{Motor Control Platform Software Guide}
+\version{0.13}
+\yearmonthday{2011}{02}{09}
+\author{Paul Hampson \& Corin Rathbone}
+
+\maketitle
+
+\section*{Release History}
+
+\begin{small}
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{| p{20mm} | p{12mm} | p{88mm}|}
+\hline
+\textbf{Date} & \textbf{Release} & \textbf{Comment} \\
+\hline
+2011-02-XX & 1.0 & First release \\
+\hline
+\end{tabular}
+\end{small}
+
+\clearpage
+
+\section{Introduction}
+The XMOS motor control development platform is provided with a software framework and example control loop. This document provides information relating to the structure, implementation and use of the software modules that are specific to the motor control development platform.
+
+For information on the XMOS Motor Control Development Platform hardware please see the Motor Control Platform Hardware Manual.
+
+\section{Software Modules}
+The provided framework consists of a number of modules that provide functions that combined to provide an integrated control system. The provided application utilises modules that provide the following:
+
+\begin{itemize}
+\item Pulse Width Modulation (PWM)
+\item Quadrature Encoder Interface (QEI)
+\item Analogue to Digital Converter (ADC) Interface
+\item Hall Sensor Interface
+\item SDRAM Interface
+\item Display \& Shared IO Interface
+\item Low Level Communications Interfaces (CAN and Ethernet)
+\item Application Level Communications (Control And Logging Interfaces)
+\item Computation blocks library
+\end{itemize}
+
+In contrast to a typical microcontroller, hardware interfaces that are implemented on XMOS devices are all described in software. This gives the developer the flexibility to implement or customise any interface they require. This gives designers wider options when selecting the ADC's or PWM schemes that are required for the solution that is being developed.
+
+Each of the modules is discussed in detail in the sections below.
+
+The modules listed above comprise of one or more threads. The architecture of the threads is shown in the figure \ref{fig_ThreadDiag}. 
+
+\begin{figure}[p]
+\begin{center}
+\includegraphics[angle=90,height=0.9\textheight]{images/threadDiag.png}
+\caption{Motor Control Platform Thread Diagram}
+\label{fig_ThreadDiag}
+\end{center}
+\end{figure}
+
+\include{dsc-software-guide-pwm}
+\include{dsc-software-guide-qei}
+\include{dsc-software-guide-adc}
+\include{dsc-software-guide-hsi}
+\include{dsc-software-guide-blocks}
+\include{dsc-software-guide-sdram}
+\include{dsc-software-guide-display}
+\include{dsc-software-guide-comms-low}
+\include{dsc-software-guide-comms-high}
+\include{dsc-software-guide-apps}
+
+\clearpage
+\finish
