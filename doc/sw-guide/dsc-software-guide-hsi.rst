@@ -52,6 +52,7 @@ When using the hall sensor server thread as described above, the information may
 get_hall_pos_speed_delta(...) will request and subsequently return the theta, speed and delta values respectively from the hall input server thread. The theta value is an estimated value, speed is in revolutions per minute (RPM) and delta is currently used for debugging purposes.
 
 Hall Sensor Server Implementation
++++++++++++++++++++++++++++++++++
 
 The function run_hall_speed_timed(...) provides a thread that handles hall sensor input functions, speed and angle estimations.
 

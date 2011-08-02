@@ -12,7 +12,7 @@ The particular interface that is implemented utilises three signals comprising o
 Configuration
 +++++++++++++
 
-The QEI module requires the following defines in dsc_config.h
+The QEI module requires the following defines in ``dsc_config.h``
 
 
 #define QEI_CLIENT_COUNT 2

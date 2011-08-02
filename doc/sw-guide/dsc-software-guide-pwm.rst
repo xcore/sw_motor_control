@@ -5,22 +5,21 @@ The PWM driver code is written using a `client server' model. The client functio
 
 The PWM implementation is centre synchronised. This means that the output is of the form shown in figure XYZ
 
-
   .. figure:: images/pwmFig.pdf
 
 Configuration
 +++++++++++++
 
-The PWM module has three modes of operation defined, plus a number of other options. The modes are defined in dsc_config.h that is part of the application code. 
+The PWM module has three modes of operation defined, plus a number of other options. The modes are defined in ``dsc_config.h`` that is part of the application code. 
 
 PWM Modes
 ~~~~~~~~~
 
 The PWM operation mode can be one of three of the following options:
 
-PWM_INV_MODE - This operates a three leg 180 degree inverter by ensuring that the HI and LO sides of the inverter are switched in a complementary manner
-PWM_NOINV_MODE - Simple three channel PWM that operates three channels as above without the inversion
-PWM_BLDC_MODE - Basic BLDC commutation mode operates a three leg inverter by switching the HI side and then applying PWM to the low side of the inverter to achieve simple commutation
+   * PWM_INV_MODE - This operates a three leg 180 degree inverter by ensuring that the HI and LO sides of the inverter are switched in a complementary manner
+   * PWM_NOINV_MODE - Simple three channel PWM that operates three channels as above without the inversion
+   * PWM_BLDC_MODE - Basic BLDC commutation mode operates a three leg inverter by switching the HI side and then applying PWM to the low side of the inverter to achieve simple commutation
 
 
 Dead Time
@@ -66,7 +65,7 @@ The usage for each mode is described below. The PWM server needs to be instantia
 Inverter Mode
 ~~~~~~~~~~~~~
 
-To instantiate the PWM service the function described in the listing below needs to be called for the \verb=PWM_INV_MODE= and \verb=LOCK_ADC_TO_PWM= combination.
+To instantiate the PWM service the function described in the listing below needs to be called for the PWM_INV_MODE and LOCK_ADC_TO_PWM combination.
 
 
 void do_pwm( chanend c_pwm, chanend c_adc_trig, 
@@ -173,10 +172,10 @@ Operation of the full inverter mode is the most complex, so this will be the cas
 
 We will therefore be covering the operation that is found in 
 
-module_dsc_pwm/src/dsc/pwm_svr/inv_svr/. 
+``module_dsc_pwm/src/dsc/pwm_svr/inv_svr/`` 
 
-PWM service port initialisation (pwm_service_inv.xc)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PWM service port initialisation ``pwm_service_inv.xc``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This file achieves a number of functions. The primary function is a wrapper that is called to start the PWM service running. This configures the port and then enters the main loop for the PWM service.
 
@@ -192,8 +191,8 @@ Once the ports have been configured the output will remain in the initialised st
 
 Once this information is received the main loop is entered.
 
-PWM service main loop (pwm_op_inv.S)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PWM service main loop ``pwm_op_inv.S``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The operation of the main loop is best described visually as in the flow chart shown in figure \ref{fig_PwmMainLoopFlow}. The entries in the flow chart relate directly to the labels within the main loop. 
 
@@ -237,7 +236,7 @@ The PWM client is required to do a number of functions to provide the correct da
    * Ascertain the loop mode required
    * Maintain the shared data set, including which buffer is in use and which one can be updated
 
-Taking the inverter mode as our working example (located in module_dsc_pwm/src/dsc_pwm_cli/pwm_cli_inv) the function update_pwm(...) first saves the PWM values for later use and then initialises the channel ordering array to assume a sequential order of output. 
+Taking the inverter mode as our working example (located in ``module_dsc_pwm/src/dsc_pwm_cli/pwm_cli_inv``) the function update_pwm(...) first saves the PWM values for later use and then initialises the channel ordering array to assume a sequential order of output. 
 
 Following this the calculation of the timings and output values are done for each of the channel. This is done by passing the relevant PWM value and data set references to the calculate_data_out_ref(...). This function also ascertains the type of output which can be one of three values SINGLE, DOUBLE and LONG_SINGLE.
 

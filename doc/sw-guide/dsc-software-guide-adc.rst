@@ -5,7 +5,7 @@ The analogue to digital interface currently provided is written for the LTC1408.
 
 Besides the client and server interfaces the key issue discussed in this section is the synchronisation of the ADC to the PWM and how this is achieved on the ADC side.
 
-The define LOCK_ADC_TO_PWM must be 0 or 1 for off and on respectively. This defines whether the ADC readings are triggered by the PWM so that measurements can be taken at the appropriate point in the PWM cycle.
+The preprocessor define LOCK_ADC_TO_PWM must be 0 or 1 for off and on respectively. This defines whether the ADC readings are triggered by the PWM so that measurements can be taken at the appropriate point in the PWM cycle.
 
 ADC Server Usage
 ++++++++++++++++

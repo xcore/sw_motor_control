@@ -36,11 +36,7 @@ The main processing function, receives a packet from the client and processes it
    * if the packets starts "stop" then the connection is closed.
 
 
-The files for this thread are in:
-
-control_comms_eth.xc
-control_comms_eth.h
-
+The files for this thread are in ``control_comms_eth.xc`` and ``control_comms_eth.h``
 
 do_comms_can
 ++++++++++++
@@ -65,11 +61,7 @@ The format of a transmitted CAN packet is:
    * 4 bytes - desired speed in big-endian order.
 
 
-The files for this thread are in:
-
-
-control_comms_can.xc
-control_comms_can.h
+The files for this thread are in ``control_comms_can.xc`` and ``control_comms_can.h``
 
 
 

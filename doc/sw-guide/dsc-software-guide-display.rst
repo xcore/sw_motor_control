@@ -31,12 +31,12 @@ Operation
 
 The following files are used for the display and shared IO manager.
 
-lcd.h - prototypes for LCD functions
-lcd.xc - LCD driver functions
-lcd_data.h - contains the lcd driver font map.
-lcd_logo.h - contains the XMOS logo as a unsigned char array.
-shared_io.h - header for the  main shared IO server and defines commands this thread uses.
-shared_io.xc - contains the main shared IO server routine. 
+   * ``lcd.h`` - prototypes for LCD functions
+   * ``lcd.xc`` - LCD driver functions
+   * ``lcd_data.h`` - contains the lcd driver font map.
+   * ``lcd_logo.h`` - contains the XMOS logo as a unsigned char array.
+   * ``shared_io.h`` - header for the  main shared IO server and defines commands this thread uses.
+   * ``shared_io.xc`` - contains the main shared IO server routine. 
 
 The shared IO manager that interacts with the hardware is a single thread with three channels connecting to it.
 The function is called from main with parameters passing a structure containing the appropriate ports into it.
