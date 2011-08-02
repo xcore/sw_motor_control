@@ -66,10 +66,10 @@
 #define USE_DHCP 0
 
 // Define the IP if a static one is used
-#define STATIC_IP_BYTE_0 10
-#define STATIC_IP_BYTE_1 0
-#define STATIC_IP_BYTE_2 102
-#define STATIC_IP_BYTE_3 33
+#define STATIC_IP_BYTE_0 169
+#define STATIC_IP_BYTE_1 254
+#define STATIC_IP_BYTE_2 0
+#define STATIC_IP_BYTE_3 1
 // Define the port for the control app to connect to
 #define TCP_CONTROL_PORT 9595
 

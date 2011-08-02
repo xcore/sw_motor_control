@@ -121,7 +121,7 @@ void adc_ltc1408_test( clock clk, port out SCLK, buffered out port:32 CNVST, in 
 
 void adc_ltc1408_triggered( chanend c_adc, clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA, chanend c_trig, chanend ?c_logging0, chanend ?c_logging1, chanend ?c_logging2)
 {
-	int adc_val[6];
+	int adc_val[6] ;
 	int cmd;
 	unsigned char ct;
 

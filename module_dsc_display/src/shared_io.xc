@@ -3,7 +3,7 @@
  * Version: 1v0module_dsc_display3
  * File:    shared_io.xc
  * Modified by : Srikanth
- * Last Modified on : 05-Jul-2011
+ * Last Modified on : 28-Jul-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -25,6 +25,7 @@
 #include "shared_io.h"
 #include "stdio.h"
 #include "lcd_logo.h"
+#include "print.h"
 
 void splash(REFERENCE_PARAM(lcd_interface_t, p), unsigned int port_val )
 {
@@ -38,7 +39,6 @@ void splash(REFERENCE_PARAM(lcd_interface_t, p), unsigned int port_val )
 	lcd_comm_out(p, 0xB0, port_val);		// Reset page and column addresses
 	lcd_comm_out(p, 0x10, port_val);		// column address upper 4 bits + 0x10
 	lcd_comm_out(p, 0x00, port_val);		// column address lower 4 bits + 0x00
-
 }
 
 #ifdef BLDC_BASIC
@@ -59,7 +59,7 @@ void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lc
 	lcd_ports_init(p);
 
 	/* Output the default value to the port */
-	 p.p_spi_dsa <:0;
+	p.p_core1_shared <:0;
 
 	/* Initiate the LCD*/
 	lcd_comm_out(p, 0xE2, port_val);		/* RESET */
@@ -101,7 +101,12 @@ void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lc
 
 			    		/* Calculate the strings here */
 		/* Now update the display */
-				lcd_draw_text_row( "  XMOS DSC Demo 2011\n", 0, port_val, p );
+#ifdef USE_CAN
+				lcd_draw_text_row( "  XMOS Demo 2011: CAN\n", 0, port_val, p );
+#endif
+#ifdef USE_ETH
+				lcd_draw_text_row( "  XMOS Demo 2011: ETH\n", 0, port_val, p );
+#endif
 				sprintf(my_string, "  Set Speed: %04d RPM\n", set_speed );
 				lcd_draw_text_row( my_string, 1, port_val, p );
 
@@ -247,12 +252,15 @@ void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lc
 
 #ifdef BLDC_FOC
 
-void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t, p), in port btns[] )
+void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_command,out port p_shared_rs,chanend c_eth_command)
 {
-	unsigned int time;
+	unsigned int time,  value;
 	unsigned int port_val = 0b0010;		// Default port value on device boot
 	unsigned int speed = 0, set_speed = INITIAL_SET_SPEED;
-	unsigned int btn_en[4] = {0,0,0,0};
+	unsigned int btn_en = 0;
+	unsigned  can_command,eth_command;
+
+//	int pwm[3] = {0,0,0};
 
 	char my_string[50];
 	timer t;
@@ -261,7 +269,7 @@ void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t
 	lcd_ports_init(p);
 
 	// Output the default value to the port
-	p.p_core1_shared <: port_val;
+	p.p_core1_shared <: 0;
 
 	// Initiate the LCD
 	lcd_comm_out(p, 0xE2, port_val);		// RESET
@@ -290,88 +298,119 @@ void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t
 	{
 		select
 		{
-			// Timer event at 10Hz
+	// Timer event at 10Hz
 			case t when timerafter(time + 10000000) :> time:
 
-			// Get actual speed
+	// Get actual speed
 				c_speed <: 2;
 				c_speed :> speed;
 				c_speed :> set_speed;
 
-			// Calculate the strings here
+	// Calculate the strings here
 
-			// Now update the display
+	// Now update the display
 				lcd_draw_text_row( "  XMOS DSC Demo 2011\n", 0, port_val, p );
-
+#ifdef USE_CAN
+				lcd_draw_text_row( "  CAN control\n", 1, port_val, p );
+#endif
+#ifdef USE_ETH
+				lcd_draw_text_row( "  ETHERNET control\n", 1, port_val, p );
+#endif
 				sprintf(my_string, "  Set Speed: %04d RPM\n", set_speed );
-				lcd_draw_text_row( my_string, 1, port_val, p );
-
-				sprintf(my_string, "  Speed:     %04d RPM\n", speed );
 				lcd_draw_text_row( my_string, 2, port_val, p );
 
-			// Switch debouncing - run through and decrement their counters.
-				for  ( int i = 0; i < 2; i ++ )
+				sprintf(my_string, "  Speed:     %04d RPM\n", speed );
+				lcd_draw_text_row( my_string, 3, port_val, p );
+
+	// Switch debouncing - run through and decrement their counters
+				for  ( int i = 0; i < 2; i++ )
 				{
-					if ( btn_en[i] != 0)
+					if ( btn_en != 0)
+						btn_en--;
+				}
+			break;
+        // Enable CAN PHY
+			case c_can_command :> can_command :
+
+				switch (can_command)
+				{
+				 case CAN_RS_LO :
+						port_val &= 0b1110;
+						p_shared_rs<:port_val;
+						break;
+
+				default :
+					   // ERROR
+						break;
+				 }
+
+						break;
+        // Enable ETHERNET PHY
+			case c_eth_command :> eth_command :
+
+				switch (eth_command)
+				{
+				 case 1:
+						port_val|= 0b0010;
+						p_shared_rs<:port_val;
+						break;
+
+				default :
+					   // ERROR
+						break;
+				 }
+
+						break;
+
+			case !btn_en => btns :> value:
+				value = (~value & 0x0000000F);
+				if(value == 1)
+				{
+	// Increase the speed, by the increment
+					set_speed += PWM_INC_DEC_VAL;
+
+	// Limit the speed to the maximum value
+					if (set_speed > MAX_RPM)
 					{
-						btn_en[i]--;
+						set_speed = MAX_RPM;
 					}
+
+	// Update the speed control loop
+					c_speed <: CMD_SET_SPEED;
+					c_speed <: set_speed;
+
+	// Increment the debouncer
+					btn_en = 12;
 				}
-
-				break;
-
-			// Button A is up
-			case !btn_en[0] => btns[0] when pinseq(0) :> void:
-
-				// Increase the speed, by the increment
-				set_speed += PWM_INC_DEC_VAL;
-
-				// Limit the speed to the maximum value
-				if (set_speed > MAX_RPM)
+				if(value == 2)
 				{
-					set_speed = MAX_RPM;
+					set_speed -= PWM_INC_DEC_VAL;
+
+	// Limit the speed to the minimum value
+					if (set_speed < MIN_RPM)
+					{
+						set_speed = MIN_RPM;
+					}
+
+	// Update the speed control loop
+					c_speed <: CMD_SET_SPEED;
+					c_speed <: set_speed;
+
+	// Increment the debouncer
+					btn_en = 12;
 				}
-
-				// Update the speed control loop
-				c_speed <: CMD_SET_SPEED;
-				c_speed <: set_speed;
-
-				// Increment the debouncer
-				btn_en[0] = 4;
-				break;
-
-			// Button B is down
-			case !btn_en[1] => btns[1] when pinseq(0) :> void:
-
-				set_speed -= PWM_INC_DEC_VAL;
-
-				// Limit the speed to the minimum value
-				if (set_speed < MIN_RPM)
+				if(value == 8)
 				{
-					set_speed = MIN_RPM;
+	// Increment the debouncer
+				btn_en = 12;
 				}
-
-				// Update the speed control loop
-				c_speed <: CMD_SET_SPEED;
-				c_speed <: set_speed;
-
-				// Increment the debouncer
-				btn_en[1] = 4;
-				break;
-
-			// Button C
-			case !btn_en[2] => btns[2] when pinseq(0) :> void:
-
-				// Increment the debouncer
-				btn_en[2] = 4;
-				break;
-
-			// Button D
-			case !btn_en[3] => btns[3] when pinseq(0) :> void:
-
-				// Increment the debouncer
-				btn_en[3] = 4;
-				break;
+	// Button D
+				if(value == 4)
+				{
+	// Increment the debouncer
+				btn_en = 12;
+				}
+			break;
 		}
 	}
 }

@@ -4,7 +4,7 @@
  * Build:   2a548667d36ce36c64c58f05b5390ec71cb253fa
  * File:    adc_client.xc
  * Modified by : Srikanth
- * Last Modified on : 31-May-2011
+ * Last Modified on : 26-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -31,20 +31,23 @@ void do_adc_calibration( chanend c_adc )
 	for (int i = 0; i < ADC_CALIB_POINTS; i++)
 	{
 		/* get ADC reading */
-		c_adc <: 3;
+		c_adc <: 0;
 		slave
 		{
 			c_adc :> a;
 			c_adc :> b;
-			c_adc :> c;
 		}
 		Ia_calib += a;
 		Ib_calib += b;
-		Ic_calib += c;
 	}
-	    Ia_calib = (Ia_calib >> 6);
-		Ib_calib = (Ib_calib >> 6);
-		Ic_calib = (Ic_calib >> 6);
+
+	/* convert to 14 bit from 12 bit */
+	Ia_calib = Ia_calib << 2;
+	Ib_calib = Ib_calib << 2;
+
+	/* calculate average */
+	Ia_calib = (Ia_calib >> 6);
+	Ib_calib = (Ib_calib >> 6);
 }
 
 {unsigned, unsigned, unsigned} get_adc_vals_raw( chanend c_adc )
@@ -57,8 +60,9 @@ void do_adc_calibration( chanend c_adc )
 	{
 		c_adc :> a;
 		c_adc :> b;
-		c_adc :> c;
 	}
+
+	c = -(a + b);
 
 	return {a,b,c};
 }
@@ -69,19 +73,21 @@ void do_adc_calibration( chanend c_adc )
 	int Ia, Ib, Ic;
 
 	/* request and then receive adc data */
-	c_adc <: 3;
+	c_adc <: 0;
 
 	slave
 	{
 		c_adc :> a;
 		c_adc :> b;
-		c_adc :> c;
 	}
-	/* apply calibration offset */
+
+	/* convert to 14 bit from 12 bit */
+	a = a << 2;
+	b = b << 2;
 
 	Ia = a - Ia_calib;
   	Ib = b - Ib_calib;
-	Ic = c - Ic_calib;
+  	Ic = -( Ia + Ib);
 
 	return {Ia, Ib, Ic};
 }

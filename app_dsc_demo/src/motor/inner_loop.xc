@@ -37,6 +37,7 @@
 #define MOTOR_I 6
 #define MOTOR_D 0
 #define SEC 100000000
+#define MSec 100000
 #define Kp 5000
 #define Ki 100
 #define Kd 40
@@ -59,7 +60,7 @@ const unsigned bldc_new_seq[3] = {0,1,2};
  **/
 
 #pragma unsafe arrays
-void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, chanend c_wd, port in p_hall )
+void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, chanend c_wd, port in p_hall,chanend c_can_eth_shared )
 {
 	/* Currents from ADC */
 	int Ia_in = 0, Ib_in = 0, Ic_in = 0;
@@ -88,12 +89,13 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	int id_set_point = 0;
 
 	/* Open loop variables running in Hall mode */
-	unsigned high_chan = 0, new_chan = 0, hall_state = 0, pin_state = 0, pwm_val = 300;
+	unsigned high_chan = 0, new_chan = 0, hall_state = 0, pin_state = 0, pwm_val = 500;
 	unsigned bldc_hall_mode = 1, counter=0;
 
 	/* Position and Speed */
-	unsigned theta = 0, speed = 0, set_speed = 2000;
+	unsigned theta = 0, speed = 0, set_speed = 1000;
 	unsigned cmm_speed, ts = 0;
+	unsigned comm_shared;
 
 	/* Speed PID structure */
 	pid_data pid;
@@ -108,15 +110,15 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	t :> ts;
 
 	/* Zero pwm */
-		pwm[0] = 0;
-		pwm[1] = 0;
-		pwm[2] = 0;
+	pwm[0] = 0;
+	pwm[1] = 0;
+	pwm[2] = 0;
 
 	/* Update PWM */
 	update_pwm( c_pwm, pwm );
 
 	/* allow the WD to get going */
-	t when timerafter(ts+ SEC) :> ts;
+	t when timerafter(ts+10*SEC) :> ts;
 	c_wd <: WD_CMD_START;
 
 	/* PID control initialisation... */
@@ -149,10 +151,36 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 			}
 
 			break;
+     //This case responds to CAN or ETHERNET commands
+		case c_can_eth_shared :>comm_shared:
+			if(comm_shared == CMD_GET_VALS)
+			{
+				c_can_eth_shared <: speed;
+				c_can_eth_shared <: Ia_in;
+				c_can_eth_shared <: Ib_in;
+			}
+			else if(comm_shared == CMD_GET_VALS2)
+			{
+				c_can_eth_shared <: Ic_in;
+				c_can_eth_shared <: iq_set_point;
+				c_can_eth_shared <: id_out;
+				c_can_eth_shared <: iq_out;
+			}
 
+			else if (comm_shared == CMD_SET_SPEED)
+			{
+				c_can_eth_shared :> set_speed;
+			}
+			else
+			{
+				/* Ignore invalid command */
+			}
+
+			break;
 		/* Initially the below case runs in open loop with the hall sensor responses and then reverts
 		 * back to main FOC algorithem */
 		default:
+			/* Initial startup code using HALL mode */
 			if (bldc_hall_mode==1)
 			{
 				/* Change in the hall sensor states detected */
@@ -199,6 +227,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 			}
 			else
 			{
+				/* ---	FOC ALGORITHM	--- */
 				/* Get ADC readings */
 				{Ia_in, Ib_in, Ic_in} = get_adc_vals_calibrated_int16( c_adc );
 

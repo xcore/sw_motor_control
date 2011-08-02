@@ -36,8 +36,9 @@
 	#define CMD_SET_SPEED2	6
 	#define CMD_DIR2        7
 	#define STEP_SPEED 		50
-	#define _30_Msec		3000000
-	#define MSec 100000
+	#define _30_Msec		2000000
+	#define _Msec_2_		50000
+	#define MSec 			100000
 	#define CAN_RS_LO		2
 
 	#ifdef __XC__
@@ -46,7 +47,7 @@
 			out port p_lcd_sclk; // buffered port:8
 			out port p_lcd_mosi; // buffered port:8
 			out port p_lcd_cs_n;
-			out port p_spi_dsa;
+			out port p_core1_shared;
 		} lcd_interface_t;
 
 		void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_reset,out port p_shared_rs,chanend c_eth_command );
@@ -57,15 +58,13 @@
 
 	#define ETH_RST_HI 		0
 	#define ETH_RST_LO		1
-	#define CAN_TERM_HI		1
-	#define CAN_TERM_LO		2
-	#define CAN_RST_HI		4
-	#define CAN_RST_LO		8
+	#define CAN_RS_LO		2
 	#define	CMD_DIR			10
 
 	#define CMD_GET_VALS	1
 	#define CMD_GET_IQ		2
 	#define CMD_SET_SPEED	3
+    #define CMD_GET_VALS2	4
 
 	#ifdef __XC__
 		typedef struct lcd_interface_t
@@ -79,7 +78,7 @@
 			out port p_core1_shared;
 		} lcd_interface_t;
 
-		void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t, p), in port btns[] );
+		void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_command,out port p_shared_rs,chanend c_eth_command);
 	#endif
 #endif
 

@@ -1,11 +1,11 @@
 # Custom Stuff
 BUILD_FLAGS=
-XCC_FLAGS= -fsubword-select -Wall -O3 -g -report -DFAULHABER_MOTOR
+XCC_FLAGS= -fsubword-select -Wall -O3 -g -report
 
 APP_NAME=dsc_foc_demo
 
 # Standard stuff below here...
-TARGET = XP-DSC-BLDC
+TARGET = XS1-L2A-QF124
 BASE_DIR = .
 
 DSC_BASIC_BLDC_DIRS = src src/ethernet src/motor src/utilities

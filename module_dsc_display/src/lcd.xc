@@ -3,6 +3,8 @@
  * Version: 1v0module_dsc_display0
  * Build:   1a950f97dabd166488e2b4ec0bb1fd750b532de8
  * File:    lcd.xc
+ * Modified by : Srikanth
+ * Last Modified on : 05-Jul-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -68,7 +70,26 @@ void itoa(int n, char s[])
 // Initiate the LCD ports
 void lcd_ports_init(REFERENCE_PARAM(lcd_interface_t, p))
 {
-	/* stub */
+	p.p_lcd_cs_n <: 1;
+
+	p.p_lcd_sclk <: 1;
+	sync(p.p_lcd_sclk);
+
+	p.p_lcd_sclk <: 0;
+	sync(p.p_lcd_sclk);
+
+	p.p_lcd_sclk <: 1;
+	sync(p.p_lcd_sclk);
+
+	p.p_lcd_sclk <: 0;
+	sync(p.p_lcd_sclk);
+
+	p.p_lcd_sclk <: 1;
+	sync(p.p_lcd_sclk);
+
+	p.p_lcd_sclk <: 0;
+	sync(p.p_lcd_sclk);
+
 }
 
 
@@ -85,13 +106,13 @@ void lcd_byte_out(REFERENCE_PARAM(lcd_interface_t, p), unsigned char c, int is_d
 	{
 		// address
 		port_val |= 0b1000;
-		p.p_spi_dsa <:1;
+		p.p_core1_shared <: 1;
 	}
 	else
 	{
 		// command
 		port_val &= 0b0111;
-		p.p_spi_dsa<:0;
+		p.p_core1_shared <: 0;
 	}
 
 	// Loop through all 8 bits

@@ -179,9 +179,9 @@ static unsigned update_pos( unsigned cur_pos, int delta )
 	unsigned A,B,I;
 
 	/* extract values */
-	A = 0x1 & (val >> 2);
+	A = 0x1 & (val >> 0);
 	B = 0x1 & (val >> 1);
-	I = 0x1 & (val >> 0);
+	I = 0x1 & (val >> 2);
 
 	return {A,B,I};
 }
@@ -193,16 +193,16 @@ static unsigned update_pos( unsigned cur_pos, int delta )
 	pQEI :> tmp;
 
 	/* extract values */
-	A = 0x1 & (tmp >> 2);
+	A = 0x1 & (tmp >> 0);
 	B = 0x1 & (tmp >> 1);
-	I = 0x1 & (tmp >> 0);
+	I = 0x1 & (tmp >> 2);
 
 	return {A,B,I};
 }
 
 static select do_state_0( in port pQEI, unsigned &pos, unsigned &pos_valid, unsigned &state, unsigned &CW, unsigned &next_state, unsigned &tmp, unsigned &A, unsigned &B, unsigned &I, timer t, unsigned &ts1, unsigned &ts2 )
 {
-	case pQEI when pinsneq(0b100) :> tmp:
+	case pQEI when pinsneq(0b001) :> tmp:
 		{A, B, I} = calc_pin_vals( tmp );
 		next_state = calc_state( A, B, I );
 		if (next_state == 1)
@@ -227,7 +227,7 @@ static select do_state_0( in port pQEI, unsigned &pos, unsigned &pos_valid, unsi
 
 static select do_state_1( in port pQEI, unsigned &pos, unsigned &pos_valid, unsigned &state, unsigned &CW, unsigned &next_state, unsigned &tmp, unsigned &A, unsigned &B, unsigned &I, timer t, unsigned &ts1, unsigned &ts2 )
 {
-	case pQEI when pinsneq(0b001) :> tmp:
+	case pQEI when pinsneq(0b100) :> tmp:
 		{A, B, I} = calc_pin_vals( tmp );
 		next_state = calc_state( A, B, I );
 		if (next_state == 0)
@@ -263,7 +263,7 @@ static select do_state_1( in port pQEI, unsigned &pos, unsigned &pos_valid, unsi
 
 static select do_state_2( in port pQEI, unsigned &pos, unsigned &pos_valid, unsigned &state, unsigned &CW, unsigned &next_state, unsigned &tmp, unsigned &A, unsigned &B, unsigned &I, timer t, unsigned &ts1, unsigned &ts2 )
 {
-	case pQEI when pinsneq(0b011) :> tmp:
+	case pQEI when pinsneq(0b110) :> tmp:
 		{A, B, I} = calc_pin_vals( tmp );
 		next_state = calc_state( A, B, I );
 

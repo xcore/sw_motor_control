@@ -16,9 +16,11 @@
  * below. The modifications to the code are still covered by the 
  * copyright notice above.
  *
- **/                                   
+ **/
+
 #ifndef _CONTROL_COMMS_CAN_H_
 #define _CONTROL_COMMS_CAN_H_
+#include <dsc_config.h>
 
 /**
  *  \brief This is a thread which performs the higher level control for the CAN interface.
@@ -29,7 +31,13 @@
  *  \param rxChan Connect to the rxChan port on the canPhyRxTx
  *  \param txChan Connect to the txChan port on the canPhyRxTx
  */
+#ifdef BLDC_BASIC
 void do_comms_can( chanend c_commands_can, chanend rxChan, chanend txChan, chanend c_control_can,chanend c_commands_can2);
+#endif  //BLDC_BASIC
 
+
+#ifdef BLDC_FOC
+void do_comms_can( chanend c_commands_can, chanend rxChan, chanend txChan, chanend c_control_can);
+#endif  //BLDC_FOC
 #endif /* _CONTROL_COMMS_CAN_H_ */
 

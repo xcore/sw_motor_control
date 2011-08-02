@@ -39,11 +39,11 @@ void do_wd(chanend c_wd, out port wd)
 				switch(cmd)
 				{
 					case WD_CMD_START: // produce a rising edge on the WD_EN
-						shared_out &= ~0x4;
+						shared_out &= ~0x1;
 						wd <: shared_out; // go low
 						t :> ts2;
 						t when timerafter(ts2+10000) :> ts2;
-						shared_out |= 0x4;
+						shared_out |= 0x1;
 						wd <: shared_out; // go high
 						break;
 	

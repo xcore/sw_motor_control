@@ -3,8 +3,8 @@
  * Version: 1v0alpha1
  * Build:   1887e6b30ecc00395f02fb3a27027fd6fcf3a300
  * File:    dsc_config.h
- * Modified by : Srikanth
- * Last Modified on : 26-May-2011
+ * Modified by : A Srikanth
+ * Last Modified on : 05-Jul-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -50,14 +50,14 @@
 #define LOGGING_CHANS 6
 
 // Define where everything is
-#define PROCESSING_CORE 0
-#define INTERFACE_CORE 1
-#define MOTOR_CORE 2
+//#define PROCESSING_CORE 0
+#define INTERFACE_CORE 0
+#define MOTOR_CORE 1
 
 // Define the ethernet OTP core for getting the mac address, this should be the same as the
 // core that the ethernet thread runs on, unless you give the ethernet thread the mac address
 // in some other way
-#define ETHERNET_OTP_CORE 1
+#define ETHERNET_OTP_CORE 0
 
 // Check to prevent error where the OTP is on a different core
 #if ETHERNET_OTP_CORE != INTERFACE_CORE
@@ -68,10 +68,10 @@
 #define USE_DHCP 0
 
 // Define the IP if a static one is used
-#define STATIC_IP_BYTE_0 10
-#define STATIC_IP_BYTE_1 0
-#define STATIC_IP_BYTE_2 102
-#define STATIC_IP_BYTE_3 33
+#define STATIC_IP_BYTE_0 169
+#define STATIC_IP_BYTE_1 254
+#define STATIC_IP_BYTE_2 0
+#define STATIC_IP_BYTE_3 1
 
 // Define the port for the control app to connect to
 #define TCP_CONTROL_PORT 9595
@@ -86,12 +86,12 @@
 //#define USE_CAN
 
 // Define this to enable the Ethernet interface
-//#define USE_ETH
+#define USE_ETH
 
 // Check that both interfaces are not defined
-//#if defined(USE_CAN) && defined(USE_ETH)
-//	#error Both CAN and Ethernet are enabled.
-//#endif
+#if defined(USE_CAN) && defined(USE_ETH)
+	#error Both CAN and Ethernet are enabled.
+#endif
 
 // Define this to use the motor
 #define USE_MOTOR

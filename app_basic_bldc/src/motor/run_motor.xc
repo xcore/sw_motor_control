@@ -58,8 +58,8 @@ void run_motor1 (chanend c_wd, chanend c_pwm, chanend c_control, port in p_hall,
 	/* 32 bit timer declaration */
 	timer t;
 	t :> ts;
-	/* delay function for 1 sec */
-	t when timerafter(ts+ 10*SEC ) :> ts;
+	/* delay function for 10 sec */
+	t when timerafter(ts+ (10 *SEC)) :> ts;
 	/* allow the WD to get going and enable motor */
 	c_wd <: WD_CMD_START;
 
@@ -179,8 +179,8 @@ void run_motor2 ( chanend c_pwm2, chanend c_control2, port in p_hall2, port out 
 	/* 32 bit timer declaration */
 	timer t;
 	t :> ts;
-	/* delay function for 1 sec */
-	t when timerafter(ts+ 10*SEC ) :> ts;
+	/* delay function for 10 sec */
+	t when timerafter(ts+ (10 *SEC)) :> ts;
 
 	/* main loop */
 	while (1)

@@ -68,7 +68,7 @@ on stdcore[MOTOR_CORE]: port in p_hall2 = PORT_M2_HALLSENSOR;
 on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_hi2[3] = {PORT_M2_HI_A, PORT_M2_HI_B, PORT_M2_HI_C};
 on stdcore[MOTOR_CORE]: out port p_motor_lo2[3] = {PORT_M2_LO_A, PORT_M2_LO_B, PORT_M2_LO_C};
 on stdcore[MOTOR_CORE]: clock pwm_clk2 = XS1_CLKBLK_4;
-
+//CAN and ETH reset port
 on stdcore[INTERFACE_CORE] : out port p_shared_rs=PORT_SHARED_RS;
 
 // CAN
@@ -80,9 +80,9 @@ on stdcore[INTERFACE_CORE] : port p_can_tx = PORT_CAN_TX;
 
 // OTP for MAC address
 #ifdef USE_ETH
-on stdcore[INTERFACE_CORE]: port otp_data = XS1_PORT_32B;
-on stdcore[INTERFACE_CORE]: out port otp_addr = XS1_PORT_16C;
-on stdcore[INTERFACE_CORE]: port otp_ctrl = XS1_PORT_16D;
+on stdcore[INTERFACE_CORE]: port otp_data = XS1_PORT_32A;
+on stdcore[INTERFACE_CORE]: out port otp_addr = XS1_PORT_16A;
+on stdcore[INTERFACE_CORE]: port otp_ctrl = XS1_PORT_16B;
 // Ethernet Ports
 on stdcore[INTERFACE_CORE]: clock clk_mii_ref = XS1_CLKBLK_REF;
 on stdcore[INTERFACE_CORE]: clock clk_smi = XS1_CLKBLK_3;

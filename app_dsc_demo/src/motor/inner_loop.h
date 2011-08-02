@@ -23,6 +23,6 @@
 #define _INNER_LOOP_H_
 
 /* run the motor inner loop */
-void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, chanend c_wd, port in p_hall );
+void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, chanend c_wd, port in p_hall,chanend c_can_eth_shared );
 
 #endif /* _INNER_LOOP_H_ */

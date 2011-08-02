@@ -19,7 +19,13 @@
  **/                                   
 #ifndef _CONTROL_COMMS_ETH_H_
 #define _CONTROL_COMMS_ETH_H_
+#include <dsc_config.h>
 
+#ifdef BLDC_BASIC
 void do_comms_eth( chanend c_commands_eth,chanend c_commands_eth2, chanend tcp_svr );
+#endif
 
+#ifdef BLDC_FOC
+void do_comms_eth( chanend c_commands_eth, chanend tcp_svr );
+#endif
 #endif /* _CONTROL_COMMS_ETH_H_ */
