@@ -20,7 +20,12 @@
 #ifndef HALL_CLIENT_H_
 #define HALL_CLIENT_H_
 
-/* get position, speed and delta */
+/** \brief Get position, speed and delta from a hall server
+ *
+ *  The client library function for a hall sensor server
+ *
+ *  \param c_hall the channel for communicating with the hall server
+ */
 {unsigned, unsigned, unsigned} get_hall_pos_speed_delta( chanend c_hall );
 
 #endif /* HALL_CLIENT_H_ */

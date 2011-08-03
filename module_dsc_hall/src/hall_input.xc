@@ -57,18 +57,6 @@ select do_hall_select( unsigned &hall_state, unsigned &cur_pin_state, port in p_
 	break;
 }
 
-void do_hall_test( port in p_hall )
-{
-	unsigned cur_pin_state = 0;
-
-	while (1)
-	{
-		p_hall when pinsneq(cur_pin_state) :> cur_pin_state;
-		printhexln(cur_pin_state & 0b111);
-	}
-}
-
-
 void run_hall_speed_timed( chanend c_hall, chanend c_speed, port in p_hall, chanend ?c_logging_0, chanend ?c_logging_1  )
 {
 	timer t;

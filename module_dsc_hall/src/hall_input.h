@@ -20,20 +20,72 @@
 #ifndef _HALL_INPUT_H_
 #define _HALL_INPUT_H_
 
-	#include <xs1.h>
+#include <xs1.h>
 
-	#define HALL_INV	99
+// Indicates an invalid hall state
+#define HALL_INV	99
 
-	// Takes a 4 bit port, H1 on the MSB
-	void run_hall( chanend c_hall, port in p_hall );
+/** \brief A basic hall encoder server
+ *
+ *  This implements the basic hall sensor server
+ *
+ *  \param c_hall the control channel for reading hall position
+ *  \param p_hall the port for reading the hall sensor data
+ */
+void run_hall( chanend c_hall, port in p_hall );
 
-	// same as above, but some variations that are used for experimentaiton
-	void run_hall_speed( chanend c_hall, chanend c_speed, port in p_hall );
-	void run_hall_speed_timed_avg( chanend c_hall, chanend c_speed, port in p_hall );
-	void run_hall_speed_timed( chanend c_hall, chanend c_speed, port in p_hall, chanend ?c_logging_0, chanend ?c_logging_1 );
-	void do_hall( unsigned &hall_state, unsigned &cur_pin_state, port in p_hall );
-	select do_hall_select( unsigned &hall_state, unsigned &cur_pin_state, port in p_hall );
-	void do_hall_test( port in p_hall );
+/** \brief A hall encoder server that also calculates motor speed
+ *
+ *  This implements the hall sensor server
+ *
+ *  \param c_hall the control channel for reading hall position
+ *  \param c_speed the control channel for reading the rotor speed
+ *  \param p_hall the port for reading the hall sensor data
+ */
+void run_hall_speed( chanend c_hall, chanend c_speed, port in p_hall );
+
+/** \brief A hall encoder server that also calculates motor speed
+ *
+ *  This implements the hall sensor server, where the speed is
+ *  calculated using a timed average of many values.
+ *
+ *  \param c_hall the control channel for reading hall position
+ *  \param c_speed the control channel for reading the rotor speed
+ *  \param p_hall the port for reading the hall sensor data
+ */
+void run_hall_speed_timed_avg( chanend c_hall, chanend c_speed, port in p_hall );
+
+/** \brief A hall encoder server that also calculates motor speed
+ *
+ *  This implements the hall sensor server, where the speed is
+ *  calculated using a timed average of many values.
+ *
+ *  \param c_hall the control channel for reading hall position
+ *  \param c_speed the control channel for reading the rotor speed
+ *  \param p_hall the port for reading the hall sensor data
+ *  \param c_logging_0 an optional channel for logging the hall data on port 0
+ *  \param c_logging_1 an optional channel for logging the hall data on port 1
+ */
+void run_hall_speed_timed( chanend c_hall, chanend c_speed, port in p_hall, chanend ?c_logging_0, chanend ?c_logging_1 );
+
+/** \brief A blocking read of the hall port
+ *
+ *   \param hall_state the output hall state
+ *   \param cur_pin_state the last value read from the hall encoder port
+ *   \param p_hall the hall port
+ */
+void do_hall( unsigned &hall_state, unsigned &cur_pin_state, port in p_hall );
+
+/** \brief A selectable read of the hall pins
+ *
+ *   This selectable function becomes ready when the hall pins change state
+ *
+ *   \param hall_state the output hall state
+ *   \param cur_pin_state the last value read from the hall encoder port
+ *   \param p_hall the hall port
+ */
+select do_hall_select( unsigned &hall_state, unsigned &cur_pin_state, port in p_hall );
+
 
 #endif /* _HALL_INPUT_H_ */
 
