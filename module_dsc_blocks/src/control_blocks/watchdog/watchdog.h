@@ -22,4 +22,17 @@
 #define WD_CMD_TICK			3
 #define WD_CMD_START		4
 
+/** \brief Run the watchdog timer server
+ *
+ * The watchdog timer needs a constant stream of pulses to prevent it
+ * from shutting down the motor.  This is a thread server which implements
+ * the watchdog timer output.
+ *
+ * The watchdog control port should have two bits attached to the watchdog
+ * circuitry. Bit zero will get a rising edge whenever the watchdog is to
+ * be reset, and bit one will have the pulse train.
+ *
+ * \param c_wd the control channel for controlling the watchdog
+ * \param wd the control port for the watchdog device
+ */
 void do_wd(chanend c_wd, out port wd);

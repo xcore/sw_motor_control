@@ -24,8 +24,22 @@
 
 extern int sine_table[];
 
+/** \brief Look up the fixed point sine value
+ *
+ * This looks up the sine of a value. The value is the index into the
+ * sine table, rather than a particular angualar measurement.
+ *
+ * \brief deg the index of the sine value to look up
+ */
 int sine( unsigned deg );
 
+/** \brief Look up the fixed point cosine value
+ *
+ * This looks up the cosine of a value. The value is the index into the
+ * sine table, rather than a particular angualar measurement.
+ *
+ * \brief deg the index of the cosine value to look up
+ */
 int cosine( unsigned deg );
 
 #endif /*__SINE_LOOKUP_H__*/
