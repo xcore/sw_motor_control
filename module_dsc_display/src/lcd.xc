@@ -94,7 +94,7 @@ void lcd_ports_init(REFERENCE_PARAM(lcd_interface_t, p))
 
 
 // Send a byte out to the LCD
-void lcd_byte_out(REFERENCE_PARAM(lcd_interface_t, p), unsigned char c, int is_data, unsigned int port_val)
+void lcd_byte_out(REFERENCE_PARAM(lcd_interface_t, p), unsigned char c, int is_data)
 {
 	unsigned int i;
 	unsigned int data = (unsigned int) c;
@@ -105,13 +105,11 @@ void lcd_byte_out(REFERENCE_PARAM(lcd_interface_t, p), unsigned char c, int is_d
 	if (is_data)
 	{
 		// address
-		port_val |= 0b1000;
 		p.p_core1_shared <: 1;
 	}
 	else
 	{
 		// command
-		port_val &= 0b0111;
 		p.p_core1_shared <: 0;
 	}
 
@@ -139,81 +137,81 @@ void lcd_byte_out(REFERENCE_PARAM(lcd_interface_t, p), unsigned char c, int is_d
 
 
 // Clear the display
-void lcd_clear( unsigned int port_val, REFERENCE_PARAM(lcd_interface_t, p) )
+void lcd_clear( REFERENCE_PARAM(lcd_interface_t, p) )
 {
 	unsigned int i, j, n = 0;
 	unsigned char page = 0xB0;						// Page Address + 0xB0
 
-	lcd_comm_out(p, 0xAE, port_val);				// Display OFF
-	lcd_comm_out(p, 0x40, port_val);				// Display start address + 0x40
-	lcd_comm_out(p, 0xA7, port_val);				// Invert
+	lcd_comm_out(p, 0xAE);				// Display OFF
+	lcd_comm_out(p, 0x40);				// Display start address + 0x40
+	lcd_comm_out(p, 0xA7);				// Invert
 
 #pragma loop unroll
 #pragma unsafe arrays
 	for (i=0; i < 4; i++)							// 32 pixel display / 8 pixels per page = 4 pages
 	{
-		lcd_comm_out(p, page, port_val);			// send page address
-		lcd_comm_out(p, 0x10, port_val);			// column address upper 4 bits + 0x10
-		lcd_comm_out(p, 0x00, port_val);			// column address lower 4 bits + 0x00
+		lcd_comm_out(p, page);			// send page address
+		lcd_comm_out(p, 0x10);			// column address upper 4 bits + 0x10
+		lcd_comm_out(p, 0x00);			// column address lower 4 bits + 0x00
 
 		for (j=0; j < 128; j++)						// 128 columns wide
 		{
 			// Send the blank data
-			lcd_data_out(p, 0x00, port_val);
+			lcd_data_out(p, 0x00);
 			n++;									// point to next picture data
 		}
 
 		page++;										// after 128 columns, go to next page
 	}
 
-	lcd_comm_out(p, 0xAF, port_val);				// Display ON
+	lcd_comm_out(p, 0xAF);				// Display ON
 }
 
 
 // Draw an image to the display
-void lcd_draw_image( unsigned char image[], unsigned int port_val, REFERENCE_PARAM(lcd_interface_t, p) )
+void lcd_draw_image( unsigned char image[], REFERENCE_PARAM(lcd_interface_t, p) )
 {
 	unsigned int i, j, n = 0;
 	unsigned char page = 0xB0;						// Page Address + 0xB0
 
-	lcd_comm_out(p, 0xAE, port_val);				// Display OFF
-	lcd_comm_out(p, 0x40, port_val);				// Display start address + 0x40
-	lcd_comm_out(p, 0xA7, port_val);				// Invert
+	lcd_comm_out(p, 0xAE);				// Display OFF
+	lcd_comm_out(p, 0x40);				// Display start address + 0x40
+	lcd_comm_out(p, 0xA7);				// Invert
 
 #pragma loop unroll
 #pragma unsafe arrays
 	for (i=0; i < 4; i++)							// 32 pixel display / 8 pixels per page = 4 pages
 	{
-		lcd_comm_out(p, page, port_val);			// send page address
-		lcd_comm_out(p, 0x10, port_val);			// column address upper 4 bits + 0x10
-		lcd_comm_out(p, 0x00, port_val);			// column address lower 4 bits + 0x00
+		lcd_comm_out(p, page);			// send page address
+		lcd_comm_out(p, 0x10);			// column address upper 4 bits + 0x10
+		lcd_comm_out(p, 0x00);			// column address lower 4 bits + 0x00
 
 		for (j=0; j < 128; j++)						// 128 columns wide
 		{
-			lcd_data_out(p, image[n], port_val);	// send picture data
+			lcd_data_out(p, image[n]);	// send picture data
 			n++;									// point to next picture data
 		}
 
 		page++;										// after 128 columns, go to next page
 	}
 
-	lcd_comm_out(p, 0xAF, port_val);				// Display ON
+	lcd_comm_out(p, 0xAF);				// Display ON
 }
 
 
 // Draw a row of text to the display
-void lcd_draw_text_row( char string[], int lcd_row, unsigned int port_val, REFERENCE_PARAM(lcd_interface_t, p) )
+void lcd_draw_text_row( char string[], int lcd_row, REFERENCE_PARAM(lcd_interface_t, p) )
 {
 	unsigned int i = 0, offset, col_pos = 0;
 
 	unsigned char page = 0xB0 + lcd_row;		// Page Address + 0xB0 + row
 
-	lcd_comm_out(p, 0xAE, port_val);			// Display OFF
-	lcd_comm_out(p, 0x40, port_val);			// Display start address + 0x40
-	lcd_comm_out(p, 0xA6, port_val);			// Non invert
-	lcd_comm_out(p, page, port_val);			// Update page address
-	lcd_comm_out(p, 0x10, port_val);			// column address upper 4 bits + 0x10
-	lcd_comm_out(p, 0x00, port_val);			// column address lower 4 bits + 0x00
+	lcd_comm_out(p, 0xAE);			// Display OFF
+	lcd_comm_out(p, 0x40);			// Display start address + 0x40
+	lcd_comm_out(p, 0xA6);			// Non invert
+	lcd_comm_out(p, page);			// Update page address
+	lcd_comm_out(p, 0x10);			// column address upper 4 bits + 0x10
+	lcd_comm_out(p, 0x00);			// column address lower 4 bits + 0x00
 
 	// Loop through all the characters
 	while (1)
@@ -236,12 +234,12 @@ void lcd_draw_text_row( char string[], int lcd_row, unsigned int port_val, REFER
 		offset = (string[i] - 32) * FONT_WIDTH;
 
 		// Print a char, along with a space between chars
-		lcd_data_out(p, font[offset++], port_val);
-		lcd_data_out(p, font[offset++], port_val);
-		lcd_data_out(p, font[offset++], port_val);
-		lcd_data_out(p, font[offset++], port_val);
-		lcd_data_out(p, font[offset++], port_val);
-		lcd_data_out(p, 0x00, port_val);
+		lcd_data_out(p, font[offset++]);
+		lcd_data_out(p, font[offset++]);
+		lcd_data_out(p, font[offset++]);
+		lcd_data_out(p, font[offset++]);
+		lcd_data_out(p, font[offset++]);
+		lcd_data_out(p, 0x00);
 
 		// Mark that we have written 6 rows
 		col_pos += 6;
@@ -253,9 +251,9 @@ void lcd_draw_text_row( char string[], int lcd_row, unsigned int port_val, REFER
 	// Blank the rest of the row
 	while ( col_pos <= 127 )
 	{
-		lcd_data_out(p, 0x00, port_val);
+		lcd_data_out(p, 0x00);
 		col_pos++;
 	}
 
-	lcd_comm_out(p, 0xAF, port_val);			// Display ON
+	lcd_comm_out(p, 0xAF);			// Display ON
 }

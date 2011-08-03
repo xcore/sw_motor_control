@@ -26,17 +26,72 @@
 
 #define CHAR_BUF_SIZE	21*4
 
+/** \brief Reverse the order of bytes in the array
+ *
+ * \param s the byte array to reverse
+ */
 void reverse(char s[]);
+
+/** \brief Convert an integer into a base 10 ASCII string
+ *
+ * \param n the integer to represent in string form
+ * \param s the output byte array to contain the number
+ */
 void itoa(int n, char s[]);
 
+/** \brief Initialise the LCD device
+ *
+ * \param p the LCD interface description
+ */
 void lcd_ports_init( REFERENCE_PARAM(lcd_interface_t, p) );
-void lcd_byte_out( REFERENCE_PARAM(lcd_interface_t, p), unsigned char i, int is_data, unsigned int port_val );
 
-void lcd_clear( unsigned int port_val, REFERENCE_PARAM(lcd_interface_t, p) );
-void lcd_draw_image( unsigned char image[], unsigned int port_val, REFERENCE_PARAM(lcd_interface_t, p) );
-void lcd_draw_text_row( char string[], int lcd_row, unsigned int port_val, REFERENCE_PARAM(lcd_interface_t, p) );
+/** \brief Write a byte to the LCD
+ *
+ * \param p the LCD interface description
+ * \param i the byte to write
+ * \param is_data a boolean indicating if the write is data or control information
+ */
+void lcd_byte_out( REFERENCE_PARAM(lcd_interface_t, p), unsigned char i, int is_data );
 
-#define lcd_data_out(p, i, v)         	lcd_byte_out(p, i, 1, v)
-#define lcd_comm_out(p, i, v)         	lcd_byte_out(p, i, 0, v)
+/** \brief Clear the LCD
+ *
+ * \param p the LCD interface description
+ */
+void lcd_clear( REFERENCE_PARAM(lcd_interface_t, p) );
+
+/** \brief Draw an image on the LCD
+ *
+ *  Draw an image on the LCD.  The image is assumed to cover the complete
+ *  LCD.  The size of the LCD is 128 wide by 32 high.
+ *
+ * \param image a byte array containing the image data.
+ * \param p the LCD interface description
+ */
+void lcd_draw_image( unsigned char image[], REFERENCE_PARAM(lcd_interface_t, p) );
+
+/** \brief Write text to a row on the LCD
+ *
+ * Display a row of text. The LCD columns beyond the end of the string will be
+ * cleared.
+ *
+ * \param string the ASCII string to display on the LCD
+ * \param lcd_row the character row on which to display the string
+ * \param p the LCD interface description
+ */
+void lcd_draw_text_row( char string[], int lcd_row, REFERENCE_PARAM(lcd_interface_t, p) );
+
+/** \brief Macro for writing data to the LCD
+ *
+ * \param p the LCD interface description
+ * \param i the data to write
+ */
+#define lcd_data_out(p, i)         	lcd_byte_out(p, i, 1)
+
+/** \brief Macro for writing a control byte to the LCD
+ *
+ * \param p the LCD interface description
+ * \param i the data to write
+ */
+#define lcd_comm_out(p, i)         	lcd_byte_out(p, i, 0)
 
 #endif /* _LCD_H_ */

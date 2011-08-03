@@ -27,18 +27,18 @@
 #include "lcd_logo.h"
 #include "print.h"
 
-void splash(REFERENCE_PARAM(lcd_interface_t, p), unsigned int port_val )
+void splash(REFERENCE_PARAM(lcd_interface_t, p) )
 {
 	timer t;
 	unsigned ts;
 
-	lcd_draw_image(xmos_logo, port_val, p);
+	lcd_draw_image(xmos_logo, p);
 	t :> ts;
 	t when timerafter(ts+300000000) :> ts;
-	lcd_clear(port_val, p);					// Clear the display RAM
-	lcd_comm_out(p, 0xB0, port_val);		// Reset page and column addresses
-	lcd_comm_out(p, 0x10, port_val);		// column address upper 4 bits + 0x10
-	lcd_comm_out(p, 0x00, port_val);		// column address lower 4 bits + 0x00
+	lcd_clear(p);					// Clear the display RAM
+	lcd_comm_out(p, 0xB0);		// Reset page and column addresses
+	lcd_comm_out(p, 0x10);		// column address upper 4 bits + 0x10
+	lcd_comm_out(p, 0x00);		// column address lower 4 bits + 0x00
 }
 
 #ifdef BLDC_BASIC
@@ -62,22 +62,22 @@ void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lc
 	p.p_core1_shared <:0;
 
 	/* Initiate the LCD*/
-	lcd_comm_out(p, 0xE2, port_val);		/* RESET */
-	lcd_comm_out(p, 0xA0, port_val);		/* RAM->SEG output = normal */
-	lcd_comm_out(p, 0xAE, port_val);		/* Display OFF */
-	lcd_comm_out(p, 0xC0, port_val);		/* COM scan direction = normal */
-	lcd_comm_out(p, 0xA2, port_val);		/* 1/9 bias */
-	lcd_comm_out(p, 0xC8, port_val);		/*  Reverse */
-	lcd_comm_out(p, 0x2F, port_val);		/* power control set */
-	lcd_comm_out(p, 0x20, port_val);		/* resistor ratio set */
-	lcd_comm_out(p, 0x81, port_val);		/* Electronic volume command (set contrast) */
-	lcd_comm_out(p, 0x3F, port_val);		/* Electronic volume value (contrast value) */
-	lcd_clear(port_val, p);					/* Clear the display RAM */
-	lcd_comm_out(p, 0xB0, port_val);		/* Reset page and column addresses */
-	lcd_comm_out(p, 0x10, port_val);		/* column address upper 4 bits + 0x10 */
-	lcd_comm_out(p, 0x00, port_val);		/* column address lower 4 bits + 0x00 */
+	lcd_comm_out(p, 0xE2);		/* RESET */
+	lcd_comm_out(p, 0xA0);		/* RAM->SEG output = normal */
+	lcd_comm_out(p, 0xAE);		/* Display OFF */
+	lcd_comm_out(p, 0xC0);		/* COM scan direction = normal */
+	lcd_comm_out(p, 0xA2);		/* 1/9 bias */
+	lcd_comm_out(p, 0xC8);		/*  Reverse */
+	lcd_comm_out(p, 0x2F);		/* power control set */
+	lcd_comm_out(p, 0x20);		/* resistor ratio set */
+	lcd_comm_out(p, 0x81);		/* Electronic volume command (set contrast) */
+	lcd_comm_out(p, 0x3F);		/* Electronic volume value (contrast value) */
+	lcd_clear(p);				/* Clear the display RAM */
+	lcd_comm_out(p, 0xB0);		/* Reset page and column addresses */
+	lcd_comm_out(p, 0x10);		/* column address upper 4 bits + 0x10 */
+	lcd_comm_out(p, 0x00);		/* column address lower 4 bits + 0x00 */
 
-	splash(p, port_val );
+	splash(p);
 
 	/* Get the initial time value */
 	timer_1 :> time;
@@ -102,19 +102,19 @@ void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lc
 			    		/* Calculate the strings here */
 		/* Now update the display */
 #ifdef USE_CAN
-				lcd_draw_text_row( "  XMOS Demo 2011: CAN\n", 0, port_val, p );
+				lcd_draw_text_row( "  XMOS Demo 2011: CAN\n", 0, p );
 #endif
 #ifdef USE_ETH
-				lcd_draw_text_row( "  XMOS Demo 2011: ETH\n", 0, port_val, p );
+				lcd_draw_text_row( "  XMOS Demo 2011: ETH\n", 0, p );
 #endif
 				sprintf(my_string, "  Set Speed: %04d RPM\n", set_speed );
-				lcd_draw_text_row( my_string, 1, port_val, p );
+				lcd_draw_text_row( my_string, 1, p );
 
 				sprintf(my_string, "  Speed1 : 	 %04d RPM\n", speed1 );
-				lcd_draw_text_row( my_string, 2, port_val, p );
+				lcd_draw_text_row( my_string, 2, p );
 
 				sprintf(my_string, "  Speed2 : 	 %04d RPM\n", speed2 );
-				lcd_draw_text_row( my_string, 3, port_val, p );
+				lcd_draw_text_row( my_string, 3, p );
 
 		/* Switch debouncing - run through and decrement their counters. */
 				for  ( int i = 0; i < 3; i ++ )
@@ -272,23 +272,23 @@ void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t
 	p.p_core1_shared <: 0;
 
 	// Initiate the LCD
-	lcd_comm_out(p, 0xE2, port_val);		// RESET
-	lcd_comm_out(p, 0xA0, port_val);		// RAM->SEG output = normal
-	lcd_comm_out(p, 0xAE, port_val);		// Display OFF
-	lcd_comm_out(p, 0xC0, port_val);		// COM scan direction = normal
-	lcd_comm_out(p, 0xA2, port_val);		// 1/9 bias
-	lcd_comm_out(p, 0xC8, port_val);		// Reverse
-	lcd_comm_out(p, 0x2F, port_val);		// power control set
-	lcd_comm_out(p, 0x20, port_val);		// resistor ratio set
-	lcd_comm_out(p, 0x81, port_val);		// Electronic volume command (set contrast)
-	lcd_comm_out(p, 0x3F, port_val);		// Electronic volume value (contrast value)
-	lcd_clear(port_val, p);					// Clear the display RAM
-	lcd_comm_out(p, 0xB0, port_val);		// Reset page and column addresses
-	lcd_comm_out(p, 0x10, port_val);		// column address upper 4 bits + 0x10
-	lcd_comm_out(p, 0x00, port_val);		// column address lower 4 bits + 0x00
+	lcd_comm_out(p, 0xE2);		// RESET
+	lcd_comm_out(p, 0xA0);		// RAM->SEG output = normal
+	lcd_comm_out(p, 0xAE);		// Display OFF
+	lcd_comm_out(p, 0xC0);		// COM scan direction = normal
+	lcd_comm_out(p, 0xA2,);		// 1/9 bias
+	lcd_comm_out(p, 0xC8);		// Reverse
+	lcd_comm_out(p, 0x2F);		// power control set
+	lcd_comm_out(p, 0x20);		// resistor ratio set
+	lcd_comm_out(p, 0x81);		// Electronic volume command (set contrast)
+	lcd_comm_out(p, 0x3F);		// Electronic volume value (contrast value)
+	lcd_clear(p);				// Clear the display RAM
+	lcd_comm_out(p, 0xB0);		// Reset page and column addresses
+	lcd_comm_out(p, 0x10);		// column address upper 4 bits + 0x10
+	lcd_comm_out(p, 0x00);		// column address lower 4 bits + 0x00
 
 	/* display splash screen */
-	splash(p, port_val );
+	splash(p);
 
 	// Get the initial time value
 	t :> time;
@@ -309,18 +309,18 @@ void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t
 	// Calculate the strings here
 
 	// Now update the display
-				lcd_draw_text_row( "  XMOS DSC Demo 2011\n", 0, port_val, p );
+				lcd_draw_text_row( "  XMOS DSC Demo 2011\n", 0, p );
 #ifdef USE_CAN
-				lcd_draw_text_row( "  CAN control\n", 1, port_val, p );
+				lcd_draw_text_row( "  CAN control\n", 1, p );
 #endif
 #ifdef USE_ETH
-				lcd_draw_text_row( "  ETHERNET control\n", 1, port_val, p );
+				lcd_draw_text_row( "  ETHERNET control\n", 1, p );
 #endif
 				sprintf(my_string, "  Set Speed: %04d RPM\n", set_speed );
-				lcd_draw_text_row( my_string, 2, port_val, p );
+				lcd_draw_text_row( my_string, 2, p );
 
 				sprintf(my_string, "  Speed:     %04d RPM\n", speed );
-				lcd_draw_text_row( my_string, 3, port_val, p );
+				lcd_draw_text_row( my_string, 3, p );
 
 	// Switch debouncing - run through and decrement their counters
 				for  ( int i = 0; i < 2; i++ )
