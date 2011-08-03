@@ -81,10 +81,7 @@ static void adc_get_data_ltc1408_singleshot( int adc_val[], unsigned offset, buf
     CNVST <: ADC_CONVERSION_TRIG;
     clearbuf(DATA);
     start_clock(clk);
-//	CNVST <: 0x0000001 @ ts;
-//	asm("out res[%0],%1" :: "r"(CNVST),"r"(0x1));
-//	asm("getts %0,res[%1]" :"=r"(ts) :"r"(CNVST));
-//	ts += 2;
+
 	DATA :> val1;
 	CNVST <: 0;
 	DATA :> val1;
@@ -102,21 +99,6 @@ static void adc_get_data_ltc1408_singleshot( int adc_val[], unsigned offset, buf
 	adc_val[offset+5] = 0x3FFF & (val5 >>  0);
 
 
-}
-
-void adc_ltc1408_test( clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA )
-{
-	int adc_val[6];
-
-    configure_adc_ports_ltc1408(clk, SCLK, CNVST, DATA);
-
-    while (1)
-    {
-    	adc_get_data_ltc1408_singleshot( adc_val, 0, CNVST, DATA, clk );
-   		printintln(adc_val[0]);
-   		printintln(adc_val[1]);
-   		printintln(adc_val[2]);
-    }
 }
 
 void adc_ltc1408_triggered( chanend c_adc, clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA, chanend c_trig, chanend ?c_logging0, chanend ?c_logging1, chanend ?c_logging2)
