@@ -25,7 +25,7 @@
 /**
  *  \brief This is a thread which performs the higher level control for the CAN interface.
  *
- *  Use it in conjunction with the thread 'canPhyRxTx' from the module module_can.  The parameters are:
+ *  Use it in conjunction with the thread 'canPhyRxTx' from the module module_can.
  *
  *  \param c_speed Channel for interfacing to the higher level motor control (shared_io_motor)
  *  \param rxChan Connect to the rxChan port on the canPhyRxTx
