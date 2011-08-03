@@ -5,7 +5,7 @@ Motor Control Platform Software Guide
 Introduction
 ++++++++++++
 
-The XMOS motor control development platform is provided with a software framework and example control loop. This document provides information relating to the structure, implementation and use of the software modules that are specific to the motor control development platform.
+The XMOS motor control development platform is provided with a software framework and example control loop. This document provides information relating to the structure, implementation and use of the software modules that are specific to the motor control development platform, and interfacing to associated peripheral modules such as the CAN component.
 
 For information on the XMOS Motor Control Development Platform hardware please see the Motor Control Platform Hardware Manual.
 
@@ -13,7 +13,7 @@ For information on the XMOS Motor Control Development Platform hardware please s
 Software Modules
 ++++++++++++++++
 
-The provided framework consists of a number of modules that provide functions that combined to provide an integrated control system. The provided application utilises modules that provide the following:
+The framework consists of a number of modules that provide functions for an integrated control system. The application utilises modules that provide the following:
 
    * Pulse Width Modulation (PWM)
    * Quadrature Encoder Interface (QEI)
@@ -25,9 +25,11 @@ The provided framework consists of a number of modules that provide functions th
    * Computation blocks library
 
 
-In contrast to a typical microcontroller, hardware interfaces that are implemented on XMOS devices are all described in software. This gives the developer the flexibility to implement or customise any interface they require. This gives designers wider options when selecting the ADC's or PWM schemes that are required for the solution that is being developed.
+In contrast to a typical microcontroller, hardware interfaces are implemented on XMOS devices in software. This gives the developer the flexibility to implement or customise any interface they require. This gives designers wider options when selecting ADC's or PWM schemes.
 
-Each of the modules is discussed in detail in the sections below.
+The modules listed above are implemented in one or more processor threads. The architecture of the threads is shown below.
 
-The modules listed above comprise of one or more threads. The architecture of the threads is shown in the figure \ref{fig_ThreadDiag}. 
+   .. figure:: images/threadDiag.png
+
+
 

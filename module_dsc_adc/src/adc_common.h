@@ -17,6 +17,13 @@
 #ifndef __ADC_COMMON_H__
 #define __ADC_COMMON_H__
 
+// The token which is passed over the control channel for triggering the ADC
+#define ADC_TRIG_TOKEN  1
+
+// The number of channels to store when sampling the ADC
+#define ADC_CHANS 6
+
+// Count of the number of elements in the ADC filter array
 #define ADC_FILT_SAMPLE_COUNT 31
 
 #endif /* __ADC_COMMON_H__ */

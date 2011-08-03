@@ -276,7 +276,7 @@ void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t
 	lcd_comm_out(p, 0xA0);		// RAM->SEG output = normal
 	lcd_comm_out(p, 0xAE);		// Display OFF
 	lcd_comm_out(p, 0xC0);		// COM scan direction = normal
-	lcd_comm_out(p, 0xA2,);		// 1/9 bias
+	lcd_comm_out(p, 0xA2);		// 1/9 bias
 	lcd_comm_out(p, 0xC8);		// Reverse
 	lcd_comm_out(p, 0x2F);		// power control set
 	lcd_comm_out(p, 0x20);		// resistor ratio set
