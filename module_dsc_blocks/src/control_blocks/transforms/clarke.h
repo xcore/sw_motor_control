@@ -23,7 +23,35 @@
 #ifdef __XC__
 
 	// XC Versions
+
+	/** \brief Perform a clarke transform
+	 *
+	 * A Clarke transform is a 2D to 3D transformation where the 3D components
+	 * have only 2 degrees of freedom.  It is used to convert the three current
+	 * values in the 120 degree separation coils into a radial and tangential
+	 * component values.
+	 *
+	 * \param I_alpha the output tangential component
+	 * \param I_beta the output radial component
+	 * \param Ia the parameter from coil A
+	 * \param Ib the parameter from coil B
+	 * \param Ic the parameter from coil C
+	 */
 	void clarke_transform( int &I_alpha, int &I_beta, int Ia, int Ib, int Ic );
+
+	/** \brief Perform an inverse clarke transform
+	 *
+	 * A Clarke transform is a 2D to 3D transformation where the 3D components
+	 * have only 2 degrees of freedom.  It is used to convert the three current
+	 * values in the 120 degree separation coils into a radial and tangential
+	 * component values.
+	 *
+	 * \param Ia the output parameter for coil A
+	 * \param Ib the output parameter for coil B
+	 * \param Ic the output parameter for coil C
+	 * \param alpha the input tangential component
+	 * \param beta the input radial component
+	 */
 	void inverse_clarke_transform( int &Ia, int &Ib, int &Ic, int alpha, int beta );
 
 #else
