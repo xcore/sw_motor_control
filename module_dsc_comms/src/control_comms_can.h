@@ -36,6 +36,8 @@ void do_comms_can( chanend c_commands_can, chanend rxChan, chanend txChan, chane
 #endif  //BLDC_BASIC
 
 
+// TODO: This should be combined with the above and the number of motor control channels should be made
+// into a parameter and the motor control channels made into an array
 #ifdef BLDC_FOC
 void do_comms_can( chanend c_commands_can, chanend rxChan, chanend txChan, chanend c_control_can);
 #endif  //BLDC_FOC

@@ -22,6 +22,11 @@
 #include <xs1.h>
 #include "dsc_config.h"
 
+/** \brief Implementation of the QEI server thread
+ *
+ *  \param c_qei The control channel used by the client
+ *  \param p_qei The hardware port where the quadrature encoder is located
+ */
 void do_qei ( chanend c_qei, port in p_qei );
 
 #endif /*__QEI_SERVER_H__ */
