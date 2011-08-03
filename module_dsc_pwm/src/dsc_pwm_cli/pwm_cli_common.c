@@ -35,46 +35,6 @@ void init_pwm_vals( )
 		pwm_val[i] = 0;
 }
 
-void print_pwm_out( t_out_data pwm_out_data[] )
-{
-	printstr("[0].ts0 = "); printuintln(pwm_out_data[0].ts0);
-	printstr("[1].ts0 = "); printuintln(pwm_out_data[1].ts0);
-	printstr("[2].ts0 = "); printuintln(pwm_out_data[2].ts0);
-
-	printstr("[0].out0 = "); printhexln(pwm_out_data[0].out0);
-	printstr("[1].out0 = "); printhexln(pwm_out_data[1].out0);
-	printstr("[2].out0 = "); printhexln(pwm_out_data[2].out0);
-
-	printstr("[0].ts1 = "); printuintln(pwm_out_data[0].ts1);
-	printstr("[1].ts1 = "); printuintln(pwm_out_data[1].ts1);
-	printstr("[2].ts1 = "); printuintln(pwm_out_data[2].ts1);
-
-	printstr("[0].out1 = "); printhexln(pwm_out_data[0].out1);
-	printstr("[1].out1 = "); printhexln(pwm_out_data[1].out1);
-	printstr("[2].out1 = "); printhexln(pwm_out_data[2].out1);
-
-	printstr("[0].inv_ts0 = "); printuintln(pwm_out_data[0].inv_ts0);
-	printstr("[1].inv_ts0 = "); printuintln(pwm_out_data[1].inv_ts0);
-	printstr("[2].inv_ts0 = "); printuintln(pwm_out_data[2].inv_ts0);
-
-	printstr("[0].inv_out0 = "); printhexln(pwm_out_data[0].inv_out0);
-	printstr("[1].inv_out0 = "); printhexln(pwm_out_data[1].inv_out0);
-	printstr("[2].inv_out0 = "); printhexln(pwm_out_data[2].inv_out0);
-
-	printstr("[0].inv_ts1 = "); printuintln(pwm_out_data[0].inv_ts1);
-	printstr("[1].inv_ts1 = "); printuintln(pwm_out_data[1].inv_ts1);
-	printstr("[2].inv_ts1 = "); printuintln(pwm_out_data[2].inv_ts1);
-
-	printstr("[0].inv_out1 = "); printhexln(pwm_out_data[0].inv_out1);
-	printstr("[1].inv_out1 = "); printhexln(pwm_out_data[1].inv_out1);
-	printstr("[2].inv_out1 = "); printhexln(pwm_out_data[2].inv_out1);
-
-	printstr("[0].cat = "); printuintln(pwm_out_data[0].cat);
-	printstr("[1].cat = "); printuintln(pwm_out_data[1].cat);
-	printstr("[2].cat = "); printuintln(pwm_out_data[2].cat);
-}
-
-
 /*
  * Used by INV and NOINV modes
  */

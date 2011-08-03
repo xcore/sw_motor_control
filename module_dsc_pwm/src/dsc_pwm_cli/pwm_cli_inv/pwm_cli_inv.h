@@ -21,5 +21,15 @@
 #include "pwm_cli_common.h"
 
 #ifdef PWM_INV_MODE
+
+/** \brief Update the PWM server with three new values
+ *
+ *  On the next cycle through the PWM, the server will update the PWM
+ *  pulse widths with these new values
+ *
+ *  \param c the control channel for the PWM server
+ *  \param value an array of three 24 bit values for the PWM server
+ */
 void update_pwm( chanend c, unsigned value[]);
+
 #endif
