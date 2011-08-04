@@ -43,11 +43,8 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 	unsigned sngle = 0, long_single = 0, dble = 0;
 	int e_check = 0;
 
-
-	for (int i = 0; i < PWM_CHAN_COUNT; i++)
-	{
-		switch(pwm_out_data[i].cat)
-		{
+	for (int i = 0; i < PWM_CHAN_COUNT; i++) {
+		switch(pwm_out_data[i].cat) {
 		case SINGLE:
 			sngle++;
 			break;
@@ -60,27 +57,21 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 		}
 	}
 
-	if (sngle == 3)
-	{
+	if (sngle == 3) {
 		*mode = 1;
 		return;
 	}
 
-	if (long_single == 1 && sngle == 2)
-	{
+	if (long_single == 1 && sngle == 2) {
 		*mode = 7;
 		/* need to find the long single and put it first */
 		for (int i = 0; i < PWM_CHAN_COUNT; i++)
 		{
 			if (pwm_out_data[i].cat == LONG_SINGLE && i != 0)
 			{
-				if (i != 0)
-				{
-
-					chan_id_tmp = chan_id[0];
-					chan_id[0] = chan_id[i];
-					chan_id[i] = chan_id_tmp;
-				}
+				chan_id_tmp = chan_id[0];
+				chan_id[0] = chan_id[i];
+				chan_id[i] = chan_id_tmp;
 				return;
 			}
 		}
@@ -88,19 +79,16 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 		asm("ecallt %0" : "=r"(e_check));
 	}
 
-	if (dble == 1 && sngle == 2)
-	{
+	if (dble == 1 && sngle == 2) {
 		*mode = 2;
 		/* need to find the double and put it first */
 		for (int i = 1; i < PWM_CHAN_COUNT; i++)
 		{
 			if (pwm_out_data[i].cat == DOUBLE )
 			{
-
 				chan_id_tmp = chan_id[0];
 				chan_id[0] = chan_id[i];
 				chan_id[i] = chan_id_tmp;
-
 				return;
 			}
 		}
@@ -108,9 +96,9 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 		asm("ecallt %0" : "=r"(e_check));
 	}
 
-	if (dble == 2 && sngle == 1)
-	{
+	if (dble == 2 && sngle == 1) {
 		*mode = 3;
+
 		/* need to find the single and put it last */
 		for (int i = 0; i < PWM_CHAN_COUNT; i++)
 		{
@@ -118,8 +106,6 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 			{
 				if (i != PWM_CHAN_COUNT-1)
 				{
-//					swap_pwm_data( pwm_out_data[PWM_CHAN_COUNT-1], pwm_out_data[i] );
-
 					chan_id_tmp = chan_id[PWM_CHAN_COUNT-1];
 					chan_id[PWM_CHAN_COUNT-1] = chan_id[i];
 					chan_id[i] = chan_id_tmp;
@@ -140,8 +126,6 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 			/* swap if we need to, but it might be in the right place */
 			if (max_index != i)
 			{
-//				swap_pwm_data( pwm_out_data[max_index], pwm_out_data[i] );
-
 				chan_id_tmp = chan_id[i];
 				chan_id[i] = chan_id[max_index];
 				chan_id[max_index] = chan_id_tmp;
@@ -151,8 +135,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 		return;
 	}
 
-	if (dble == 3)
-	{
+	if (dble == 3) {
 		*mode = 4;
 
 		/* now order by length*/
@@ -168,8 +151,6 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 			/* swap if we need to, but it might be in the right place */
 			if (max_index != i)
 			{
-//				swap_pwm_data( pwm_out_data[max_index], pwm_out_data[i] );
-
 				chan_id_tmp = chan_id[i];
 				chan_id[i] = chan_id[max_index];
 				chan_id[max_index] = chan_id_tmp;
@@ -179,40 +160,26 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 		return;
 	}
 
-	if (long_single == 1 && dble == 1 && sngle == 1)
-	{
+	if (long_single == 1 && dble == 1 && sngle == 1) {
 		*mode = 5;
 
 		/* need to find the single and put it last */
 		for (int i = 0; i < PWM_CHAN_COUNT; i++)
 		{
-			if (pwm_out_data[i].cat == SINGLE )
-			{
-				if (i != PWM_CHAN_COUNT-1)
-				{
-//					swap_pwm_data( pwm_out_data[PWM_CHAN_COUNT-1], pwm_out_data[i] );
-
+			if (pwm_out_data[i].cat == SINGLE  && i != PWM_CHAN_COUNT-1) {
 					chan_id_tmp = chan_id[PWM_CHAN_COUNT-1];
 					chan_id[PWM_CHAN_COUNT-1] = chan_id[i];
 					chan_id[i] = chan_id_tmp;
-				}
 			}
 		}
 
 		/* need to find the double and put it in the middle */
 		for (int i = 0; i < PWM_CHAN_COUNT; i++)
 		{
-			if (pwm_out_data[i].cat == DOUBLE )
-			{
-				// TODO: assumes 3 channel
-				if (i != 1)
-				{
-//					swap_pwm_data( pwm_out_data[1], pwm_out_data[i] );
-
-					chan_id_tmp = chan_id[1];
-					chan_id[1] = chan_id[i];
-					chan_id[i] = chan_id_tmp;
-				}
+			if (pwm_out_data[i].cat == DOUBLE && i != 1) {
+				chan_id_tmp = chan_id[1];
+				chan_id[1] = chan_id[i];
+				chan_id[i] = chan_id_tmp;
 			}
 		}
 
@@ -223,46 +190,30 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 		return;
 	}
 
-	if (long_single == 1 && dble == 2)
-	{
+	if (long_single == 1 && dble == 2) {
 		*mode = 6;
 
 		/* need to find the long single and put it first */
-		for (int i = 0; i < PWM_CHAN_COUNT; i++)
-		{
-			if (pwm_out_data[i].cat == LONG_SINGLE )
-			{
-				if (i != 0)
-				{
-//					swap_pwm_data( pwm_out_data[0], pwm_out_data[i] );
-
-					chan_id_tmp = chan_id[0];
-					chan_id[0] = chan_id[i];
-					chan_id[i] = chan_id_tmp;
-				}
+		for (int i = 0; i < PWM_CHAN_COUNT; i++) {
+			if (pwm_out_data[i].cat == LONG_SINGLE && i != 0) {
+				chan_id_tmp = chan_id[0];
+				chan_id[0] = chan_id[i];
+				chan_id[i] = chan_id_tmp;
 			}
 		}
 
 		/* need to find the double and put it in the middle */
-		for (int i = 0; i < PWM_CHAN_COUNT; i++)
-		{
-			if (pwm_out_data[i].cat == DOUBLE )
-			{
-				if (i != 1) // TODO: assumes 3 channel
-				{
-//					swap_pwm_data( pwm_out_data[1], pwm_out_data[i] );
-
-					chan_id_tmp = chan_id[1];
-					chan_id[1] = chan_id[i];
-					chan_id[i] = chan_id_tmp;
-				}
+		for (int i = 0; i < PWM_CHAN_COUNT; i++) {
+			if (pwm_out_data[i].cat == DOUBLE && i != 1) {
+				chan_id_tmp = chan_id[1];
+				chan_id[1] = chan_id[i];
+				chan_id[i] = chan_id_tmp;
 			}
 		}
 
 		/* long single should be first by definition */
 		e_check = (pwm_out_data[0].cat != LONG_SINGLE);
 		asm("ecallt %0" : "=r"(e_check));
-
 
 		return;
 	}
