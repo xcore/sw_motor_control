@@ -29,7 +29,7 @@ In contrast to a typical microcontroller, hardware interfaces are implemented on
 
 The modules listed above are implemented in one or more processor threads. The architecture of the threads is shown below.
 
-   .. figure:: images/threadDiag.png
+   .. image:: images/threadDiag.png
 
 
 

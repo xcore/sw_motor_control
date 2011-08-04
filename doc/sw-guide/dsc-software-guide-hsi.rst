@@ -8,33 +8,33 @@ Hall Sensor Usage
 
 The hall sensor input module provides a number of functions and options in its usage. A listing of the available functions is given below.
 
+::
+  #include "hall_input.h"
 
-#include "hall_input.h"
-
-void run_hall_speed_timed( chanend c_hall, 
+  void run_hall_speed_timed( chanend c_hall, 
 	chanend c_speed, 
 	port in p_hall, 
 	chanend ?c_logging_0, 
 	chanend ?c_logging_1 );
 
-void do_hall( unsigned &hall_state, 
+  void do_hall( unsigned &hall_state, 
 	unsigned &cur_pin_state, 
 	port in p_hall );
 	
-select do_hall_select( unsigned &hall_state, 
+  select do_hall_select( unsigned &hall_state, 
 	unsigned &cur_pin_state, 
 	port in p_hall );
 
-void do_hall_test( port in p_hall );
+  void do_hall_test( port in p_hall );
 
 
-run_hall_speed_timed(...) provides a server thread which measures the time between hall sensor state transitions on a 4 bit port as provided on the motor control platform. This functions implementation is described in more detail below.
+``run_hall_speed_timed(...)`` provides a server thread which measures the time between hall sensor state transitions on a 4 bit port as provided on the motor control platform. This functions implementation is described in more detail below.
 
-do_hall(...) simply writes the next hall state into the hall_state= variable and current pin state into the cur_pin_state variable.
+``do_hall(...)`` simply writes the next hall state into the hall_state= variable and current pin state into the cur_pin_state variable.
 
-do_hall_select(...) is the same as do_hall(...) but is a select function. This function is used in the basic BLDC demonstration application.
+``do_hall_select(...)`` is the same as do_hall(...) but is a select function. This function is used in the basic BLDC demonstration application.
 
-do_hall_test(...) simply prints out the values received on the hall sensor input port.
+``do_hall_test(...)`` simply prints out the values received on the hall sensor input port.
 
 
 Hall Sensor Client
@@ -42,19 +42,18 @@ Hall Sensor Client
 
 When using the hall sensor server thread as described above, the information may be accessed by using the client functions as listed below.
 
+::
+  #include "hall_client.h"
 
-#include "hall_client.h"
-
-{unsigned,unsigned,unsigned} 
-	get_hall_pos_speed_delta(chanend c_hall);
+  {unsigned,unsigned,unsigned} get_hall_pos_speed_delta(chanend c_hall);
 
 
-get_hall_pos_speed_delta(...) will request and subsequently return the theta, speed and delta values respectively from the hall input server thread. The theta value is an estimated value, speed is in revolutions per minute (RPM) and delta is currently used for debugging purposes.
+``get_hall_pos_speed_delta(...)`` will request and subsequently return the theta, speed and delta values respectively from the hall input server thread. The theta value is an estimated value, speed is in revolutions per minute (RPM) and delta is currently used for debugging purposes.
 
 Hall Sensor Server Implementation
 +++++++++++++++++++++++++++++++++
 
-The function run_hall_speed_timed(...) provides a thread that handles hall sensor input functions, speed and angle estimations.
+The function ``run_hall_speed_timed(...)`` provides a thread that handles hall sensor input functions, speed and angle estimations.
 
 This code is currently considered experimental. 
 

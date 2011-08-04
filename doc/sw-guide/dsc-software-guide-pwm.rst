@@ -5,7 +5,7 @@ The PWM driver code is written using a `client server' model. The client functio
 
 The PWM implementation is centre synchronised. This means that the output is of the form shown in figure XYZ
 
-  .. figure:: images/pwmFig.pdf
+  .. image:: images/pwmFig.pdf
 
 Configuration
 +++++++++++++
@@ -32,8 +32,7 @@ PWM Resolution
 
 PWM resolution is defined using PWM_MAX_VALUE. The value defined here sets the frequency of the PWM. The relationship between PWM_MAX_VALUE, XS1_TIMER_HZ and PWM frequency ($PWM_FREQ$) is defined in equation \ref{eqn_PwmFreq}. XS1_TIMER_HZ is defined at compile time by the ReferenceFrequency identifier in the project XN file. By default this reference frequency is 100MHz so XS1_TIMER_HZ would have a value of 100,000,000.
 
-eqn_PwmFreq
-PWM_FREQ = XS1_TIMER_HZ / PWM_MAX_VAL
+``PWM_FREQ = XS1_TIMER_HZ / PWM_MAX_VAL``
 
 So with an example value of PWM_MAX_VALUE being 4096 (12 bit resolution), the PWM_FREQ will be 24,414Hz.
 
@@ -47,10 +46,11 @@ Default PWM Configuration
 
 The default configuration for the demonstration application is as follows. 
 
-#define PWM_INV_MODE 1
-#define PWM_DEAD_TIME 10
-#define PWM_MAX_VALUE 4096
-#define LOCK_ADC_TO_PWM 1
+::
+  #define PWM_INV_MODE 1
+  #define PWM_DEAD_TIME 10
+  #define PWM_MAX_VALUE 4096
+  #define LOCK_ADC_TO_PWM 1
 
 
 PWM Server Usage
@@ -59,7 +59,7 @@ PWM Server Usage
 The usage for each mode is described below. The PWM server needs to be instantiated on the same core as the PWM client. The following is required to be included.
 
 
-#include "pwm_service.h"
+``#include "pwm_service.h"``
 
 
 Inverter Mode
@@ -67,28 +67,28 @@ Inverter Mode
 
 To instantiate the PWM service the function described in the listing below needs to be called for the PWM_INV_MODE and LOCK_ADC_TO_PWM combination.
 
-
-void do_pwm( chanend c_pwm, chanend c_adc_trig, 
+::
+  void do_pwm( chanend c_pwm, chanend c_adc_trig, 
 	in port dummy_port, 
 	buffered out port:32 p_pwm[],  
 	buffered out port:32 p_pwm_inv[], 
 	clock clk);
 
 
-chanend c_pwm is the channel used to communication with the client side.
+``chanend c_pwm`` is the channel used to communication with the client side.
 
-chanend c_adc_trig is the channel used to communicate the triggering of the ADC conversion to the ADC thread
+``chanend c_adc_trig`` is the channel used to communicate the triggering of the ADC conversion to the ADC thread
 
-in port dummy_port is an unused port that is used to consistently trigger the ADC conversion. This port can overlap other used ports at it is never written to and the input value is never used.
+``in port dummy_port`` is an unused port that is used to consistently trigger the ADC conversion. This port can overlap other used ports at it is never written to and the input value is never used.
 
-buffered out port:32 p_pwm[] and buffered out port:32 p_pwm_inv[] are arrays of 1 bit ports with an array length of 3 that are used for the HI and LO sides of inverter respectively.
+``buffered out port:32 p_pwm[]`` and ``buffered out port:32 p_pwm_inv[]`` are arrays of 1 bit ports with an array length of 3 that are used for the HI and LO sides of inverter respectively.
 
-clock clk is the clock block that the PWM thread uses for timing output.
+``clock clk`` is the clock block that the PWM thread uses for timing output.
 
-If LOCK_ADC_TO_PWM is not defined then the following call is used.
+If ``LOCK_ADC_TO_PWM`` is not defined then the following call is used.
 
-
-void do_pwm( chanend c_pwm,
+::
+  void do_pwm( chanend c_pwm,
 	buffered out port:32 p_pwm[],  
 	buffered out port:32 p_pwm_inv[], 
 	clock clk);
@@ -107,21 +107,21 @@ Basic BLDC commutation mode
 
 This mode of operation is slightly different to the others as it is designed for simple commutation of a brushless DC motor. An example of the output of this mode is shown in figure \ref{fig_PwmBldcMode}
 
-  .. figure:: images/bldcpwm.pdf
+  .. image:: images/bldcpwm.pdf
 
 To instantiate the PWM service in this mode the following function needs to be called.
 
-
-void do_pwm( chanend c_pwm, 
+::
+  void do_pwm( chanend c_pwm, 
 	buffered out port:32 p_pwm[], 
 	clock clk);
 
 
-chanend c_pwm is the channel used to communication with the client side.
+``chanend c_pwm`` is the channel used to communication with the client side.
 
-buffered out port:32 p_pwm[] is an array of 1 bit ports with an array length of 3 that are used for the HI or LO sides of the inverter respectively.
+``buffered out port:32 p_pwm[]`` is an array of 1 bit ports with an array length of 3 that are used for the HI or LO sides of the inverter respectively.
 
-clock clk is the clock block that the PWM thread uses for timing output.
+``clock clk`` is the clock block that the PWM thread uses for timing output.
 
 PWM Client Usage
 ++++++++++++++++
@@ -129,7 +129,7 @@ PWM Client Usage
 The PWM client functions must be operated on the same core as the server. The usage of the client functions in the various operational modes are described below. The following must be included to call the client functions.
 
 
-#include "pwm_cli.h"
+``#include "pwm_cli.h"``
 
 
 Inverter Mode
@@ -137,7 +137,7 @@ Inverter Mode
 
 The only call required to update the PWM values that are currently being output is listed below. It takes only two arguments, the channel to the PWM server and an array of size three containing unsigned integers that must be between 0 and PWM_MAX_VALUE.
 
-void update_pwm( chanend c, unsigned value[]);
+``void update_pwm( chanend c, unsigned value[]);``
 
 This function will process the values and pass them to the PWM service thread.
 
@@ -153,8 +153,8 @@ The basic BLDC commutation mode client operates slightly differently to achieve 
 
 Only a single output is active at any one time and this channel must be identified using the pwm_chan argument, this is a value between 0 and 2. The corresponding leg of the inverter needs to be switched manually in the control thread. Please refer to the app_basic_bldc application and associated documentation. 
 
-
-void update_pwm( chanend c, 
+::
+  void update_pwm( chanend c, 
 	unsigned value, 
 	unsigned pwm_chan );
 
@@ -198,7 +198,7 @@ The operation of the main loop is best described visually as in the flow chart s
 
 A brief overview of each part of the main loop are given below. These should be consulted alongside the comments that reside in the code itself.
 
-  .. figure:: images/pwm_loop.pdf
+  .. image:: images/pwm_loop.pdf
 
 The code begins at the pwm_op_inv entry point. This begins by running a standard callee save. This preserves any registers that we will clobber as part of the operation of this function. The arguments to the function are then stored on the stack itself in sp[8:11]. This ensures we have access to them later.
 
@@ -213,7 +213,7 @@ It is worth discussing at this point why there are different loop modes and what
 
 To achieve the required output efficiently using the ports the buffers are used to create the extremely short or long pulses as shown in figure \ref{fig_PwmPortBuffering}. The green boxes indicate a buffer of data that is output from the port.
 
-  .. figure:: images/bufferedPWM.pdf
+  .. image:: images/bufferedPWM.pdf
 
 This method of output requires a combination of one or two buffer outputs depending on the length of these pulses. Rather than calculate these during runtime the client will ascertain the particular combination of outputs required and then will define the mode. The different buffering output modes are individually implemented to reduce branching overhead within the loop.
 

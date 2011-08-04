@@ -7,16 +7,16 @@ This module is not explicitly utilised in the current reference design, but coul
 
 The particular interface that is implemented utilises three signals comprising of two quadrature output (A and B) and an index output (I). A and B provide incremental information while I indicates a return to 0 or origin. The signals A and B are provided out of phase so that the direction of rotation can be resolved.
 
-  .. figure:: images/QeiOutput.pdf
+  .. image:: images/QeiOutput.pdf
 
 Configuration
 +++++++++++++
 
 The QEI module requires the following defines in ``dsc_config.h``
 
-
-#define QEI_CLIENT_COUNT 2
-#define QEI_LINE_COUNT 1024
+::
+  #define QEI_CLIENT_COUNT 2
+  #define QEI_LINE_COUNT 1024
 
 
 The QEI_CLIENT_COUNT defines the number of clients that the server supports. This must be a minimum of 1.
@@ -28,10 +28,10 @@ QEI Server Usage
 
 To initiate the service the following include is required as well as the function call shown. This defines the ports that are required to read the interface and the channel that will be utilised by the client thread.
 
+::
+  #include "qei_server.h"
 
-#include "qei_server.h"
-
-void do_qei( chanend c_qei[QEI_CLIENT_COUNT],
+  void do_qei( chanend c_qei[QEI_CLIENT_COUNT],
 	port in pQEI);
 
 
@@ -40,16 +40,16 @@ QEI Client Usage
 
 To access the information provided by the quadrature encoder the functions listed below can used.
 
+::
+  #include "qei_client.h"
 
-#include "qei_client.h"
+  int get_qei_position( chanend c_qei );
 
-int get_qei_position( chanend c_qei );
+  int get_qei_speed( chanend c_qei );
 
-int get_qei_speed( chanend c_qei );
+  int qei_pos_known( chanend c_qei );
 
-int qei_pos_known( chanend c_qei );
-
-int qei_cw( chanend c_qei );
+  int qei_cw( chanend c_qei );
 
 
 Position value is returned in tenths of a degree and speed is returned in revolutions per minute (RPM). 
@@ -63,7 +63,7 @@ QEI Service Implementation
 
 The core functionality is shown below in the state machine in figure \ref{fig_QeiStateMachine}. When in a static state the state machine can be interrupted by a request for rotation data.
 
-  .. figure:: images/qei-state.pdf
+  .. image:: images/qei-state.pdf
 
 The request for data will only be served if the event on the channel is enabled. This means that during any state updates the provision of the required data will be a blocked request.
 
@@ -73,11 +73,11 @@ To enable the calculation of both speed and position the time between transition
 
 Communication of the required information is done by the client first requesting the information. This can be requested using the following command values.
 
-
-QEI_CMD_POS_REQ
-QEI_CMD_SPEED_REQ
-QEI_CMD_POS_KNOWN_REQ
-QEI_CMD_CW_REQ
+::
+  QEI_CMD_POS_REQ
+  QEI_CMD_SPEED_REQ
+  QEI_CMD_POS_KNOWN_REQ
+  QEI_CMD_CW_REQ
 
 
 These are utilised by the client library functions discussed below.
@@ -87,13 +87,12 @@ QEI Client Implementation
 
 The client library as described above makes requests to the QEI service thread. These requests are made exclusively via channels and may be blocked during a change in state, but will then be serviced appropriately.
 
-The service thread provides speed and position data in the form of the raw count and time information. This means that to calculate the speed of rotation equation \ref{eqn_QeiSpeed} is utilised on the client side.
+The service thread provides speed and position data in the form of the raw count and time information. This means that to calculate the speed of rotation equation is utilised on the client side::
 
-SPEED =  60000000 / (t_2 - t_1) * 1024
+  SPEED =  60000000 / (t_2 - t_1) * 1024
 
+Calculation of position in tenths of a degree is also performed on the client side and is shown in equation::
 
-Calculation of position in tenths of a degree is also performed on the client side and is shown in equation \ref{eqn_QeiPosition}
-
-POS = (QEI_RAW_POS * 3600) >> 10 
+  POS = (QEI_RAW_POS * 3600) >> 10
 
 Direction and whether an index signal has been received are direct values presented as requested from the QEI service.

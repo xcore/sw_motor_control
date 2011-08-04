@@ -84,9 +84,9 @@ The procedure for sending a byte to the display is:
    * Select the display using the CS_N signal.
    * Set the address / data flag (this requires knowing the current port_val as it is on the shared port).
 Clock out the 8 bits of data MSB first by:
-   * - Setting the data pin to the bit value.
-   * - Setting clock high.
-   * - Setting clock low.
+     - Setting the data pin to the bit value.
+     - Setting clock high.
+     - Setting clock low.
    * Deselect the display using the CS\_N signal.
 
 

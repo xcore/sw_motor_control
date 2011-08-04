@@ -188,6 +188,7 @@ LCD display and PHY reset
 
 LCD
 +++
+
 .. doxygenstruct:: lcd_interface_t
 
 .. doxygenfunction:: reverse

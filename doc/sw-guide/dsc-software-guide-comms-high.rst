@@ -21,11 +21,11 @@ After configuring the TCP port and TCP/IP stack interface, the thread just sits 
 The following actions are performed based on the event type:
 
 
-   * XTCP_NEW_CONNECTION - Prints the IP address that the connection is from to the debug output.
-   * XTCP_RECV_DATA - Main processing function, described below.
-   * XTCP_SENT_DATA - Closes the send request by sending a 0 byte packet.
-   * XTCP_REQUEST_DATA / XTCP_RESEND_DATA - Sends the data generated during the XTCP_RECV_DATA event to the client.
-   * XTCP_CLOSED - Closes the connection and prints the IP address that the connection was from to the debug output.
+   * ``XTCP_NEW_CONNECTION`` - Prints the IP address that the connection is from to the debug output.
+   * ``XTCP_RECV_DATA`` - Main processing function, described below.
+   * ``XTCP_SENT_DATA`` - Closes the send request by sending a 0 byte packet.
+   * ``XTCP_REQUEST_DATA / XTCP_RESEND_DATA`` - Sends the data generated during the XTCP_RECV_DATA event to the client.
+   * ``XTCP_CLOSED`` - Closes the connection and prints the IP address that the connection was from to the debug output.
 
 
 The main processing function, receives a packet from the client and processes it according to the criteria below: 
