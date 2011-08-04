@@ -67,7 +67,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 		/* need to find the long single and put it first */
 		for (int i = 0; i < PWM_CHAN_COUNT; i++)
 		{
-			if (pwm_out_data[i].cat == LONG_SINGLE && i != 0)
+			if (pwm_out_data[i].cat == LONG_SINGLE)
 			{
 				chan_id_tmp = chan_id[0];
 				chan_id[0] = chan_id[i];
@@ -104,12 +104,9 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 		{
 			if (pwm_out_data[i].cat == SINGLE )
 			{
-				if (i != PWM_CHAN_COUNT-1)
-				{
-					chan_id_tmp = chan_id[PWM_CHAN_COUNT-1];
-					chan_id[PWM_CHAN_COUNT-1] = chan_id[i];
-					chan_id[i] = chan_id_tmp;
-				}
+				chan_id_tmp = chan_id[PWM_CHAN_COUNT-1];
+				chan_id[PWM_CHAN_COUNT-1] = chan_id[i];
+				chan_id[i] = chan_id_tmp;
 			}
 		}
 
@@ -123,14 +120,10 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 					max_index = j;
 			}
 
-			/* swap if we need to, but it might be in the right place */
-			if (max_index != i)
-			{
-				chan_id_tmp = chan_id[i];
-				chan_id[i] = chan_id[max_index];
-				chan_id[max_index] = chan_id_tmp;
-			}
-
+			/* swap into the correct place */
+			chan_id_tmp = chan_id[i];
+			chan_id[i] = chan_id[max_index];
+			chan_id[max_index] = chan_id_tmp;
 		}
 		return;
 	}
@@ -149,13 +142,9 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 			}
 
 			/* swap if we need to, but it might be in the right place */
-			if (max_index != i)
-			{
-				chan_id_tmp = chan_id[i];
-				chan_id[i] = chan_id[max_index];
-				chan_id[max_index] = chan_id_tmp;
-			}
-
+			chan_id_tmp = chan_id[i];
+			chan_id[i] = chan_id[max_index];
+			chan_id[max_index] = chan_id_tmp;
 		}
 		return;
 	}
@@ -166,17 +155,17 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 		/* need to find the single and put it last */
 		for (int i = 0; i < PWM_CHAN_COUNT; i++)
 		{
-			if (pwm_out_data[i].cat == SINGLE  && i != PWM_CHAN_COUNT-1) {
-					chan_id_tmp = chan_id[PWM_CHAN_COUNT-1];
-					chan_id[PWM_CHAN_COUNT-1] = chan_id[i];
-					chan_id[i] = chan_id_tmp;
+			if (pwm_out_data[i].cat == SINGLE) {
+				chan_id_tmp = chan_id[PWM_CHAN_COUNT-1];
+				chan_id[PWM_CHAN_COUNT-1] = chan_id[i];
+				chan_id[i] = chan_id_tmp;
 			}
 		}
 
 		/* need to find the double and put it in the middle */
 		for (int i = 0; i < PWM_CHAN_COUNT; i++)
 		{
-			if (pwm_out_data[i].cat == DOUBLE && i != 1) {
+			if (pwm_out_data[i].cat == DOUBLE) {
 				chan_id_tmp = chan_id[1];
 				chan_id[1] = chan_id[i];
 				chan_id[i] = chan_id_tmp;
@@ -195,7 +184,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 
 		/* need to find the long single and put it first */
 		for (int i = 0; i < PWM_CHAN_COUNT; i++) {
-			if (pwm_out_data[i].cat == LONG_SINGLE && i != 0) {
+			if (pwm_out_data[i].cat == LONG_SINGLE) {
 				chan_id_tmp = chan_id[0];
 				chan_id[0] = chan_id[i];
 				chan_id[i] = chan_id_tmp;
@@ -204,7 +193,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 
 		/* need to find the double and put it in the middle */
 		for (int i = 0; i < PWM_CHAN_COUNT; i++) {
-			if (pwm_out_data[i].cat == DOUBLE && i != 1) {
+			if (pwm_out_data[i].cat == DOUBLE) {
 				chan_id_tmp = chan_id[1];
 				chan_id[1] = chan_id[i];
 				chan_id[i] = chan_id_tmp;
