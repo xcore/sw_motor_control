@@ -49,6 +49,9 @@
 const unsigned bldc_high_seq[6] = {2,0,0,1,1,2};
 const unsigned bldc_new_seq[3] = {0,1,2};
 
+#pragma xta command "analyze loop foc_loop"
+#pragma xta command "set required - 40 us"
+
 /*
  *run_motor() function Initially runs in open loop uses hall sensor outputs and finds hall_state.
  *Based on the hall state it identifies the rotor position and give the commutation sequence to
@@ -132,6 +135,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	/* Main loop */
 	while (1)
 	{
+#pragma xta endpoint "foc_loop"
 		select
 		{
 		/* This case responds to speed control through shared I/O */
@@ -184,7 +188,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 			if (bldc_hall_mode==1)
 			{
 				/* Change in the hall sensor states detected */
-				do_hall_select( hall_state, pin_state, p_hall );
+				do_hall( hall_state, pin_state, p_hall );
 
 				/* Handling hall states */
 				if (hall_state == HALL_INV)

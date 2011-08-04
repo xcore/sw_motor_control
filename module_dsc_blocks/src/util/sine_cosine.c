@@ -39,7 +39,7 @@ inline int sine( unsigned deg )
 inline int cosine( unsigned deg )
 {
 	unsigned x = deg + SINE_COSINE_OFFSET;
-	while (x >= SINE_TABLE_LIMIT)
+	if (x >= SINE_TABLE_LIMIT)
 	{
 		x = x - SINE_TABLE_LIMIT;
 	}

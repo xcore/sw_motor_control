@@ -20,7 +20,6 @@
 #include "pwm_cli_common.h"
 #include "dsc_pwm_common.h"
 #include "dsc_config.h"
-#include <print.h>
 
 unsigned pwm_val[PWM_CHAN_COUNT];
 
@@ -85,7 +84,6 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 				return;
 			}
 		}
-		printstr("PWM ERROR 1\n");
 		e_check = 1;
 		asm("ecallt %0" : "=r"(e_check));
 	}
@@ -106,7 +104,6 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 				return;
 			}
 		}
-		printstr("PWM ERROR 2\n");
 		e_check = 1;
 		asm("ecallt %0" : "=r"(e_check));
 	}
@@ -221,7 +218,6 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 
 		/* long single should be first by definition */
 		e_check = (pwm_out_data[0].cat != LONG_SINGLE);
-		printstr("PWM ERROR 3\n");
 		asm("ecallt %0" : "=r"(e_check));
 
 		return;
@@ -265,7 +261,6 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 
 		/* long single should be first by definition */
 		e_check = (pwm_out_data[0].cat != LONG_SINGLE);
-		printstr("PWM ERROR 4\n");
 		asm("ecallt %0" : "=r"(e_check));
 
 
