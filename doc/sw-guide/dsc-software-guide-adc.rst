@@ -1,7 +1,7 @@
 Analogue to Digital Converter (ADC) Interface
 =============================================
 
-The analogue to digital interface currently provided is written for the LTC1408. This provides a clocked serial output following a sample and hold conversion trigger signal. The physical interface of the ADC is not covered in detail as the interface for ADC's will vary from manufacturer to manufacturer. An example of the interface for the MAX1379 is also available in this module.
+The analogue to digital interface currently provided is written for the 7265. This provides a clocked serial output following a sample and hold conversion trigger signal. The physical interface of the ADC is not covered in detail as the interface for ADC's will vary from manufacturer to manufacturer. Examples of the interfaces for the MAX1379 and LTC1408 is also available in this module.
 
 Besides the client and server interfaces the key issue discussed in this section is the synchronisation of the ADC to the PWM and how this is achieved on the ADC side.
 
@@ -14,22 +14,18 @@ The following include and function call are required to operate the ADC software
 
 
 
-#include "adc_ltc1408.h"
+#include "adc_7265.h"
 
-void adc_ltc1408_triggered( chanend c_adc, 
+void adc_7265_triggered( chanend c_adc, 
+	chanend c_trig, 
 	clock clk, 
 	port out SCLK, 
 	buffered out port:32 CNVST, 
-	in buffered port:32 DATA, 
-	chanend c_trig)
+	in buffered port:32 DATA_A, 
+	in buffered port:32 DATA_B, 
+	port out MUX)
 
-chanend c_adc is the channel where values from the ADC are received.
-
-clock clk is the clock block for control data flow to and from the ADC
-
-port out SCLK, buffered out port:32 CNVST and in buffered port:32 DATA are the ports used for interfacing to the ADC.  
-
-chanend c_trig is the channel between the PWM and the ADC threads that triggers the conversion of the ADC.
+See the API section for a full description of the function call.
 
 ADC Client Usage
 ++++++++++++++++
