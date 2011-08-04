@@ -60,9 +60,11 @@ Client functions
 Server functions
 ++++++++++++++++
 
-.. doxygenfunction:: adc_ltc1408_filtered
+.. docygenfunction:: adc_7265_triggered
 
 .. doxygenfunction:: adc_ltc1408_filtered
+
+.. doxygenfunction:: adc_ltc1408_triggered
 
 .. doxygenfunction:: run_adc_max1379
 

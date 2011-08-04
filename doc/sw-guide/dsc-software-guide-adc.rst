@@ -13,10 +13,10 @@ ADC Server Usage
 The following include and function call are required to operate the ADC software as a server. This server is utilised in the case where the ADC is locked to the PWM.
 
 
+::
+  #include "adc_7265.h"
 
-#include "adc_7265.h"
-
-void adc_7265_triggered( chanend c_adc, 
+  void adc_7265_triggered( chanend c_adc, 
 	chanend c_trig, 
 	clock clk, 
 	port out SCLK, 
@@ -34,23 +34,21 @@ The functions below are the primary method of collecting ADC data from the ADC s
 
 The client can be utilised as follows:
 
+::
+  #include "adc_client.h"
 
-#include "adc_client.h"
+  void do_adc_calibration(chanend c_adc);
 
-void do_adc_calibration(chanend c_adc);
+  {unsigned,unsigned,unsigned} get_adc_vals_raw(chanend c_adc);
 
-{unsigned,unsigned,unsigned} get_adc_vals_raw(chanend c_adc);
-
-{int, int, int} get_adc_vals_calibrated_int16(chanend c_adc);
+  {int, int, int} get_adc_vals_calibrated_int16(chanend c_adc);
 
 
-do_adc_calibration(...) is used to initialise the ADC and calibrate the 0 point. This does an average over 64 ADC readings.
+``do_adc_calibration(...)`` is used to initialise the ADC and calibrate the 0 point. This does an average over 64 ADC readings.
 
-get_adc_vals_raw(...) is used to get the raw values from the ADC. In the case of the LTC1408 these are the raw 14 bit values that the ADC delivers. This is a multiple return function in channel order.
+``get_adc_vals_raw(...)`` is used to get the raw values from the ADC. In the case of the LTC1408 these are the raw 14 bit values that the ADC delivers. This is a multiple return function in channel order.
 
-get_adc_vals_calibrated_int16(...) is used to get the three ADC values with the zero calibration, offset and scaling applied to get a signed 16 bit value. This is a multiple return function in channel order.
-
-There is also an example of an experimental server providing continuous ADC readings that are filtered and provided when requested by the client side.
+``get_adc_vals_calibrated_int16(...)`` is used to get the three ADC values with the zero calibration, offset and scaling applied to get a signed 16 bit value. This is a multiple return function in channel order.
 
 
 ADC Server Implementation
