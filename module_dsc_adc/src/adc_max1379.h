@@ -20,6 +20,17 @@
 #ifndef ADC_MAX1379_H_
 #define ADC_MAX1379_H_
 
+/** \brief The server thread for the MAX1379 ADC device
+ *
+ * Implements the server thread for the MAX1379 ADC device
+ *
+ * \param c_adc the control channel
+ * \param clk the clock for the ADC device serial port
+ * \param SCLK the port which feeds the ADC serial clock
+ * \param CNVST the ADC convert strobe
+ * \param SEL the chip select for the ADC device
+ * \param DATA the ADC data port
+ */
 void run_adc_max1379( chanend c_adc, clock clk, port out SCLK,  port out CNVST,  port out SEL, in buffered port:32 DATA);
 
 #endif /*ADC_MAX1379_H_*/

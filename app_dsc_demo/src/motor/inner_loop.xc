@@ -3,8 +3,8 @@
  * Version: 1v0alpha1
  * Build:   60a90cca6296c0154ccc44e1375cc3966292f74e
  * File:    inner_loop.xc
- * Modified by : A Srikanth
- * Last Modified on : 05-Aug-2011
+ * Modified by : Srikanth
+ * Last Modified on : 06-Jun-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -37,9 +37,10 @@
 #define MOTOR_I 6
 #define MOTOR_D 0
 #define SEC 100000000
-#define K_P 5000
-#define K_I 100
-#define K_D 40
+#define MSec 100000
+#define Kp 5000
+#define Ki 100
+#define Kd 40
 #define PWM_MAX_LIMIT 3800
 #define PWM_MIN_LIMIT 200
 #define OFFSET_14 16383
@@ -47,6 +48,9 @@
 
 const unsigned bldc_high_seq[6] = {2,0,0,1,1,2};
 const unsigned bldc_new_seq[3] = {0,1,2};
+
+#pragma xta command "analyze loop foc_loop"
+#pragma xta command "set required - 40 us"
 
 /*
  *run_motor() function Initially runs in open loop uses hall sensor outputs and finds hall_state.
@@ -81,7 +85,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	unsigned pwm[3] = {0, 0, 0};
 	int Va = 0, Vb = 0, Vc = 0;
 
-	/* Output of speed controller */
+	/* Speed feed back variable */
 	int iq_set_point = 0;
 
 	/* Always zero for BLDC */
@@ -123,7 +127,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	/* PID control initialisation... */
 	init_pid( MOTOR_P, MOTOR_I, MOTOR_D, pid_d);
 	init_pid( MOTOR_P, MOTOR_I, MOTOR_D, pid_q);
-	init_pid( K_P, K_I, K_D, pid );
+	init_pid( Kp, Ki, Kd, pid );
 
 	/* ADC centrepoint calibration */
 	do_adc_calibration( c_adc );
@@ -131,6 +135,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	/* Main loop */
 	while (1)
 	{
+#pragma xta endpoint "foc_loop"
 		select
 		{
 		/* This case responds to speed control through shared I/O */
@@ -150,7 +155,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 			}
 
 			break;
-		/* This case responds to CAN or ETHERNET commands */
+     //This case responds to CAN or ETHERNET commands
 		case c_can_eth_shared :>comm_shared:
 			if(comm_shared == CMD_GET_VALS)
 			{
@@ -158,7 +163,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 				c_can_eth_shared <: Ia_in;
 				c_can_eth_shared <: Ib_in;
 			}
-			else if(comm_shared == CMD_GET_VALS_2)
+			else if(comm_shared == CMD_GET_VALS2)
 			{
 				c_can_eth_shared <: Ic_in;
 				c_can_eth_shared <: iq_set_point;
@@ -176,17 +181,14 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 			}
 
 			break;
-
 		/* Initially the below case runs in open loop with the hall sensor responses and then reverts
 		 * back to main FOC algorithem */
-
 		default:
-
 			/* Initial startup code using HALL mode */
 			if (bldc_hall_mode==1)
 			{
 				/* Change in the hall sensor states detected */
-				do_hall_select( hall_state, pin_state, p_hall );
+				do_hall( hall_state, pin_state, p_hall );
 
 				/* Handling hall states */
 				if (hall_state == HALL_INV)
@@ -230,7 +232,6 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 			else
 			{
 				/* ---	FOC ALGORITHM	--- */
-
 				/* Get ADC readings */
 				{Ia_in, Ib_in, Ic_in} = get_adc_vals_calibrated_int16( c_adc );
 

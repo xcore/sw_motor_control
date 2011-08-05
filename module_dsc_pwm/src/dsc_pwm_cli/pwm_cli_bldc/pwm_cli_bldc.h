@@ -22,7 +22,26 @@
 #include "pwm_cli_common.h"
 
 #ifdef PWM_BLDC_MODE
-void calculate_data_out( unsigned value, t_out_data &pwm_out_data );
+
+/** \brief Update the PWM server with a new value for a particular channel
+ *
+ *  On the next cycle through the PWM, the server will update the PWM
+ *  pulse widths.
+ *
+ *  \param c the control channel for the PWM server
+ *  \param value an array of three 24 bit values for the PWM server
+ *  \param pwm_chan the channel to output this value onto
+ */
 void update_pwm1( chanend c, unsigned value, unsigned pwm_chan );
+
+/** \brief Update the PWM server with a new value for a particular channel
+ *
+ *  On the next cycle through the PWM, the server will update the PWM
+ *  pulse widths.
+ *
+ *  \param c the control channel for the PWM server
+ *  \param value an array of three 24 bit values for the PWM server
+ *  \param pwm_chan the channel to output this value onto
+ */
 void update_pwm2( chanend c2, unsigned value2, unsigned pwm_chan2 );
 #endif

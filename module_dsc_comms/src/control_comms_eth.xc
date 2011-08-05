@@ -97,7 +97,7 @@ static void print_mac( chanend xtcp )
 
 #ifdef BLDC_BASIC
 // Thread that does the Ethernet control interface
-void do_comms_eth( chanend c_commands_eth,chanend c_commands_eth2, chanend tcp_svr,chanend c_eth_gui_en )
+void do_comms_eth( chanend c_commands_eth,chanend c_commands_eth2, chanend tcp_svr )
 {
 	xtcp_connection_t conn;
 	unsigned char tx_buf[512];
@@ -107,9 +107,8 @@ void do_comms_eth( chanend c_commands_eth,chanend c_commands_eth2, chanend tcp_s
 	unsigned int set_speed = 500;
 	unsigned int n;
 	unsigned int Ia=0,Ib=0,Ic=0,Iq_set_point=0,Id_out=0,Iq_out=0;
-    int Ia2=0,Ib2=0,Ic2=0,Iq_set_point2=0,Id_out2=0,Iq_out2=0;
-    int fault_flag1=0,fault_flag2=0;
-    unsigned ref_speed_flag=0;
+	unsigned int Ia2=0,Ib2=0,Ic2=0,Iq_set_point2=0,Id_out2=0,Iq_out2=0;
+    unsigned int fault_flag1=0,fault_flag2=0;
 
 	slave xtcp_event(tcp_svr, conn);
 	if (conn.event != XTCP_IFDOWN)
@@ -280,17 +279,6 @@ void do_comms_eth( chanend c_commands_eth,chanend c_commands_eth2, chanend tcp_s
 							c_commands_eth2 <: set_speed;
                 		}
                 	}
-                	else if(rx_buf[0] == '^'&& rx_buf[1] == '3' && rx_buf[2] == '|')
-						{
-							if(n==6)
-							{
-								ref_speed_flag = from_hex_string(rx_buf[3]) << 4;
-								ref_speed_flag += from_hex_string(rx_buf[4]);
-
-								c_eth_gui_en <: GUI_ENABLED;
-								c_eth_gui_en <: ref_speed_flag;
-							}
-						}
 
                 	else
                 	{
@@ -319,7 +307,7 @@ void do_comms_eth( chanend c_commands_eth,chanend c_commands_eth2, chanend tcp_s
 #endif      //BASIC_BLDC
 
 #ifdef BLDC_FOC
-void do_comms_eth( chanend c_commands_eth, chanend tcp_svr,chanend c_eth_gui_en )
+void do_comms_eth( chanend c_commands_eth, chanend tcp_svr )
 {
 	xtcp_connection_t conn;
 	unsigned char tx_buf[512];
@@ -328,10 +316,9 @@ void do_comms_eth( chanend c_commands_eth, chanend tcp_svr,chanend c_eth_gui_en 
 	unsigned int speed2 = 0;
 	unsigned int set_speed = 500;
 	unsigned int n;
-    int Ia=0,Ib=0,Ic=0,Iq_set_point=0,Id_out=0,Iq_out=0;
-    int Ia2=0,Ib2=0,Ic2=0,Iq_set_point2=0,Id_out2=0,Iq_out2=0;
+	unsigned int Ia=0,Ib=0,Ic=0,Iq_set_point=0,Id_out=0,Iq_out=0;
+	unsigned int Ia2=0,Ib2=0,Ic2=0,Iq_set_point2=0,Id_out2=0,Iq_out2=0;
     unsigned int fault_flag1=0,fault_flag2=0;
-    unsigned ref_speed_flag=0;
 
 	slave xtcp_event(tcp_svr, conn);
 	if (conn.event != XTCP_IFDOWN)
@@ -371,16 +358,13 @@ void do_comms_eth( chanend c_commands_eth, chanend tcp_svr,chanend c_eth_gui_en 
                 		c_commands_eth :>Ia;
                 		c_commands_eth :>Ib;
 
-                		c_commands_eth <: CMD_GET_VALS_2;
+                		c_commands_eth <: CMD_GET_VALS2;
                 		c_commands_eth :>Ic;
                 		c_commands_eth :>Iq_set_point;
                 		c_commands_eth :>Id_out;
                 		c_commands_eth :>Iq_out;
 
-                		// convert in to mA
-                		Ia=Ia*2;
-                		Ib=Ib*2;
-                		Ic=Ic*2;
+
 						tx_buf[0]  = '^';
 						tx_buf[1]  = '2';
  						tx_buf[2]  = '|';
@@ -500,17 +484,6 @@ void do_comms_eth( chanend c_commands_eth, chanend tcp_svr,chanend c_eth_gui_en 
 
                 		}
                 	}
-                	else if(rx_buf[0] == '^'&& rx_buf[1] == '3' && rx_buf[2] == '|')
-					{
-						if(n==6)
-						{
-							ref_speed_flag = from_hex_string(rx_buf[3]) << 4;
-							ref_speed_flag += from_hex_string(rx_buf[4]);
-
-							c_eth_gui_en <: GUI_ENABLED;
-							c_eth_gui_en <: ref_speed_flag;
-						}
-					}
 
                 	else
                 	{

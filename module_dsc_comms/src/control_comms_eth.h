@@ -22,10 +22,20 @@
 #include <dsc_config.h>
 
 #ifdef BLDC_BASIC
-void do_comms_eth( chanend c_commands_eth,chanend c_commands_eth2, chanend tcp_svr,chanend c_eth_gui_en );
+
+/** \brief Implement the high level Ethernet control server
+ *
+ * This control the motors based on commands from the ethernet/TCP stack
+ *
+ * \param c_commands_eth Command channel for motor 1
+ * \param c_commands_eth2 Command channel for motor 2
+ * \param tcp_svr channel to the TCP/IP thread
+ */
+void do_comms_eth( chanend c_commands_eth,chanend c_commands_eth2, chanend tcp_svr );
+
 #endif
 
 #ifdef BLDC_FOC
-void do_comms_eth( chanend c_commands_eth, chanend tcp_svr,chanend c_eth_gui_en);
+void do_comms_eth( chanend c_commands_eth, chanend tcp_svr );
 #endif
 #endif /* _CONTROL_COMMS_ETH_H_ */

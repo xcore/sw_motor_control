@@ -1,9 +1,10 @@
 /**
  * Module:  module_dsc_display
  * Version: 1v0module_dsc_display3
+ * Build:
  * File:    shared_io.h
- * Modified by : A Srikanth
- * Last Modified on : 05-Aug-2011
+ * Modified by : Srikanth
+ * Last Modified on : 27-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -22,38 +23,63 @@
 #define SHARED_IO_H_
 
 #include <xccompat.h>
+#include <dsc_config.h>
 
-	/* Individual command interfaces */
+	// Individual command interfaces
+#ifdef BLDC_BASIC
 
 	#define CMD_GET_VALS	1
 	#define CMD_GET_IQ		2
 	#define CMD_SET_SPEED	3
     #define CMD_DIR         4
-	#define CMD_GET_IQ_2	5
-	#define CMD_SET_SPEED_2	6
-	#define CMD_DIR_2       7
+	#define CMD_GET_IQ2		5
+	#define CMD_SET_SPEED2	6
+	#define CMD_DIR2        7
 	#define STEP_SPEED 		50
-	#define MSEC_30			2000000
-	#define MSEC_BY_2		50000
-	#define MSEC 			100000
+	#define _30_Msec		2000000
+	#define _Msec_2_		50000
+	#define MSec 			100000
 	#define CAN_RS_LO		2
-	#define BUTTON_MASK		0x0000000F
-
-	#define ETH_RST_HI 		0
-	#define ETH_RST_LO		1
-	#define CMD_GET_VALS_2	4
-    #define GUI_ENABLED     1
 
 	#ifdef __XC__
 		typedef struct lcd_interface_t
 		{
-			out port p_lcd_sclk; /* buffered port:8 */
-			out port p_lcd_mosi; /* buffered port:8 */
+			out port p_lcd_sclk; // buffered port:8
+			out port p_lcd_mosi; // buffered port:8
 			out port p_lcd_cs_n;
 			out port p_core1_shared;
 		} lcd_interface_t;
 
-		void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_reset,out port p_shared_rs,chanend c_eth_command,chanend c_gui_en);
+		void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_reset,out port p_shared_rs,chanend c_eth_command );
 	#endif
+#endif
+
+#ifdef BLDC_FOC
+
+	#define ETH_RST_HI 		0
+	#define ETH_RST_LO		1
+	#define CAN_RS_LO		2
+	#define	CMD_DIR			10
+
+	#define CMD_GET_VALS	1
+	#define CMD_GET_IQ		2
+	#define CMD_SET_SPEED	3
+    #define CMD_GET_VALS2	4
+
+	#ifdef __XC__
+		typedef struct lcd_interface_t
+		{
+			//clock clk_lcd_1;
+			//clock clk_lcd_2;
+
+			out port p_lcd_sclk; // buffered port:8
+			out port p_lcd_mosi; // buffered port:8
+			out port p_lcd_cs_n;
+			out port p_core1_shared;
+		} lcd_interface_t;
+
+		void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_command,out port p_shared_rs,chanend c_eth_command);
+	#endif
+#endif
 
 #endif /* SHARED_IO_H_ */

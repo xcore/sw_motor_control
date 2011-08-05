@@ -20,18 +20,37 @@
 #ifndef _POS_ESTIMATOR_H_
 #define _POS_ESTIMATOR_H_
 
-	// initialise the position estimation
-	void init_pos_estimation( );
+/** \brief Initialise the position estimation
+ *
+ *  Initialize the position estimation table
+ */
+void init_pos_estimation( );
 
-	// do an update on information from hall
-	unsigned pos_hall_update(unsigned ticks);
+/** \brief Do an update on information from hall
+ *
+ *  Calculate the increment in the last sector based on number of PWM cycles
+ *
+ *  \param ticks the number of PWM cycles
+ *  \return the new increment value
+ */
+unsigned pos_hall_update(unsigned ticks);
 
-	#ifdef __XC__
-		// get theta value
-		unsigned get_pos( unsigned inc, int &pos, unsigned &ticks );
-	#else
-		// get theta value
-		unsigned get_pos( unsigned inc, int *pos, unsigned *ticks );
-	#endif
+#ifdef __XC__
+
+/** \brief get theta value
+ *
+ *  \param inc the increment within the position table
+ *  \param pos the position table index
+ *  \param ticks the tick table index
+ *  \return the position estimate theta value
+ */
+unsigned get_pos( unsigned inc, int &pos, unsigned &ticks );
+
+#else
+
+// get theta value
+unsigned get_pos( unsigned inc, int *pos, unsigned *ticks );
+
+#endif
 
 #endif /* _POS_ESTIMATOR_H_ */

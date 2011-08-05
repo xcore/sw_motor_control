@@ -3,8 +3,8 @@
  * Version: 1v0alpha0
  * Build:   3a9f71a8be03a46f99a43ab12f3b1932762e406f
  * File:    qei_server.xc
- * Modified by : A Srikanth
- * Last Modified on : 05-Aug-2011
+ * Modified by : Srikanth
+ * Last Modified on : 26-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -105,8 +105,8 @@ void do_qei ( chanend c_qei, port in pQEI )
 						break;
 
 					default:
-						state = calc_state( A, B, I ); /* calculate where we should be */
-						if (state == INVALID_STATE) state = 1; /* goto default state if we can't find a correct one */
+						state = calc_state( A, B, I ); // calculate where we should be
+						if (state == INVALID_STATE) state = 1; // goto default state if we can't find a correct one
 						break;
 				}
 				break;
@@ -159,7 +159,7 @@ static unsigned update_pos( unsigned cur_pos, int delta )
 #ifdef FAULHABER_MOTOR
 	#define QEI_COUNT_MAX (1024 * 4)
 #else
-	#define QEI_COUNT_MAX (PPR*STATE)
+	#define QEI_COUNT_MAX (256 * 4)
 #endif
 	int pos;
 

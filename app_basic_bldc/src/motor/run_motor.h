@@ -34,7 +34,7 @@
 #define CMD_SET_SPEED 2
 
 /* run the motor using pwm on the high side and normal switching on the low side */
-void run_motor1 (chanend c_wd, chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_lo[]);
+void run_motor1 ( chanend c_wd, chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_lo[]);
 void run_motor2 ( chanend c_pwm2, chanend c_control2, port in p_hall2, port out p_pwm_lo2[]);
 
 #endif /* _RUN_MOTOR_H_ */

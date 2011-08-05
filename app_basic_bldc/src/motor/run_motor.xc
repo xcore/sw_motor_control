@@ -19,7 +19,12 @@
  *
  **/
 
+
+
 #include "run_motor.h"
+
+/* number of pole pairs are TWO so we are defining that below*/
+#define MOTOR_POLE_PAIRS (NUMBER_OF_POLES>>1)
 
 /* counter clockwise direction commutation sequence for low side of bridge */
 static unsigned bldc_ph_a_lo[6] = {0,1,1,0,0,0};
@@ -48,6 +53,7 @@ void run_motor1 (chanend c_wd, chanend c_pwm, chanend c_control, port in p_hall,
 	unsigned high_chan, hall_state = 0, pin_state = 0, pwm_val = 240, dir_flag=1;
 	unsigned ts, ts0, delta_t, speed = 0, hall_flg = 1, cmd;
 	unsigned state0 = 0, statenot0 =0 ;
+	unsigned set_speed=500;
 
 	/* 32 bit timer declaration */
 	timer t;

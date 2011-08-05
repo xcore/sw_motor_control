@@ -18,7 +18,6 @@
  *
  **/                                   
 #include "pwm_cli_inv.h"
-#include <print.h>
 #include "dsc_config.h"
 
 #ifdef PWM_INV_MODE
@@ -32,24 +31,25 @@ void update_pwm( chanend c, unsigned value[])
 	unsigned pwm_val[PWM_CHAN_COUNT];
 
 	/* update buffer value for next calculation */
-	if (pwm_cur_buf == 1)
+	if (pwm_cur_buf == 1) {
 		pwm_cur_buf = 0;
-	else pwm_cur_buf = 1;
+	} else {
+		pwm_cur_buf = 1;
+	}
 
 	/* store new values */
 	for (int pwm_chan = 0; pwm_chan < PWM_CHAN_COUNT; pwm_chan++)
 		pwm_val[pwm_chan] = value[pwm_chan];
 
 	/* initialise PWM channel list */
-	for (int i = 0; i < PWM_CHAN_COUNT; i++)
+	for (int i = 0; i < PWM_CHAN_COUNT; i++) {
 		chan_id_buf[pwm_cur_buf][i] = i;
+	}
 
 	/* calculate the required outputs */
-	for (int i = 0; i < PWM_CHAN_COUNT; i++)
-	{
+	for (int i = 0; i < PWM_CHAN_COUNT; i++) {
 		/* clamp to avoid issues with LONG_SINGLE */
-		if (pwm_val[i] > (PWM_MAX_VALUE - (32+PWM_DEAD_TIME)))
-		{
+		if (pwm_val[i] > (PWM_MAX_VALUE - (32+PWM_DEAD_TIME))) {
 			pwm_val[i] = (PWM_MAX_VALUE - (32+PWM_DEAD_TIME));
 		}
 		calculate_data_out_ref( pwm_val[i], pwm_out_data_buf[pwm_cur_buf][i].ts0, pwm_out_data_buf[pwm_cur_buf][i].out0, pwm_out_data_buf[pwm_cur_buf][i].ts1, pwm_out_data_buf[pwm_cur_buf][i].out1, pwm_out_data_buf[pwm_cur_buf][i].cat );
@@ -59,12 +59,10 @@ void update_pwm( chanend c, unsigned value[])
 	/* now order them and work out the mode */
 	order_pwm( mode_buf[pwm_cur_buf], chan_id_buf[pwm_cur_buf], pwm_out_data_buf[pwm_cur_buf] );
 
-	if (mode_buf[pwm_cur_buf] < 1 || mode_buf[pwm_cur_buf] > 7 )
-	{
-		printstr("MODE ERROR:"); printuintln(mode_buf[pwm_cur_buf]);
-		while (1);
+	if (mode_buf[pwm_cur_buf] < 1 || mode_buf[pwm_cur_buf] > 7 ) {
+		unsigned e_check = 1;
+		asm("ecallt %0" : "=r"(e_check));
 	}
-
 
 	c <: pwm_cur_buf;
 }

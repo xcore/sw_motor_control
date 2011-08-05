@@ -1,9 +1,9 @@
 /**
  * Module:  app_basic_bldc
  * Version: 1v1
+ * Build:
  * File:    main.xc
- * Modified by : Srikanth
- * Last Modified on : 05-Jul-2011
+ * Author: 	L & T
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -92,7 +92,7 @@ on stdcore[INTERFACE_CORE]: mii_interface_t mii = { XS1_CLKBLK_1, XS1_CLKBLK_2, 
 
 int main ( void )
 {
-	chan c_wd, c_pwm1, c_control1, c_lcd1, c_control2, c_pwm2, c_lcd2, c_eth_reset, c_can_reset,c_gui_en;
+	chan c_wd, c_pwm1, c_control1, c_lcd1, c_control2, c_pwm2, c_lcd2, c_eth_reset, c_can_reset, c_eth_command;
 
 #ifdef USE_CAN
 	chan c_rxChan, c_txChan,c_commands_can,c_commands_can2;
@@ -105,15 +105,15 @@ int main ( void )
 	par
 	{
 #ifdef USE_CAN
-		on stdcore[INTERFACE_CORE] : do_comms_can( c_commands_can, c_rxChan, c_txChan, c_can_reset,c_commands_can2,c_gui_en);
+		on stdcore[INTERFACE_CORE] : do_comms_can( c_commands_can, c_rxChan, c_txChan, c_can_reset,c_commands_can2);
 
 		on stdcore[INTERFACE_CORE] : canPhyRxTx( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx );
 #endif
 
 #ifdef USE_ETH
 		on stdcore[INTERFACE_CORE] : init_tcp_server( c_mac_rx[0], c_mac_tx[0], c_xtcp, c_connect_status );
-		on stdcore[MOTOR_CORE] : do_comms_eth( c_commands_eth,c_commands_eth2, c_xtcp[0],c_gui_en );
-		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, c_eth_reset); // +4 threads
+		on stdcore[MOTOR_CORE] : do_comms_eth( c_commands_eth,c_commands_eth2, c_xtcp[0] );
+		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, c_eth_command); // +4 threads
 #endif
 
 		/* L2 */
@@ -137,7 +137,7 @@ int main ( void )
 					XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT, "rpm"
 			);
 #endif
-		display_shared_io_motor( c_lcd1, c_lcd2, lcd_ports, btns,c_can_reset,p_shared_rs,c_eth_reset,c_gui_en);
+		display_shared_io_motor( c_lcd1, c_lcd2, lcd_ports, btns,c_can_reset,p_shared_rs,c_eth_command);
 		}
 
 		/* L1 */

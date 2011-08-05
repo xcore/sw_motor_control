@@ -1,8 +1,5 @@
 /**
- * Module:  module_dsc_adc
- * Version: 1v0alpha1
- * Build:   1dad8e7b44076dc4fbd1a5431e1773c4e9b94f42
- * File:    adc_filter.h
+ * \file adc_filter.h
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -19,4 +16,14 @@
  **/                                   
 #include "adc_common.h"
 
+/** \brief Perform a low pass filter on the ADC values
+ *
+ * Perform a low pass filter consisting of ADC_FILT_SAMPLE_COUNT samples
+ * on the filter data.
+ *
+ * \param adc0_val the array of values from ADC channel 0
+ * \param adc1_val the array of values from ADC channel 1
+ * \param adc2_val the array of values from ADC channel 2
+ * \param pos the current fill marker in the array
+ */
 {int,int,int} do_lp_filter( int adc0_val[], int adc1_val[], int adc2_val[], unsigned pos );

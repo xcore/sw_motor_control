@@ -1,8 +1,5 @@
 /**
- * Module:  module_dsc_adc
- * Version: 1v0alpha1
- * Build:   5a0777f66dd21195304ee94ba3537494a8f237b4
- * File:    adc_common.h
+ * \file adc_common.h
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -20,9 +17,13 @@
 #ifndef __ADC_COMMON_H__
 #define __ADC_COMMON_H__
 
+// The token which is passed over the control channel for triggering the ADC
 #define ADC_TRIG_TOKEN  1
 
+// The number of channels to store when sampling the ADC
 #define ADC_CHANS 6
+
+// Count of the number of elements in the ADC filter array
 #define ADC_FILT_SAMPLE_COUNT 31
 
 #endif /* __ADC_COMMON_H__ */

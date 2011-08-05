@@ -3,8 +3,8 @@
  * Version: 1v0alpha1
  * Build:   128bfdf87839aeec0e38320c3524102eb996ecd5
  * File:    sine_lookup.h
- * Modified by : A Srikanth
- * Last Modified on : 05-Aug-2011
+ * Modified by : Srikanth
+ * Last Modified on : 04-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -22,8 +22,6 @@
 #ifndef __SINE_LOOKUP_H__
 #define __SINE_LOOKUP_H__
 
-#define DEGREE_COUNT_360 256
-#define DEGREE_COUNT_90 64
 extern int sine_table[];
 
 /** \brief Look up the fixed point sine value

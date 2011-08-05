@@ -4,7 +4,7 @@
  * Build:   dcbd8f9dde72e43ef93c00d47bed86a114e0d6ac
  * File:    main.xc
  * Modified by : A Srikanth
- * Last Modified on : 05-Aug-2011
+ * Last Modified on : 06-Jul-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -140,9 +140,8 @@ void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl
 // Program Entry Point
 int main ( void )
 {
-	chan c_control, c_eth_shared, c_speed, c_commands_eth,c_commands_can,c_can_reset,c_eth_reset,c_gui_en;
+	chan c_control, c_eth_shared, c_speed, c_commands_eth,c_commands_can,c_can_reset,c_eth_reset;
 	chan c_qei;
-	chan c_lcd;
 #ifdef USE_CAN
 	chan c_rxChan, c_txChan,c_can_command ;
 #endif
@@ -157,19 +156,23 @@ int main ( void )
 	{
 		// Xcore 0 - INTERFACE_CORE
 #ifdef USE_CAN
-		on stdcore[INTERFACE_CORE] : do_comms_can( c_commands_can, c_rxChan, c_txChan, c_can_reset,c_gui_en);
+		on stdcore[INTERFACE_CORE] : do_comms_can( c_commands_can, c_rxChan, c_txChan, c_can_reset);
 		on stdcore[INTERFACE_CORE] : canPhyRxTx( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx );
 #endif
 
 #ifdef USE_ETH
+		//on stdcore[INTERFACE_CORE] : logging_server( c_sdram, c_logging_data, c_data_read );
+		//on stdcore[INTERFACE_CORE] : sdram_server( c_sdram, sdram_ports );
 		on stdcore[MOTOR_CORE] : init_tcp_server( c_mac_rx[0], c_mac_tx[0], c_xtcp, c_connect_status );
-		on stdcore[MOTOR_CORE] : do_comms_eth( c_commands_eth, c_xtcp[1],c_gui_en );
+		on stdcore[MOTOR_CORE] : do_comms_eth( c_commands_eth, c_xtcp[1] );
+		//on stdcore[INTERFACE_CORE] : do_logging_eth( c_data_read, c_xtcp[0] );
 #endif
 
-		on stdcore[INTERFACE_CORE]:display_shared_io_motor( c_speed, c_lcd, lcd_ports, btns,c_can_reset,p_shared_rs,c_eth_reset,c_gui_en);
+	
+		on stdcore[INTERFACE_CORE] : display_shared_io_manager( c_speed, lcd_ports, btns, c_can_reset, p_shared_rs,c_eth_reset);
 
 #ifdef USE_ETH
-		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, c_eth_reset); // +4 threads
+		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, c_eth_shared); // +4 threads
 #endif
 
 		// Xcore 1 - MOTOR_CORE
@@ -182,6 +185,7 @@ int main ( void )
 #ifdef USE_ETH
 		on stdcore[MOTOR_CORE] : run_motor ( c_pwm, c_qei, c_adc, c_speed, c_wd, p_hall,c_commands_eth);
 #endif
+		//on stdcore[MOTOR_CORE] : adc_ltc1408_triggered( c_adc, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA, c_adc_trig, null, null, null );
 		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei, p_qei );
 #endif
