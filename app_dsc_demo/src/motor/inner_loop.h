@@ -3,8 +3,8 @@
  * Version: 1v0alpha1
  * Build:   60a90cca6296c0154ccc44e1375cc3966292f74e
  * File:    inner_loop.h
- * Modified by : Srikanth
- * Last Modified on : 26-May-2011
+ * Modified by : A Srikanth
+ * Last Modified on : 05-Aug-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 

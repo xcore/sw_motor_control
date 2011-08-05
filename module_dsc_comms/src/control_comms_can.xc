@@ -34,16 +34,16 @@
 
 #ifdef BLDC_BASIC
 // Thread that does the CAN control interface
-void do_comms_can( chanend c_commands_can, chanend rxChan, chanend txChan, chanend c_control_can,chanend c_commands_can2)
+void do_comms_can( chanend c_commands_can, chanend rxChan, chanend txChan, chanend c_control_can,chanend c_commands_can2,chanend c_can_gui_en)
 {
 	struct CanPacket p;
 	unsigned int sender_address, count = 1, value;
 	unsigned int speed1 = 1000,speed2=1000;
 	unsigned int set_speed = 1000;
 	unsigned  error_flag1=0,error_flag2=0;
-	unsigned int Ia=0,Ib=0,Ic=0,Iq_set_point=0,Id_out=0,Iq_out=0;
-	unsigned int Ia2=0,Ib2=0,Ic2=0,Iq_set_point2=0,Id_out2=0,Iq_out2=0;
-	//unsigned ref_speed_flag1=0;
+    int Ia=0,Ib=0,Ic=0,Iq_set_point=0,Id_out=0,Iq_out=0;
+    int Ia2=0,Ib2=0,Ic2=0,Iq_set_point2=0,Id_out2=0,Iq_out2=0;
+	unsigned ref_speed_flag=0;
 
    //enable CAN
      c_control_can<:CAN_RS_LO;
@@ -209,6 +209,13 @@ void do_comms_can( chanend c_commands_can, chanend rxChan, chanend txChan, chane
 				// Increment the packet count
 					count = (count + 1) & COUNTER_MASK;
 				break;
+			 case 6:   //Disable/Enable button functionalities when using CAN GUI
+				 // Rebuild flag from the packet
+				    ref_speed_flag = ((p.DATA[3] & 0xFF) << 0);
+				 //send flag to shared i/o
+					c_can_gui_en <: GUI_ENABLED;
+					c_can_gui_en <: ref_speed_flag;
+				break;
 		 default :// Unknown command - ignore it.
 						//printstr("Unknown\n");
 
@@ -232,16 +239,16 @@ void do_comms_can( chanend c_commands_can, chanend rxChan, chanend txChan, chane
 #endif    //BLDC_BASIC
 
 #ifdef BLDC_FOC
-void do_comms_can( chanend c_commands_can, chanend rxChan, chanend txChan, chanend c_control_can)
+void do_comms_can( chanend c_commands_can, chanend rxChan, chanend txChan, chanend c_control_can,chanend c_can_gui_en)
 {
 	struct CanPacket p;
 	unsigned int sender_address, count = 1, value;
 	unsigned int speed1 = 1000,speed2=0;
 	unsigned int set_speed = 1000;
 	unsigned  error_flag1=0,error_flag2=0;   //fault indication
-	unsigned int Ia=0,Ib=0,Ic=0,Iq_set_point=0,Id_out=0,Iq_out=0; // motor1 parameters
-	unsigned int Ia2=0,Ib2=0,Ic2=0,Iq_set_point2=0,Id_out2=0,Iq_out2=0;  //motor2 parameters
-
+    int Ia=0,Ib=0,Ic=0,Iq_set_point=0,Id_out=0,Iq_out=0; // motor1 parameters
+    int Ia2=0,Ib2=0,Ic2=0,Iq_set_point2=0,Id_out2=0,Iq_out2=0;  //motor2 parameters
+	unsigned ref_speed_flag=0;
     //enable CAN
     c_control_can<:CAN_RS_LO;
 	// Loop forever processing packets
@@ -293,6 +300,8 @@ void do_comms_can( chanend c_commands_can, chanend rxChan, chanend txChan, chane
 						c_commands_can :> Ia;
 						c_commands_can :> Ib;
 
+						Ia=Ia*2;     // convert in to mA
+						Ib=Ib*2;     // convert in to mA
 						// Put the speed1 and speed2 into the packet
 						p.DATA[0] = ( ( speed1 >> 8) & 0xFF);
 						p.DATA[1] = ( ( speed1 >> 0 ) & 0xFF);
@@ -332,11 +341,13 @@ void do_comms_can( chanend c_commands_can, chanend rxChan, chanend txChan, chane
 						break;
 					case 3: //send CAN frame 2
 						//get Ic,Iq_set_point,Iq_out and Id_out of motor1
-						c_commands_can <: CMD_GET_VALS2;
+						c_commands_can <: CMD_GET_VALS_2;
 						c_commands_can :> Ic;
 						c_commands_can :> Iq_set_point;
 						c_commands_can :> Id_out;
 						c_commands_can :> Iq_out;
+
+						Ic=Ic*2;    // convert in to mA
 
 
 					// Put Ic and Iq_set_point into the packet
@@ -404,6 +415,13 @@ void do_comms_can( chanend c_commands_can, chanend rxChan, chanend txChan, chane
 
 				// Increment the packet count
 					count = (count + 1) & COUNTER_MASK;
+				break;
+			 case 6:   //Disable/Enable button functionalities when using CAN GUI
+				 // Rebuild flag from the packet
+				   ref_speed_flag = ((p.DATA[3] & 0xFF) << 0);
+				   //send flag to shared i/o
+					c_can_gui_en <: GUI_ENABLED;
+					c_can_gui_en <: ref_speed_flag;
 				break;
 		 default :// Unknown command - ignore it.
 						//printstr("Unknown\n");

@@ -17,5 +17,5 @@
  * copyright notice above.
  *
  **/                                   
-// Increase to 1100 for logging
+
 #define XTCP_CLIENT_BUF_SIZE (200)

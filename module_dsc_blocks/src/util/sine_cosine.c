@@ -3,8 +3,8 @@
  * Version: 1v0alpha1
  * Build:   128bfdf87839aeec0e38320c3524102eb996ecd5
  * File:    sine_cosine.c
- * Modified by : Srikanth
- * Last Modified on : 04-May-2011
+ * Modified by : A Srikanth
+ * Last Modified on : 05-Aug-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -22,28 +22,26 @@
 #include "sine_lookup.h"
 #include "sine_table_big.h"
 
-#ifdef FAULHABER_MOTOR
-#define SINE_COSINE_OFFSET 512
-#define SINE_TABLE_LIMIT 4096
-#else
-#define SINE_COSINE_OFFSET 64
-#define SINE_TABLE_LIMIT 1024
-#endif
-
-
 inline int sine( unsigned deg )
 {
-	return sine_table[deg];
+      deg = deg & 0xFF;
+      return sine_table[deg];
 }
 
 inline int cosine( unsigned deg )
 {
-	unsigned x = deg + SINE_COSINE_OFFSET;
-	if (x >= SINE_TABLE_LIMIT)
-	{
-		x = x - SINE_TABLE_LIMIT;
-	}
-	return sine_table[x];
+      unsigned x;
+
+      deg = deg & 0xFF;
+
+      x = deg + DEGREE_COUNT_90;
+
+      while (x >= DEGREE_COUNT_360)
+      {
+            x = x - DEGREE_COUNT_360;
+      }
+      return sine_table[x];
 }
+
 
 

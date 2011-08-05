@@ -1,8 +1,10 @@
 /**
- * Module:  module_dsc_pwm
- * Version: 0v9sd
- * Build:   e5396b80fb9aa55f9ac7b96a4d043e1e8662d624
- * File:    pwm_cli_inv.h
+ * Module:  app_dsc_demo
+ * Version: 1v0alpha0
+ * Build:   8b9b7f06e54cf08659c20477a643c0cd958c1510
+ * File:    watchdog.h
+ * Modified by : A Srikanth
+ * Last Modified on : 05-Aug-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -17,9 +19,9 @@
  * copyright notice above.
  *
  **/                                   
-#include <xs1.h>
-#include "pwm_cli_common.h"
+#define WD_CMD_EN_MOTOR		1
+#define WD_CMD_DIS_MOTOR	2
+#define WD_CMD_TICK		3
+#define WD_CMD_START		4
 
-#ifdef PWM_INV_MODE
-void update_pwm( chanend c, unsigned value[]);
-#endif
+void do_wd(chanend c_wd, out port wd);

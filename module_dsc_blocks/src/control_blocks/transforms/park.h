@@ -23,36 +23,7 @@
 #ifdef __XC__
 
 	// XC versions
-
-	/** \brief Perform a Park transform
-	 *
-	 * A Park transform is a 2D to 2D transform which takes the radial and tangential
-	 * components of a measurement (for instance the magnetic flux or total coil
-	 * currents) and converts them to a rotating frame of reference.  Typically
-	 * this is the rotating frame of reference attached to the spinning rotor.
-	 *
-	 * \param Id the output tangential component
-	 * \param Iq the output radial component
-	 * \param I_alpha the input tangential component
-	 * \param I_beta the input radial component
-	 * \param theta the angle between the fixed and rotating frames of reference
-	 */
 	void park_transform( int &Id, int &Iq, int I_alpha, int I_beta, unsigned theta );
-
-
-	/** \brief Perform an inverse Park transform
-	 *
-	 * A Park transform is a 2D to 2D transform which takes the radial and tangential
-	 * components of a measurement (for instance the magnetic flux or total coil
-	 * currents) and converts them to a rotating frame of reference.  Typically
-	 * this is the rotating frame of reference attached to the spinning rotor.
-	 *
-	 * \param I_alpha the output tangential component
-	 * \param I_beta the output radial component
-	 * \param Id the input tangential component
-	 * \param Iq the intput radial component
-	 * \param theta the angle between the fixed and rotating frames of reference
-	 */
 	void inverse_park_transform( int &I_alpha, int &I_beta, int Id, int Iq, unsigned theta );
 
 #else

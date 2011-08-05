@@ -3,8 +3,8 @@
  * Version: 1v0alpha2
  * Build:   280fc2259bcf2719c6b83e517d854c7666e0c448
  * File:    hall_input.xc
- * Modified by : Upendra
- * Last Modified on : 01-Jul-2011
+ * Modified by : A Srikanth
+ * Last Modified on : 03-Aug-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -27,12 +27,12 @@
 
 /* Hall lookup table 							Hall      => Sector  */
 const unsigned hall_pos[8] = { 	HALL_INV,	/* 0bx000 = 0 => INVALID */
-								2,			/* 0bx001 = 1 => 0 */
+								2,			/* 0bx001 = 1 => 2 */
 								4,			/* 0bx010 = 2 => 4 */
-								3,			/* 0bx011 = 3 => 5 */
-								0,			/* 0bx100 = 4 => 2 */
+								3,			/* 0bx011 = 3 => 3 */
+								0,			/* 0bx100 = 4 => 0 */
 								1,			/* 0bx101 = 5 => 1 */
-								5,			/* 0bx110 = 6 => 3 */
+								5,			/* 0bx110 = 6 => 5 */
 								HALL_INV };	/* 0bx111 = 7 => INVALID */
 
 const unsigned rev_pos[6] = { 	0b0001,		/* 0bx001 <= 0 */
@@ -56,6 +56,18 @@ select do_hall_select( unsigned &hall_state, unsigned &cur_pin_state, port in p_
 	hall_state = hall_pos[cur_pin_state & 0b111];
 	break;
 }
+
+void do_hall_test( port in p_hall )
+{
+	unsigned cur_pin_state = 0;
+
+	while (1)
+	{
+		p_hall when pinsneq(cur_pin_state) :> cur_pin_state;
+		printhexln(cur_pin_state & 0b111);
+	}
+}
+
 
 void run_hall_speed_timed( chanend c_hall, chanend c_speed, port in p_hall, chanend ?c_logging_0, chanend ?c_logging_1  )
 {
@@ -81,7 +93,6 @@ void run_hall_speed_timed( chanend c_hall, chanend c_speed, port in p_hall, chan
 	/* last calculated value when in the sector */
 	unsigned base;
 	unsigned limit[6] = {600, 1200, 1900, 2400, 3000, 0};
-//	unsigned limit[6] = {602, 1237, 1795, 2416, 3024, 0};
 	unsigned update = 0;
 
 	/* init */
@@ -89,7 +100,7 @@ void run_hall_speed_timed( chanend c_hall, chanend c_speed, port in p_hall, chan
 	p_hall :> pin_state;
 	cur_state = hall_pos[pin_state & 0b111];
 
-	// Code below is a fudge to stop an exception caused by stepping off the end of the array.
+	/* Code below is a fudge to stop an exception caused by stepping off the end of the array. */
 	if (cur_state == HALL_INV)
 	{
 		printstr("Invalid hall state detected...\n");
@@ -109,7 +120,7 @@ void run_hall_speed_timed( chanend c_hall, chanend c_speed, port in p_hall, chan
 	{
 		select
 		{
-//		case p_hall when pinsneq(pin_state) :> pin_state:
+
 		case p_hall when pinseq(next_pin_state) :> pin_state:
 
 			cur_state = hall_pos[pin_state & 0b111]; // update current state
@@ -118,12 +129,12 @@ void run_hall_speed_timed( chanend c_hall, chanend c_speed, port in p_hall, chan
 			else
 				next_pin_state = rev_pos[cur_state+1];
 
-			base = theta; // save base angle
+			base = theta; /* save base angle */
 
-			tz = t0; // save last ts
-			t :> t0; // get new ts for this point
+			tz = t0; /* save last ts */
+			t :> t0; /* get new ts for this point */
 
-			delta_t = t0 - tz; // calculate time delta for 60 deg
+			delta_t = t0 - tz; /* calculate time delta for 60 deg */
 
 			i++;
 			break;
@@ -144,7 +155,7 @@ void run_hall_speed_timed( chanend c_hall, chanend c_speed, port in p_hall, chan
 
 	}
 
-	// Main hall loop
+	/* Main hall loop */
 	while (1)
 	{
 		select
@@ -154,14 +165,13 @@ void run_hall_speed_timed( chanend c_hall, chanend c_speed, port in p_hall, chan
 				
 				new_state = hall_pos[pin_state & 0b111];
 				
-				//theta = ((int)(ts - t0) * ((limit[new_state] - limit[cur_state] + 3600)%3600) ) / delta_t;
 				theta = ((int)(ts - t0) * 600 ) / delta_t;
 				theta = theta + base;
 
 				while (theta >= 3600)
 					theta -= 3600;
 
-				cur_state = new_state; // update current state
+				cur_state = new_state; /* update current state */
 				
 				/* update next state to wait for... means we can't accidentally skip or go the wrong direction
 				 * but not great if a hall sensor fails
@@ -191,7 +201,6 @@ void run_hall_speed_timed( chanend c_hall, chanend c_speed, port in p_hall, chan
 				{
 					if (update == 1)
 					{
-						// calibrate position -> state 2 == 180 deg, plus some error (~10deg?)
 						int diff = limit[2] - theta;
 						base = theta + ((diff*4)>>3) ;
 						update = 0;
@@ -203,13 +212,13 @@ void run_hall_speed_timed( chanend c_hall, chanend c_speed, port in p_hall, chan
 				}
 				else
 				{
-						base = theta; // save base angle
+						base = theta; /* save base angle */
 						update = 0;
 				}
 
 
-				tz = t0; // save last ts at this point
-				t :> t0; // get new ts for this point
+				tz = t0; /* save last ts at this point */
+				t :> t0; /* get new ts for this point */
 
 				delta_t = t0 - tz; // calculate time delta for 360 deg
 				break;

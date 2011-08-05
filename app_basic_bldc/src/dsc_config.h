@@ -1,9 +1,8 @@
 /**
  * Module:  app_basic_bldc
  * Version: 1v1
- * Build:
- * File:    dsc_config.h
- * Author: 	L & T
+ * Modified by : Srikanth
+ * Last Modified on : 05-Jul-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -31,7 +30,7 @@
 #define PWM_DEAD_TIME 10
 
 // Define the resolution of PWM (affects operational freq. as tied to ref clock)
-#define PWM_MAX_VALUE 4096
+#define PWM_MAX_VALUE 4000
 
 // Define the hall effect & position estimation operation mode:
 // HALL_POS_ESTIMATION - deliver an estimated theta for based on the frequency of requests of theta
@@ -115,5 +114,9 @@
 //Use CAN or ETHERNET communication
 //#define USE_CAN
 #define USE_ETH
+// Check that both interfaces are not defined
+#if defined(USE_CAN) && defined(USE_ETH)
+	#error Both CAN and Ethernet are enabled.
+#endif
 
 #endif /* _DSC_CONFIG__H_ */

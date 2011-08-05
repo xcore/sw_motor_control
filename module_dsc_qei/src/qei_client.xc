@@ -3,8 +3,8 @@
  * Version: 1v0alpha0
  * Build:   e89e295a87b36dc1ad5ce82058b7434d3df4bb94
  * File:    qei_client.xc
- * Modified by : Srikanth
- * Last Modified on : 26-May-2011
+ * Modified by : A Srikanth
+ * Last Modified on : 05-Aug-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -34,6 +34,15 @@ unsigned get_qei_position ( chanend c_qei )
 	c_qei <: QEI_CMD_POS_REQ;
 	c_qei :> tmp;
 
+	if(tmp >= E_REV_4)
+		tmp = tmp - E_REV_4;
+	if(tmp >= E_REV_3)
+		tmp = tmp - E_REV_3;
+	if(tmp >= E_REV_2)
+		tmp = tmp - E_REV_2;
+	if(tmp >= E_REV_1)
+		tmp = tmp - E_REV_1;
+
 	r = tmp ;
 	return r;
 }
@@ -51,12 +60,8 @@ int get_qei_speed ( chanend c_qei )
 		r = 0;
 	else
 	{
-#ifdef FAULHABER_MOTOR
-		r = 3000000000 / ((t2 - t1) * (1024 * 4));
-#else
-		r = 3000000000 / ((t2 - t1) * (256 * 4));
-#endif
-		r <<= 1; // double to get RPM
+		r = SPEED_COUNT / ((t2 - t1) * (PPR * STATE));
+		r <<= 1; /* double to get RPM */
 	}
 
 	qei_avg_buffer[qei_buf_pos++] = r;

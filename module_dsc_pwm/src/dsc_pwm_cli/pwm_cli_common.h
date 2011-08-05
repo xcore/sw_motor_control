@@ -24,10 +24,11 @@
 #include "dsc_pwm_common_types.h"
 #include "dsc_pwm_common.h"
 
-/** \brief Initialise PWM control state
- *
- */
-void init_pwm_vals( );
+	// Print out for debugging
+	void print_pwm_out( t_out_data pwm_out_data[] );
+
+	// initialise PWM values
+	void init_pwm_vals( );
 
 // Calculate timings for PWM output
 #ifdef __XC__

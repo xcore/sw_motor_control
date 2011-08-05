@@ -3,8 +3,8 @@
  * Version: 1v0alpha2
  * Build:   2a548667d36ce36c64c58f05b5390ec71cb253fa
  * File:    adc_client.xc
- * Modified by : Srikanth
- * Last Modified on : 26-May-2011
+ * Modified by : A Srikanth
+ * Last Modified on : 05-Aug-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 

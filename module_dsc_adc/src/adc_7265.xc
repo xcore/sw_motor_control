@@ -1,5 +1,5 @@
 /*
- * adc_7265.xc
+ *  adc_7265.xc
  *
  *  Created on: Jul 6, 2011
  *  Author: A SRIKANTH
@@ -12,7 +12,7 @@
 
 static void configure_adc_ports_7265(clock clk, port out SCLK, port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX)
 {
-    configure_clock_rate_at_least(clk, 100, 6);
+    configure_clock_rate_at_least(clk, 100, 6); // adc clock rate 16MHz
     configure_port_clock_output(SCLK, clk);
     configure_out_port(CNVST, clk, 1);
 	configure_in_port(DATA_A, clk);
@@ -27,7 +27,7 @@ static void configure_adc_ports_7265(clock clk, port out SCLK, port out CNVST, i
 #pragma unsafe arrays
 static void adc_get_data_7265( int adc_val[], port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
 {
-	unsigned val1 = 0, val3 = 0;
+	unsigned Va1 = 0, Vb1 = 0;
 	unsigned ts;
 
 	MUX <: 0x0;
@@ -38,21 +38,21 @@ static void adc_get_data_7265( int adc_val[], port out CNVST, in buffered port:3
 
 	par
 	{
-			DATA_A @ ts :> val1;
-			DATA_B @ ts :> val3;
+			DATA_A @ ts :> Va1;
+			DATA_B @ ts :> Vb1;
 	}
 
-	val1 = bitrev(val1);
-	val3 = bitrev(val3);
+	Va1 = bitrev(Va1);
+	Vb1 = bitrev(Vb1);
 
-	val1 = val1 >> 2;
-	val3 = val3 >> 2;
+	Va1 = Va1 >> 2;
+	Vb1 = Vb1 >> 2;
 
-	val1 = 0x00000FFF & val1;
-	val3 = 0x00000FFF & val3;
+	Va1 = ADC_MASK & Va1;
+	Vb1 = ADC_MASK & Vb1;
 
-	adc_val[0] = val1;
-	adc_val[1] = val3;
+	adc_val[0] = Va1;
+	adc_val[1] = Vb1;
 
 }
 

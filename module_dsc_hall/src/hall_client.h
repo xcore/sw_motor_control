@@ -3,6 +3,8 @@
  * Version: 1v0alpha2
  * Build:   60a90cca6296c0154ccc44e1375cc3966292f74e
  * File:    hall_client.h
+ * Modified by : A Srikanth
+ * Last Modified on : 05-Aug-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -20,12 +22,7 @@
 #ifndef HALL_CLIENT_H_
 #define HALL_CLIENT_H_
 
-/** \brief Get position, speed and delta from a hall server
- *
- *  The client library function for a hall sensor server
- *
- *  \param c_hall the channel for communicating with the hall server
- */
+/* get position, speed and delta */
 {unsigned, unsigned, unsigned} get_hall_pos_speed_delta( chanend c_hall );
 
 #endif /* HALL_CLIENT_H_ */
