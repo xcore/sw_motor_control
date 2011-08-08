@@ -39,30 +39,35 @@ on stdcore[0]: in port btns = PORT_BUTTONS;
 on stdcore[0] : out port p_shared_rs=PORT_SHARED_RS;
 
 // CAN
-on stdcore[0] : clock p_can_clk = XS1_CLKBLK_4;
+on stdcore[0] : clock can_clk = XS1_CLKBLK_4;
 on stdcore[0] : buffered in port:32 p_can_rx = PORT_CAN_RX;
 on stdcore[0] : port p_can_tx = PORT_CAN_TX;
 
 unsigned char black[16*32];
 
 // OTP for MAC address
-/*
+
 // Ethernet Ports
-on stdcore[0]: clock clk_mii_ref = XS1_CLKBLK_REF;
-on stdcore[0]: clock clk_smi = XS1_CLKBLK_3;
-on stdcore[0]: smi_interface_t smi = { PORT_ETH_MDIO, PORT_ETH_MDC, 0 };
-on stdcore[0]: mii_interface_t mii = { XS1_CLKBLK_1, XS1_CLKBLK_2, PORT_ETH_RXCLK, PORT_ETH_RXER, PORT_ETH_RXD, PORT_ETH_RXDV, PORT_ETH_TXCLK, PORT_ETH_TXEN, PORT_ETH_TXD };
-*/
+on stdcore[0]: clock eth_rx_clk_blk = XS1_CLKBLK_1;
+on stdcore[0]: in port eth_rx_clk = PORT_ETH_RXCLK;
+on stdcore[0]: buffered in port:32 eth_rx_data = PORT_ETH_RXD;
+on stdcore[0]: in port eth_rx_valid = PORT_ETH_RXDV;
+
+on stdcore[0]: clock eth_tx_clk_blk = XS1_CLKBLK_2;
+on stdcore[0]: in port eth_tx_clk = PORT_ETH_TXCLK;
+on stdcore[0]: buffered out port:32 eth_tx_data = PORT_ETH_TXD;
+on stdcore[0]: out port eth_tx_enable = PORT_ETH_TXEN;
+
 
 void reset_devices()
 {
 	timer t;
 	unsigned ts;
 
-	p_shared_rs = 0;
+	p_shared_rs <: 0;
 	t :> ts;
 	t when timerafter(ts+10000000) :> void;
-	p_shared_rs = 0xf;
+	p_shared_rs <: 0xf;
 }
 
 int test_buttons_and_leds()
@@ -107,31 +112,92 @@ int test_display()
 
 int test_can()
 {
-	clock clk;
+	configure_clock_ref(can_clk, 16);
+	configure_in_port_no_ready(p_can_rx, can_clk);
+	set_port_clock(p_can_tx, can_clk);
 
-	configure_clock_ref(clk, CLOCK_DIV);
-	configure_in_port_no_ready(p_can_rx, clk);
-	set_port_clock(p_can_tx, clk);
-
-	start_clock(clk);
+	start_clock(can_clk);
 
 	// Write out a bit pattern and read it in, checking that it is the same
 
 	return 1;
 }
 
+
+// Ethernet timing constants
+#define PAD_DELAY_RECEIVE    0
+#define PAD_DELAY_TRANSMIT   0
+#define CLK_DELAY_RECEIVE    0
+#define CLK_DELAY_TRANSMIT   7
+
 int test_ethernet()
 {
-	// Setup PHY
+	// Setup receive MII pins
 
+	set_port_use_on(eth_rx_clk);
+	eth_rx_clk :> int;
+	set_port_use_on(eth_rx_data);
+	set_port_use_on(eth_rx_valid);
+
+	set_pad_delay(eth_rx_clk, PAD_DELAY_RECEIVE);
+
+	set_port_strobed(eth_rx_data);
+	set_port_slave(eth_rx_data);
+
+	set_clock_on(eth_rx_clk_blk);
+	set_clock_src(eth_rx_clk_blk, eth_rx_clk);
+	set_clock_ready_src(eth_rx_clk_blk, eth_rx_valid);
+	set_port_clock(eth_rx_data, eth_rx_clk_blk);
+	set_port_clock(eth_rx_valid, eth_rx_clk_blk);
+
+	set_clock_rise_delay(eth_rx_clk_blk, CLK_DELAY_RECEIVE);
+
+	start_clock(eth_rx_clk_blk);
+
+	clearbuf(eth_rx_data);
+
+	// Setup transmit MII pins
+
+	set_port_use_on(eth_tx_clk);
+	set_port_use_on(eth_tx_data);
+	set_port_use_on(eth_tx_enable);
+
+	set_pad_delay(eth_tx_clk, PAD_DELAY_TRANSMIT);
+
+	eth_tx_data <: 0;
+	eth_tx_enable <: 0;
+	sync(eth_tx_data);
+	sync(eth_tx_enable);
+
+	set_port_strobed(eth_tx_data);
+	set_port_master(eth_tx_data);
+	clearbuf(eth_tx_data);
+
+	set_port_ready_src(eth_tx_enable, eth_tx_data);
+	set_port_mode_ready(eth_tx_enable);
+
+	set_clock_on(eth_tx_clk_blk);
+	set_clock_src(eth_tx_clk_blk, eth_tx_clk);
+	set_port_clock(eth_tx_data, eth_tx_clk_blk);
+	set_port_clock(eth_tx_enable, eth_tx_clk_blk);
+
+	set_clock_fall_delay(eth_tx_clk_blk, CLK_DELAY_TRANSMIT);
+
+	start_clock(eth_tx_clk_blk);
+
+	clearbuf(eth_tx_data);
 
 	par
 	{
 		// Send
-		{};
+		{
+			unsigned int txd;
+		};
 
 		// Receive
-		{};
+		{
+			unsigned int rxd;
+		};
 	}
 	return 1;
 }
