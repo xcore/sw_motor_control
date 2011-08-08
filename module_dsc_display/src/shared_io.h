@@ -25,6 +25,18 @@
 #include <xccompat.h>
 #include <dsc_config.h>
 
+#ifdef __XC__
+	/** \brief The control structure for the LCD ports
+	*/
+	typedef struct lcd_interface_t
+	{
+		out port p_lcd_sclk; // buffered port:8
+		out port p_lcd_mosi; // buffered port:8
+		out port p_lcd_cs_n;
+		out port p_core1_shared;
+	} lcd_interface_t;
+#endif
+
 	// Individual command interfaces
 #ifdef BLDC_BASIC
 
@@ -42,14 +54,6 @@
 	#define CAN_RS_LO		2
 
 	#ifdef __XC__
-		typedef struct lcd_interface_t
-		{
-			out port p_lcd_sclk; // buffered port:8
-			out port p_lcd_mosi; // buffered port:8
-			out port p_lcd_cs_n;
-			out port p_core1_shared;
-		} lcd_interface_t;
-
 		void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_reset,out port p_shared_rs,chanend c_eth_command );
 	#endif
 #endif
@@ -67,17 +71,6 @@
     #define CMD_GET_VALS2	4
 
 	#ifdef __XC__
-		typedef struct lcd_interface_t
-		{
-			//clock clk_lcd_1;
-			//clock clk_lcd_2;
-
-			out port p_lcd_sclk; // buffered port:8
-			out port p_lcd_mosi; // buffered port:8
-			out port p_lcd_cs_n;
-			out port p_core1_shared;
-		} lcd_interface_t;
-
 		void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_command,out port p_shared_rs,chanend c_eth_command);
 	#endif
 #endif

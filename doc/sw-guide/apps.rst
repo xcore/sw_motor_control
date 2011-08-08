@@ -53,9 +53,7 @@ Speed Control Loop
 The speed control loop for this application can be found in ``src/control/speed_control.xc``. The thread is launched by calling the following function.
 
 ::
-  void speed_control(chanend c_control, 
-	chanend c_lcd, 
-	chanend c_ethernet );
+  void speed_control(chanend c_control, chanend c_lcd, chanend c_ethernet );
 
 
 This thread begins by initialising the PID data structure with the required coefficients. Following this a startup sequence is entered. This triggers open loop control to get the motor to begin rotating. After a sufficient time period the main speed loop is entered into.

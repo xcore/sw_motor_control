@@ -19,9 +19,9 @@ The processing blocks module provides the following PID calculation routines. Th
   void init_pid( int Kp, int Ki, int Kd, pid_data *d );
 
   int pid_regulator( int set_point, int actual, pid_data *d );
-	
+
   int pid_regulator_delta( int set_point, int actual, pid_data *d );
-	
+
   int pid_regulator_delta_cust_error( int error, pid_data *d );
 
 
@@ -41,16 +41,12 @@ The processing blocks module provides the following Clarke and park transforms. 
 
 ::
   #include "park.h"
-  void park_transform( int *Id, int *Iq, 
-	int I_alpha, int I_beta, unsigned theta );
-  void inverse_park_transform( int *I_alpha, int *I_beta, 
-	int Id, int Iq, unsigned theta );
+  void park_transform( int *Id, int *Iq, int I_alpha, int I_beta, unsigned theta );
+  void inverse_park_transform( int *I_alpha, int *I_beta, int Id, int Iq, unsigned theta );
 
   #include "clarke.h"
-  void clarke_transform( int *I_alpha, int *I_beta, 
-	int Ia, int Ib, int Ic );
-  void inverse_clarke_transform( int *Ia, int *Ib, int *Ic, 
-	int alpha, int beta );
+  void clarke_transform( int *I_alpha, int *I_beta, int Ia, int Ib, int Ic );
+  void inverse_clarke_transform( int *Ia, int *Ib, int *Ic, int alpha, int beta );
 
 
 Each function has the calculation destinations passed as pointers (or references in XC) and the inputs to the calculations are passed as normal arguments.

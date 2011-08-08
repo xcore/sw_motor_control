@@ -27,9 +27,11 @@ The framework consists of a number of modules that provide functions for an inte
 
 In contrast to a typical microcontroller, hardware interfaces are implemented on XMOS devices in software. This gives the developer the flexibility to implement or customise any interface they require. This gives designers wider options when selecting ADC's or PWM schemes.
 
-The modules listed above are implemented in one or more processor threads. The architecture of the threads is shown below.
+The modules listed above are implemented in one or more processor threads. The architecture of the threads is shown below for both the basic BLDC and FOC configurations.
 
-   .. image:: images/threadDiag.png
+   .. image:: images/bldc-thread.*
+
+   .. image:: images/foc-thread.*
 
 
 

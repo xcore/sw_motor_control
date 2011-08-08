@@ -60,7 +60,7 @@ Client functions
 Server functions
 ++++++++++++++++
 
-.. docygenfunction:: adc_7265_triggered
+.. doxygenfunction:: adc_7265_triggered
 
 .. doxygenfunction:: adc_ltc1408_filtered
 

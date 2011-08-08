@@ -1,9 +1,9 @@
 Pulse Width Modulation
 ======================
 
-The PWM driver code is written using a `client server' model. The client functions are designed to be run from either the main control loop or a separate thread that sits between the control loop and the PWM server thread (dependant on timing constraints defined by the speed of the control loop).
+The PWM driver code is written using a *client server* model. The client functions are designed to be run from either the main control loop or a separate thread that sits between the control loop and the PWM server thread (dependant on timing constraints defined by the speed of the control loop).
 
-The PWM implementation is centre synchronised. This means that the output is of the form shown in figure XYZ
+The PWM implementation is centre synchronised. This means that the output is of the form shown in the figure
 
   .. image:: images/pwmFig.pdf
 
@@ -166,7 +166,7 @@ The PWM service is designed as a continuously running loop that cannot be blocke
 
 To achieve the behaviour needed the PWM services are all written in assembly language. This is done to achieve a fine grained control over the instruction sequences required to load up the buffers in the ports and also the port timers.
 
-The PWM service pulls the required data for outputting to the ports from a shared memory location. This is a `double buffered' scheme where the client will update the memory area that is not currently in use and then inform the service via a channel which memory location it should look at for the output data. The update sequence is looked at in more detail in the discussion of the client implementation.
+The PWM service pulls the required data for outputting to the ports from a shared memory location. This is a *double buffered* scheme where the client will update the memory area that is not currently in use and then inform the service via a channel which memory location it should look at for the output data. The update sequence is looked at in more detail in the discussion of the client implementation.
 
 Operation of the full inverter mode is the most complex, so this will be the case that is dealt with here. The other modes (simple three channel and BLDC commutation) are derived from this inverter implementation and thus do not need separate explanation.
 
@@ -181,7 +181,7 @@ This file achieves a number of functions. The primary function is a wrapper that
 
 Firstly three legs of the inverter drive are configured to be attached to the clock block and have an initial output of 0. This is deemed to be a safe start-up configuration as all drives are switched off.
 
-Then, in the loop, the `inverted' ports are configured to output the inverse or complementary of the data that is put into the buffers. This means that only a single data set need be maintained and removes the need for inverting the data using the instruction set as this is done by the port logic.
+Then, in the loop, the *inverted* ports are configured to output the inverse or complementary of the data that is put into the buffers. This means that only a single data set need be maintained and removes the need for inverting the data using the instruction set as this is done by the port logic.
 
 Following the loop that sets up the individual PWM channels is the configuration for the ADC triggering port. This is an input port that is attached to the same clock block as the PWM output ports. An input port that overlaps other in use ports (as described in the usage section above) will not affect their operation. The dummy port is just used for timing synchronisation when signalling the ADC.
 
@@ -202,7 +202,7 @@ A brief overview of each part of the main loop are given below. These should be 
 
 The code begins at the pwm_op_inv entry point. This begins by running a standard callee save. This preserves any registers that we will clobber as part of the operation of this function. The arguments to the function are then stored on the stack itself in sp[8:11]. This ensures we have access to them later.
 
-Following this the registers are moved around into the configuration we require and data is read from the t_data_out structure after calculating the appropriate pointers. The port resource IDs are then loaded into registers and the `mode' of operation is read and the port timer read to initialise the synchronisation point.
+Following this the registers are moved around into the configuration we require and data is read from the t_data_out structure after calculating the appropriate pointers. The port resource IDs are then loaded into registers and the *mode* of operation is read and the port timer read to initialise the synchronisation point.
 
 The code then branches to the appropriate mode according to the mode value that has been read from the data structure provided to it by the client.
 

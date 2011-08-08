@@ -3,7 +3,7 @@ Quadrature Encoder Input
 
 The quadrature encoder input (QEI) module is provided with a library for both running the thread that handles the direct interface to the pins and also for retrieving and calculating the appropriate information from that thread. 
 
-This module is not explicitly utilised in the current reference design, but could be utilised in the `decoder' thread.
+This module is not explicitly utilised in the current reference design, but could be utilised in the *decoder* thread.
 
 The particular interface that is implemented utilises three signals comprising of two quadrature output (A and B) and an index output (I). A and B provide incremental information while I indicates a return to 0 or origin. The signals A and B are provided out of phase so that the direction of rotation can be resolved.
 

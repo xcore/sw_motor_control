@@ -2,15 +2,8 @@ Application Level Communications Interfaces
 ===========================================
 
 This module provides a details on the higher application level communication interfaces used in the XMOS Motor Control Development Platform.
-The figure below shows the main threads that are used.
 
-  .. figure:: images/comms_threads.png
-
-
-The ethernet_server and uip_server threads are the Ethernet and TCP/IP interface, as detailed in the previous section.
-The speed_control_loop and run_motor threads are the outer and inner control loops for the motors.
-The canPhyRxTx is the CAN interface, as previously discussed.
-
+The motor control platform has been written to take advantage of the XMOS Ethernet and XMOS CAN open source components.  With suitable compile time options, the example applications will automatically contain ethernet or CAN control modules.  A high level communication server has been written for each, and these interface to the standard MAC and PHY components for the two protocols.  These high level server threads are called *do_comms_eth* and *do_comms_can*.
 
 do_comms_eth
 ++++++++++++
