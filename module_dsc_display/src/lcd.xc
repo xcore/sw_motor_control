@@ -90,6 +90,21 @@ void lcd_ports_init(REFERENCE_PARAM(lcd_interface_t, p))
 	p.p_lcd_sclk <: 0;
 	sync(p.p_lcd_sclk);
 
+	// Now initialize the device
+	lcd_comm_out(p, 0xE2);		/* RESET */
+	lcd_comm_out(p, 0xA0);		/* RAM->SEG output = normal */
+	lcd_comm_out(p, 0xAE);		/* Display OFF */
+	lcd_comm_out(p, 0xC0);		/* COM scan direction = normal */
+	lcd_comm_out(p, 0xA2);		/* 1/9 bias */
+	lcd_comm_out(p, 0xC8);		/*  Reverse */
+	lcd_comm_out(p, 0x2F);		/* power control set */
+	lcd_comm_out(p, 0x20);		/* resistor ratio set */
+	lcd_comm_out(p, 0x81);		/* Electronic volume command (set contrast) */
+	lcd_comm_out(p, 0x3F);		/* Electronic volume value (contrast value) */
+	lcd_clear(p);				/* Clear the display RAM */
+	lcd_comm_out(p, 0xB0);		/* Reset page and column addresses */
+	lcd_comm_out(p, 0x10);		/* column address upper 4 bits + 0x10 */
+	lcd_comm_out(p, 0x00);		/* column address lower 4 bits + 0x00 */
 }
 
 
