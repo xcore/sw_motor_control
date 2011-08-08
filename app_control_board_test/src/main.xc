@@ -132,6 +132,8 @@ int test_can()
 
 int test_ethernet()
 {
+	unsigned done = 0;
+
 	// Setup receive MII pins
 
 	set_port_use_on(eth_rx_clk);
@@ -189,17 +191,54 @@ int test_ethernet()
 
 	par
 	{
-		// Send
-		{
-			unsigned int txd;
-		};
-
 		// Receive
 		{
 			unsigned int rxd;
+			unsigned i=1;
+
+			eth_rx_valid when pinseq(1) :> int;
+			eth_rx_data when pinseq(0xD) :> int;
+
+			do
+			{
+				select
+				{
+					case eth_rx_data :> rxd:
+					{
+						if (rxd != i)
+						{
+							printstr("Received incorrect data during ethernet test\n");
+							done = 2;
+						}
+						i++;
+					}
+					break;
+
+					case eth_rx_valid when pinseq(0) :> int:
+					{
+						done = 1;
+						break;
+					}
+				}
+			} while (!done);
+
+		};
+
+		// Send
+		{
+			unsigned int txd;
+
+			eth_tx_data <: 0x55555555;
+			eth_tx_data <: 0x55555555;
+			eth_tx_data <: 0xD5555555;
+
+			for (unsigned i=1; i<256; i++)
+			{
+				eth_tx_data <: i;
+			}
 		};
 	}
-	return 1;
+	return (done == 1) ? 1 : 0;
 }
 
 
