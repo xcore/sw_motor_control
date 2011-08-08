@@ -30,7 +30,7 @@ unsigned get_qei_position ( chanend c_qei );
 /** \brief Get the speed from the QEI server
  *
  *  \param c_qei The control channel for the QEI server
- *  \param the speed in RPM
+ *  \return the speed in RPM
  */
 int get_qei_speed ( chanend c_qei );
 

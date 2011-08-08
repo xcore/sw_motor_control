@@ -33,6 +33,15 @@ The modules listed above are implemented in one or more processor threads. The a
 
 
 
+.. toctree::
 
-
+   apps
+   blocks
+   display
+   pwm
+   adc
+   comms-high
+   hsi
+   qei
+   api
 
