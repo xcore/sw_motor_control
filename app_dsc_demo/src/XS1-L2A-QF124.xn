@@ -116,6 +116,13 @@ xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
 	     <LinkEndpoint NodeId="1" Link="4"/>
 	   </Link>
     
+    <!-- XSCOPE --
+    <Link Encoding="2wire" Delays="4,5" Flags="SOD">
+      <LinkEndpoint NodeId="1" Link="X1LB"/>
+      <LinkEndpoint RoutingId="0x8000" Chanend="1"/>
+    </Link>
+    <!-- --> 
+        
   	</Links>
 
   <Packages>	

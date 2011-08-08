@@ -116,4 +116,6 @@
 //#define USE_CAN
 #define USE_ETH
 
+//#define USE_XSCOPE
+
 #endif /* _DSC_CONFIG__H_ */
