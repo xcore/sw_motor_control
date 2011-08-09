@@ -58,6 +58,13 @@ on stdcore[0]: in port eth_tx_clk = PORT_ETH_TXCLK;
 on stdcore[0]: buffered out port:32 eth_tx_data = PORT_ETH_TXD;
 on stdcore[0]: out port eth_tx_enable = PORT_ETH_TXEN;
 
+void waitfor(unsigned ms)
+{
+	timer t;
+	unsigned ts;
+	t :> ts;
+	t when timerafter(ts + ms * 1000000) :> void;
+}
 
 void reset_devices()
 {
@@ -67,23 +74,42 @@ void reset_devices()
 	p_shared_rs <: 0;
 	t :> ts;
 	t when timerafter(ts+10000000) :> void;
-	p_shared_rs <: 0xf;
+	p_shared_rs <: 0x2;
 }
 
 int test_buttons_and_leds()
 {
+	btns when pinseq(0xF) :> void;
+	waitfor(10);
+
 	printstr("Press the button next to each LED as it lights\n");
-	leds <: 0x01;
+	leds <: 0x10;
 	btns when pinseq(0xE) :> void;
+	btns when pinseq(0xF) :> void;
+	waitfor(10);
 
-	leds <: 0x02;
+	leds <: 0x20;
 	btns when pinseq(0xD) :> void;
+	btns when pinseq(0xF) :> void;
+	waitfor(10);
 
-	leds <: 0x04;
+	leds <: 0x80;
 	btns when pinseq(0xB) :> void;
+	btns when pinseq(0xF) :> void;
+	waitfor(10);
 
-	leds <: 0x08;
+	leds <: 0x40;
 	btns when pinseq(0x7) :> void;
+	btns when pinseq(0xF) :> void;
+	waitfor(10);
+
+	printstr("Press any button if all LEDs are lit\n");
+	leds <: 0xF0;
+	btns when pinseq(0x7) :> void;
+	btns when pinseq(0xF) :> void;
+	waitfor(10);
+
+	leds <: 0x00;
 
 	return 1;
 }
@@ -95,32 +121,102 @@ int test_display()
 	/* Initiate the LCD ports */
 	lcd_ports_init(p);
 
-	printstr("Press any button when the display is all black\n");
-	lcd_draw_image(black, p);
-	btns when pinsneq(0xF) :> void;
+	btns when pinseq(0xF) :> void;
+	waitfor(10);
 
 	printstr("Press any button when the display is all black\n");
 	lcd_clear(p);
 	btns when pinsneq(0xF) :> void;
+	btns when pinseq(0xF) :> void;
+	waitfor(10);
+
+	printstr("Press any button when the display is all white\n");
+	lcd_draw_image(black, p);
+	btns when pinsneq(0xF) :> void;
+	btns when pinseq(0xF) :> void;
+	waitfor(10);
 
 	printstr("Press any button when the display shows the splash screen\n");
 	lcd_draw_image(xmos_logo, p);
 	btns when pinsneq(0xF) :> void;
+	btns when pinseq(0xF) :> void;
+	waitfor(10);
 
 	return 1;
 }
 
 int test_can()
 {
-	configure_clock_ref(can_clk, 16);
+	unsigned int success = 1;
+
+	configure_clock_ref(can_clk, 32);
 	configure_in_port_no_ready(p_can_rx, can_clk);
 	set_port_clock(p_can_tx, can_clk);
 
+	p_can_tx <: 1;
+
 	start_clock(can_clk);
 
-	// Write out a bit pattern and read it in, checking that it is the same
+	printstr("Testing CAN\n");
 
-	return 1;
+	// Write out a bit pattern and read it in, checking that it is the same
+	par
+	{
+		// Send
+		{
+			waitfor(10);
+			p_can_tx <: 0;
+
+			p_can_tx <: 1;
+			p_can_tx <: 0;
+			p_can_tx <: 1;
+			p_can_tx <: 0;
+			p_can_tx <: 1;
+			p_can_tx <: 0;
+			p_can_tx <: 0;
+			p_can_tx <: 1;
+			p_can_tx <: 1;
+			p_can_tx <: 0;
+			p_can_tx <: 0;
+			p_can_tx <: 1;
+			p_can_tx <: 1;
+			p_can_tx <: 0;
+			p_can_tx <: 0;
+			p_can_tx <: 1;
+
+			p_can_tx <: 1;
+			p_can_tx <: 1;
+			p_can_tx <: 1;
+			p_can_tx <: 0;
+			p_can_tx <: 0;
+			p_can_tx <: 0;
+			p_can_tx <: 0;
+			p_can_tx <: 1;
+			p_can_tx <: 0;
+			p_can_tx <: 0;
+			p_can_tx <: 0;
+			p_can_tx <: 1;
+			p_can_tx <: 1;
+			p_can_tx <: 1;
+			p_can_tx <: 0;
+			p_can_tx <: 0;
+		}
+
+		// Receive
+		{
+			unsigned int rxd;
+			p_can_rx when pinseq(0) :> void;
+			p_can_rx :> rxd;
+			if (rxd != 0b00111000100001111001100110010101) {
+				printstr("Invalid data received from CAN: ");
+				printhex(rxd);
+				printchar('\n');
+				success = 0;
+			}
+		}
+	}
+
+	return success;
 }
 
 
@@ -189,6 +285,8 @@ int test_ethernet()
 
 	clearbuf(eth_tx_data);
 
+	printstr("Testing ethernet\n");
+
 	par
 	{
 		// Receive
@@ -250,6 +348,8 @@ int main ( void )
 	if (!test_display()) return 0;
 	if (!test_can()) return 0;
 	if (!test_ethernet()) return 0;
+
+	printstr("Passed\n");
 
 	return 0;
 }
