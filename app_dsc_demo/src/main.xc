@@ -107,7 +107,7 @@ void init_tcp_server(chanend c_mac_rx, chanend c_mac_tx, chanend c_xtcp[], chane
 	#else
 		xtcp_ipconfig_t ipconfig =
 		{
-		  {STATIC_IP_BYTE_0, STATIC_IP_BYTE_1, STATIC_IP_BYTE_2, STATIC_IP_BYTE_3},	// ip address
+		  {169, 254,0,1},	// ip address
 		  {255,255,0,0},	// netmask
 		  {0,0,0,0}       	// gateway
 		};
@@ -139,16 +139,14 @@ void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl
 int main ( void )
 {
 	chan c_control, c_eth_shared, c_speed, c_commands_eth,c_commands_can,c_can_reset,c_eth_reset;
-	chan c_qei;
+	chan c_qei, c_wd, c_pwm, c_hall, c_adc, c_adc_trig;
 #ifdef USE_CAN
 	chan c_rxChan, c_txChan,c_can_command ;
 #endif
 #ifdef USE_ETH
 	chan c_sdram, c_logging_data, c_data_read, c_mac_rx[1], c_mac_tx[1], c_xtcp[2], c_connect_status;
 #endif
-#ifdef USE_MOTOR
-	chan c_wd, c_pwm, c_hall, c_adc, c_adc_trig;
-#endif
+
 
 	par
 	{
@@ -159,11 +157,8 @@ int main ( void )
 #endif
 
 #ifdef USE_ETH
-		//on stdcore[INTERFACE_CORE] : logging_server( c_sdram, c_logging_data, c_data_read );
-		//on stdcore[INTERFACE_CORE] : sdram_server( c_sdram, sdram_ports );
 		on stdcore[MOTOR_CORE] : init_tcp_server( c_mac_rx[0], c_mac_tx[0], c_xtcp, c_connect_status );
 		on stdcore[MOTOR_CORE] : do_comms_eth( c_commands_eth, c_xtcp[1] );
-		//on stdcore[INTERFACE_CORE] : do_logging_eth( c_data_read, c_xtcp[0] );
 #endif
 
 	
@@ -174,7 +169,6 @@ int main ( void )
 #endif
 
 		// Xcore 1 - MOTOR_CORE
-#ifdef USE_MOTOR
 		on stdcore[INTERFACE_CORE] : do_wd( c_wd, i2c_wd );
 		on stdcore[MOTOR_CORE] : do_pwm( c_pwm, c_adc_trig, ADC_SYNC_PORT, p_pwm_hi, p_pwm_lo, pwm_clk );
 #ifdef USE_CAN
@@ -186,7 +180,6 @@ int main ( void )
 		//on stdcore[MOTOR_CORE] : adc_ltc1408_triggered( c_adc, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA, c_adc_trig, null, null, null );
 		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei, p_qei );
-#endif
 	}
 
 	return 0;

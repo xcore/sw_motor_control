@@ -33,20 +33,9 @@
 // Define the resolution of PWM (affects operational freq. as tied to ref clock)
 #define PWM_MAX_VALUE 4096
 
-// Define the hall effect & position estimation operation mode:
-// HALL_POS_ESTIMATION - deliver an estimated theta for based on the frequency of requests of theta
-// HALL_SECTOR - output sector update onto channel when it happens
-#define HALL_POS_ESTIMATION 1
-
 // Define if ADC sampling is locked to PWM switching. The ADC sampling will occur in the middle of the  switching sequence.
 // It is triggered over a channel. Set this define to 0 to disable this feature
 #define LOCK_ADC_TO_PWM 0
-
-// Define if you want to push ADC data out to the ethernet logging channel
-#define ADC_LOGGING_ON 0
-
-// The number of logging channels
-#define LOGGING_CHANS 6
 
 // Define where everything is
 #define INTERFACE_CORE 0
@@ -62,33 +51,11 @@
 	#error OTP and Interfaces are defined on different cores.
 #endif
 
-// Define whether we want a static IP or not. Set to 1 to use DHCP, set to 0 to use static IP
-#define USE_DHCP 0
-
-// Define the IP if a static one is used
-#define STATIC_IP_BYTE_0 169
-#define STATIC_IP_BYTE_1 254
-#define STATIC_IP_BYTE_2 0
-#define STATIC_IP_BYTE_3 1
 // Define the port for the control app to connect to
 #define TCP_CONTROL_PORT 9595
 
-// Define the port for the logging app to connect to
-#define TCP_LOGGING_PORT 9596
-
 // Define the number of poles the motor has
 #define NUMBER_OF_POLES	8
-
-// Define whether or not to use DHCP - default is to not use it
-//#define USE_DHCP
-
-// Define this to use the motor
-#define USE_MOTOR
-
-// Uncomment to cause the software to reset on a trap or exception.
-#define RESET_ON_TRAP
-
-//#define PWM_TIME_PERIOD 50 //uS
 
 // Value to increase/decrease the speed by when the button is pressed
 #define PWM_INC_DEC_VAL 100
@@ -99,19 +66,14 @@
 // Minimum RPM value for the motor
 #define MIN_RPM 100
 
-
 // Maximum RPM value for the motor
 #define MAX_RPM 4000
 
-// Maximum Iq value for the motor
-#define MAX_IQ 8000
-
-// String shown on the display for what is being fed to the motor drive thread (usually Iq or PWM)
-#define LCD_SETTING_STRING "PWM"
 /* define the number of clients for the QEI module */
 #define QEI_CLIENT_COUNT 2
 
 #define BLDC_BASIC
+
 //Use CAN or ETHERNET communication
 //#define USE_CAN
 #define USE_ETH
