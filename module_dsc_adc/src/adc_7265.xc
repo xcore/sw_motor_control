@@ -25,12 +25,12 @@ static void configure_adc_ports_7265(clock clk, port out SCLK, port out CNVST, i
 }
 
 #pragma unsafe arrays
-static void adc_get_data_7265( int adc_val[], port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
+static void adc_get_data_7265( int adc_val[], unsigned channel, port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
 {
 	unsigned val1 = 0, val3 = 0;
 	unsigned ts;
 
-	MUX <: 0x0;
+	MUX <: channel;
 
 	CNVST <: 0 @ts;
 	ts += 16;
@@ -75,7 +75,7 @@ void adc_7265_triggered( chanend c_adc, chanend c_trig, clock clk, port out SCLK
 			{
 				t :> ts;
 				t when timerafter(ts + 1740) :> ts;
-				adc_get_data_7265( adc_val, CNVST, DATA_A, DATA_B, MUX );
+				adc_get_data_7265( adc_val, 0, CNVST, DATA_A, DATA_B, MUX );
 			}
 			break;
 		case c_adc :> cmd:
