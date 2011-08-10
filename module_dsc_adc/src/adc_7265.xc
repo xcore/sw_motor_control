@@ -58,7 +58,7 @@ static void adc_get_data_7265( int adc_val[], unsigned channel, port out CNVST, 
 
 void adc_7265_triggered( chanend c_adc, chanend c_trig, clock clk, port out SCLK, port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
 {
-	int adc_val[6];
+	int adc_val1[2], adc_val2[2];
 	int cmd;
 	unsigned char ct;
 
@@ -75,7 +75,7 @@ void adc_7265_triggered( chanend c_adc, chanend c_trig, clock clk, port out SCLK
 			{
 				t :> ts;
 				t when timerafter(ts + 1740) :> ts;
-				adc_get_data_7265( adc_val, 0, CNVST, DATA_A, DATA_B, MUX );
+				adc_get_data_7265( adc_val1, 0, CNVST, DATA_A, DATA_B, MUX );
 			}
 			break;
 		case c_adc :> cmd:
@@ -83,15 +83,27 @@ void adc_7265_triggered( chanend c_adc, chanend c_trig, clock clk, port out SCLK
 			{
 			case 0:
 				master {
-					c_adc <: adc_val[0];
-					c_adc <: adc_val[1];
+					c_adc <: adc_val1[0];
+					c_adc <: adc_val1[1];
+					c_adc <: -(adc_val1[0] + adc_val1[1]);
 				}
 				break;
 			case 3:
-					/* stub */
+				master {
+					c_adc <: adc_val2[0];
+					c_adc <: adc_val2[1];
+					c_adc <: -(adc_val2[0] + adc_val2[1]);
+				}
 				break;
 			case 6:
-					/* stub */
+				master {
+					c_adc <: adc_val1[0];
+					c_adc <: adc_val1[1];
+					c_adc <: -(adc_val1[0] + adc_val1[1]);
+					c_adc <: adc_val2[0];
+					c_adc <: adc_val2[1];
+					c_adc <: -(adc_val2[0] + adc_val2[1]);
+				}
 				break;
 			}
 		break;
