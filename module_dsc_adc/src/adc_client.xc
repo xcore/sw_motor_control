@@ -40,6 +40,7 @@ void do_adc_calibration( chanend c_adc )
 		}
 		Ia_calib += a;
 		Ib_calib += b;
+		Ic_calib += c;
 	}
 
 	/* convert to 14 bit from 12 bit */
