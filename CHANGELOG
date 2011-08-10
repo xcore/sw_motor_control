@@ -25,5 +25,17 @@ Change / Notes:
 	- Example Java Control apps for CAN and ethernet control
 
 
+Version 2v0 - 2001-08-10
+===========================================
 
+Change / Notes:
+-----------------
+* Second release of BLDC commutation
+    - LabView based control application using Ethernet or CAN control
+    - Dual axis control
+   
+* First release of full FOC control
+    - Ethernet and CAN control
+    
+ 
  
