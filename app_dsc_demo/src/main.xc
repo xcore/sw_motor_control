@@ -22,18 +22,16 @@
 #include <xs1.h>
 #include <platform.h>
 #include <print.h>
+
 #include "CanPhy.h"
 #include "adc_7265.h"
 #include "control_comms_can.h"
 #include "control_comms_eth.h"
 #include "dsc_config.h"
-#include "dsc_sdram.h"
 #include "ethernet_server.h"
 #include "getmac.h"
 #include "hall_input.h"
 #include "inner_loop.h"
-#include "logging_comms.h"
-#include "logging_if.h"
 #include "pos_estimator.h"
 #include "pwm_cli.h"
 #include "pwm_service.h"
@@ -131,7 +129,7 @@ void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl
 		ethernet_getmac_otp(p_otp_data, p_otp_addr, p_otp_ctrl, (mac_address, char[]));
 
 		// Initiate the PHY
-		phy_init(clk_smi, null, c_eth_shared, p_smi, p_mii);
+		phy_init(clk_smi, null, p_smi, p_mii);
 
 		// Run the Ethernet server
 		ethernet_server(p_mii, mac_address, c_mac_rx, 1, c_mac_tx, 1, p_smi, c_connect_status);

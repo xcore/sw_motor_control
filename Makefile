@@ -40,7 +40,7 @@
 # This variable should contain a space separated list of all
 # the directories containing buildable applications (usually
 # prefixed with the app_ prefix)
-BUILD_SUBDIRS = app_basic_bldc app_dsc_demo
+BUILD_SUBDIRS = app_basic_bldc app_dsc_demo app_control_board_test
 
 # This variable should contain a space separated list of all
 # the directories containing buildable plugins (usually
@@ -49,7 +49,7 @@ PLUGIN_SUBDIRS =
 
 # This variable should contain a space separated list of all
 # the directories containing applications with a 'test' make target
-TEST_SUBDIRS = 
+TEST_SUBDIRS = test_pwm test_qei
 
 # Provided that the above variables are set you shouldn't need to modify
 # the targets below here. 
@@ -65,6 +65,6 @@ TEST_SUBDIRS =
 
 all: $(foreach x, $(BUILD_SUBDIRS), $x.all) 
 plugins: $(foreach x, $(PLUGIN_SUBDIRS), $x.all) 
-clean: $(foreach x, $(BUILD_SUBDIRS), $x.clean)
+clean: $(foreach x, $(BUILD_SUBDIRS) $(TEST_SUBDIRS), $x.clean)
 clean_plugins: $(foreach x, $(PLUGIN_SUBDIRS), $x.clean) 
 test: $(foreach x, $(TEST_SUBDIRS), $x.test)

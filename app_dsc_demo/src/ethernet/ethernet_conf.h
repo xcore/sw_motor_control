@@ -1,7 +1,4 @@
 /**
- * Module:  app_dsc_demo
- * Version: 1v0alpha0
- * Build:   8b9b7f06e54cf08659c20477a643c0cd958c1510
  * File:    ethernet_conf.h
  *
  * The copyrights, all other intellectual and industrial 
@@ -9,7 +6,7 @@
  * Terms and conditions covering the use of this code can
  * be found in the Xmos End User License Agreement.
  *
- * Copyright XMOS Ltd 2010
+ * Copyright XMOS Ltd 2011
  *
  * In the case where this code is a modification of existing code
  * under a separate license, the separate license terms are shown
@@ -21,6 +18,9 @@
 
 #define NUM_MII_RX_BUF 10
 #define NUM_MII_TX_BUF 4
+
+#define MII_RX_BUFSIZE 512
+#define MII_TX_BUFSIZE 512
 
 #define MAX_ETHERNET_CLIENTS   (1)    
 

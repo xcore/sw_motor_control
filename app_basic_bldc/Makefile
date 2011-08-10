@@ -1,28 +1,53 @@
-# Custom Stuff
-BUILD_FLAGS=
-XCC_FLAGS= -O3 -g -report
+# The TARGET variable determines what target system the application is 
+# compiled for. It either refers to an XN file in the source directories
+# or a valid argument for the --target option when compiling.
+
+TARGET = XS1-L2A-QF124
+
+# The APP_NAME variable determines the name of the final .xe file. It should
+# not include the .xe postfix. If left blank the name will default to 
+# the project name
+
+APP_NAME =
+
+# The flags passed to xcc when building the application
+# You can also set the following to override flags for a particular language:
+#
+#    XCC_XC_FLAGS, XCC_C_FLAGS, XCC_ASM_FLAGS, XCC_CPP_FLAGS
+#
+# If the variable XCC_MAP_FLAGS is set it overrides the flags passed to 
+# xcc for the final link (mapping) stage.
+
+XCC_FLAGS = -O3 -g -report
 #-lxscope
 
-APP_NAME=dsc_basic_bldc
 
-# Standard stuff below here...
-TARGET = XS1-L2A-QF124
-BASE_DIR = .
+# The USED_MODULES variable lists other module used by the application. 
 
-DSC_BASIC_BLDC_DIRS = src src/motor src/control src/utilities src/ethernet
+USED_MODULES = module_dsc_hall module_dsc_pwm module_dsc_display module_dsc_blocks
+USED_MODULES += module_ethernet module_locks module_xtcp module_dsc_comms module_can
 
-SOURCE_DIRS += $(DSC_BASIC_BLDC_DIRS)
-INCLUDE_DIRS += $(DSC_BASIC_BLDC_DIRS)
+USE_XTCP_MAC_CUSTOM_FILTER = 1
 
-USED_MODULES = module_dsc_hall.1v0alpha4 module_dsc_pwm.1v0alpha4 module_dsc_display.1v0module_dsc_display2 module_dsc_blocks.1v0alpha4
-USED_MODULES += module_ethernet module_locks module_xtcp module_dsc_comms module_can.0v1alpha1
+#=============================================================================
+# The following part of the Makefile includes the common build infrastructure
+# for compiling XMOS applications. You should not need to edit below here.
 
-USE_XTCP_MAC_CUSTOM_FILTER=1
 
-include ../module_xmos_common/build/Makefile.common
+# Use the latest 1v* version of module_xmos_common
+-include ../module_xcommon/build/Makefile.common
+-include ../../xcommon/module_xcommon/build/Makefile.common
+
+# The final target of the build. This is usually dependent on a binary file
+# in the $(BIN_DIR) directory e.g.
+#
+#  all : $(BIN_DIR)/my_app.xe
+
+all: $(BIN_DIR)/$(APP_NAME).xe
+	@echo Build Complete
+
 
 clean: clean_common
 
-all: $(BIN_DIR)/$(APP_NAME).xe
-	@echo Build complete
+test: all
 

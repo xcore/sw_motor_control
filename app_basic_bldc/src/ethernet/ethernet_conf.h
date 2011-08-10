@@ -22,6 +22,9 @@
 #define NUM_MII_RX_BUF 3
 #define NUM_MII_TX_BUF 2
 
+#define MII_RX_BUFSIZE 512
+#define MII_TX_BUFSIZE 512
+
 #define MAX_ETHERNET_CLIENTS   (1)    
 
 

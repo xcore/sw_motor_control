@@ -1,17 +1,12 @@
 /**
- * Module:  app_dsc_demo
- * Version: 1v0alpha1
- * Build:   60a90cca6296c0154ccc44e1375cc3966292f74e
  * File:    inner_loop.xc
- * Modified by : Srikanth
- * Last Modified on : 06-Jun-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
  * Terms and conditions covering the use of this code can
  * be found in the Xmos End User License Agreement.
  *
- * Copyright XMOS Ltd 2010
+ * Copyright XMOS Ltd 2011
  *
  * In the case where this code is a modification of existing code
  * under a separate license, the separate license terms are shown

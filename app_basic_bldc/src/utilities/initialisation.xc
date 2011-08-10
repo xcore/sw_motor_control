@@ -57,7 +57,7 @@ void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl
 	ethernet_getmac_otp(p_otp_data, p_otp_addr, p_otp_ctrl, (mac_address, char[]));
 
 	// Initiate the PHY
-	phy_init(clk_smi, null, c_eth_reset, p_smi, p_mii);
+	phy_init(clk_smi, null, p_smi, p_mii);
 
 	// Run the Ethernet server
 	ethernet_server(p_mii, mac_address, c_mac_rx, 1, c_mac_tx, 1, p_smi, c_connect_status);

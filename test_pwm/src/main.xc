@@ -6,12 +6,15 @@
 #include "pwm_cli.h"
 #include "pwm_service.h"
 
+/* WARNING: This test application is for use in simuation only.  It may damage a motor if applied
+ * to a working system.
+ */
+
 /* motor1 core ports */
-on stdcore[MOTOR_CORE]: port in p_hall = PORT_M1_ENCODER;
-on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_hi1[3] = {PORT_M1_HI_A, PORT_M1_HI_B, PORT_M1_HI_C};
-on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_lo1[3] = {PORT_M1_LO_A, PORT_M1_LO_B, PORT_M1_LO_C};
-on stdcore[MOTOR_CORE]: out port i2c_wd = PORT_I2C_WD_SHARED;
-on stdcore[MOTOR_CORE]: clock pwm_clk = XS1_CLKBLK_1;
+on stdcore[1]: port in p_hall = PORT_M1_ENCODER;
+on stdcore[1]: buffered out port:32 p_pwm_hi1[3] = {PORT_M1_HI_A, PORT_M1_HI_B, PORT_M1_HI_C};
+on stdcore[1]: buffered out port:32 p_pwm_lo1[3] = {PORT_M1_LO_A, PORT_M1_LO_B, PORT_M1_LO_C};
+on stdcore[1]: clock pwm_clk = XS1_CLKBLK_1;
 
 
 void do_test(chanend c_pwm)
@@ -30,8 +33,8 @@ int main ( void )
 	par
 	{
 		/* L1 */
-		on stdcore[MOTOR_CORE]: do_pwm( c_pwm, p_pwm_hi1, p_pwm_lo1, pwm_clk);
-		on stdcore[MOTOR_CORE]: do_test( c_pwm );
+		on stdcore[1]: do_pwm( c_pwm, p_pwm_hi1, p_pwm_lo1, pwm_clk);
+		on stdcore[1]: do_test( c_pwm );
 	}
 	return 0;
 }

@@ -1,9 +1,4 @@
 /**
- * Module:  app_basic_bldc
- * Version: 1v1
- * Build:
- * File:    main.xc
- * Author: 	L & T
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
