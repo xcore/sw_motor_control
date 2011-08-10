@@ -75,12 +75,21 @@ on stdcore[INTERFACE_CORE] : out port p_shared_rs=PORT_SHARED_RS;
 	};
 #endif
 
-// Motor core ports
-on stdcore[MOTOR_CORE]: port in p_hall = PORT_M1_HALLSENSOR;
-on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_hi[3] = {PORT_M1_HI_A, PORT_M1_HI_B, PORT_M1_HI_C};
-on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_lo[3] = {PORT_M1_LO_A, PORT_M1_LO_B, PORT_M1_LO_C};
-on stdcore[MOTOR_CORE]: clock pwm_clk = XS1_CLKBLK_REF;
-on stdcore[MOTOR_CORE]: port in p_qei = PORT_M1_ENCODER;
+// Motor 1 ports
+on stdcore[MOTOR_CORE]: port in p_hall1 = PORT_M1_HALLSENSOR;
+on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_hi1[3] = {PORT_M1_HI_A, PORT_M1_HI_B, PORT_M1_HI_C};
+on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_lo1[3] = {PORT_M1_LO_A, PORT_M1_LO_B, PORT_M1_LO_C};
+on stdcore[MOTOR_CORE]: clock pwm_clk1 = XS1_CLKBLK_REF;
+on stdcore[MOTOR_CORE]: port in p_qei1 = PORT_M1_ENCODER;
+
+// Motor 2 ports
+on stdcore[MOTOR_CORE]: port in p_hall2 = PORT_M2_HALLSENSOR;
+on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_hi2[3] = {PORT_M2_HI_A, PORT_M2_HI_B, PORT_M2_HI_C};
+on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_lo2[3] = {PORT_M2_LO_A, PORT_M2_LO_B, PORT_M2_LO_C};
+on stdcore[MOTOR_CORE]: clock pwm_clk2 = XS1_CLKBLK_4;
+on stdcore[MOTOR_CORE]: port in p_qei2 = PORT_M2_ENCODER;
+
+// Watchdog port
 on stdcore[INTERFACE_CORE]: out port i2c_wd = PORT_WATCHDOG;
 
 on stdcore[MOTOR_CORE]: out port ADC_SCLK = PORT_ADC_CLK;
@@ -158,28 +167,24 @@ int main ( void )
 
 #ifdef USE_ETH
 		on stdcore[MOTOR_CORE] : init_tcp_server( c_mac_rx[0], c_mac_tx[0], c_xtcp, c_connect_status );
-		on stdcore[MOTOR_CORE] : do_comms_eth( c_commands_eth, c_xtcp[1] );
+		on stdcore[INTERFACE_CORE] : do_comms_eth( c_commands_eth, c_xtcp[1] );
+		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, c_eth_shared);
 #endif
 
-	
-		on stdcore[INTERFACE_CORE] : display_shared_io_manager( c_speed, lcd_ports, btns, c_can_reset, p_shared_rs,c_eth_reset);
+		on stdcore[INTERFACE_CORE] : do_wd( c_wd, i2c_wd );
+		on stdcore[INTERFACE_CORE] : display_shared_io_manager( c_speed, lcd_ports, btns, c_can_reset, p_shared_rs, c_eth_reset);
 
-#ifdef USE_ETH
-		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, c_eth_shared); // +4 threads
-#endif
 
 		// Xcore 1 - MOTOR_CORE
-		on stdcore[INTERFACE_CORE] : do_wd( c_wd, i2c_wd );
-		on stdcore[MOTOR_CORE] : do_pwm( c_pwm, c_adc_trig, ADC_SYNC_PORT, p_pwm_hi, p_pwm_lo, pwm_clk );
+		on stdcore[MOTOR_CORE] : do_pwm( c_pwm, c_adc_trig, ADC_SYNC_PORT, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
 #ifdef USE_CAN
-		on stdcore[MOTOR_CORE] : run_motor ( c_pwm, c_qei, c_adc, c_speed, c_wd, p_hall,c_commands_can );
+		on stdcore[MOTOR_CORE] : run_motor ( c_pwm, c_qei, c_adc, c_speed, c_wd, p_hall1, c_commands_can);
 #endif
 #ifdef USE_ETH
-		on stdcore[MOTOR_CORE] : run_motor ( c_pwm, c_qei, c_adc, c_speed, c_wd, p_hall,c_commands_eth);
+		on stdcore[MOTOR_CORE] : run_motor ( c_pwm, c_qei, c_adc, c_speed, c_wd, p_hall1, c_commands_eth);
 #endif
-		//on stdcore[MOTOR_CORE] : adc_ltc1408_triggered( c_adc, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA, c_adc_trig, null, null, null );
 		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );
-		on stdcore[MOTOR_CORE] : do_qei ( c_qei, p_qei );
+		on stdcore[MOTOR_CORE] : do_qei ( c_qei, p_qei1 );
 	}
 
 	return 0;
