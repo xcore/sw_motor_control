@@ -125,12 +125,12 @@ void init_tcp_server(chanend c_mac_rx, chanend c_mac_tx, chanend c_xtcp[], chane
 	#endif
 
 	// Start the TCP/IP server
-	uip_server(c_mac_rx, c_mac_tx, c_xtcp, 2, ipconfig, c_connect_status);
+	uip_server(c_mac_rx, c_mac_tx, c_xtcp, 1, ipconfig, c_connect_status);
 }
 
 
 // Function to initise and run the Ethernet server
-void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl, clock clk_smi, clock clk_mii, smi_interface_t &p_smi, mii_interface_t &p_mii, chanend c_mac_rx[], chanend c_mac_tx[], chanend c_connect_status, chanend c_eth_shared )
+void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl, clock clk_smi, clock clk_mii, smi_interface_t &p_smi, mii_interface_t &p_mii, chanend c_mac_rx[], chanend c_mac_tx[], chanend c_connect_status )
 {
 		int mac_address[2];
 
@@ -147,13 +147,13 @@ void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl
 // Program Entry Point
 int main ( void )
 {
-	chan c_control, c_eth_shared, c_speed, c_commands_eth,c_commands_can,c_can_reset,c_eth_reset;
-	chan c_qei, c_wd, c_pwm, c_hall, c_adc, c_adc_trig;
+	chan c_speed, c_commands, c_can_reset, c_eth_reset;
+	chan c_qei, c_wd, c_pwm, c_adc, c_adc_trig;
 #ifdef USE_CAN
-	chan c_rxChan, c_txChan,c_can_command ;
+	chan c_rxChan, c_txChan, c_can_command;
 #endif
 #ifdef USE_ETH
-	chan c_sdram, c_logging_data, c_data_read, c_mac_rx[1], c_mac_tx[1], c_xtcp[2], c_connect_status;
+	chan c_mac_rx[1], c_mac_tx[1], c_xtcp[1], c_connect_status;
 #endif
 
 
@@ -161,14 +161,14 @@ int main ( void )
 	{
 		// Xcore 0 - INTERFACE_CORE
 #ifdef USE_CAN
-		on stdcore[INTERFACE_CORE] : do_comms_can( c_commands_can, c_rxChan, c_txChan, c_can_reset);
+		on stdcore[INTERFACE_CORE] : do_comms_can( c_commands, c_rxChan, c_txChan, c_can_reset);
 		on stdcore[INTERFACE_CORE] : canPhyRxTx( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx );
 #endif
 
 #ifdef USE_ETH
 		on stdcore[MOTOR_CORE] : init_tcp_server( c_mac_rx[0], c_mac_tx[0], c_xtcp, c_connect_status );
-		on stdcore[INTERFACE_CORE] : do_comms_eth( c_commands_eth, c_xtcp[1] );
-		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, c_eth_shared);
+		on stdcore[INTERFACE_CORE] : do_comms_eth( c_commands, c_xtcp[0] );
+		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status);
 #endif
 
 		on stdcore[INTERFACE_CORE] : do_wd( c_wd, i2c_wd );
@@ -177,12 +177,7 @@ int main ( void )
 
 		// Xcore 1 - MOTOR_CORE
 		on stdcore[MOTOR_CORE] : do_pwm( c_pwm, c_adc_trig, ADC_SYNC_PORT, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
-#ifdef USE_CAN
-		on stdcore[MOTOR_CORE] : run_motor ( c_pwm, c_qei, c_adc, c_speed, c_wd, p_hall1, c_commands_can);
-#endif
-#ifdef USE_ETH
-		on stdcore[MOTOR_CORE] : run_motor ( c_pwm, c_qei, c_adc, c_speed, c_wd, p_hall1, c_commands_eth);
-#endif
+		on stdcore[MOTOR_CORE] : run_motor ( c_pwm, c_qei, c_adc, c_speed, c_wd, p_hall1, c_commands);
 		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei, p_qei1 );
 	}
