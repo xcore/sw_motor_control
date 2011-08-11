@@ -37,9 +37,16 @@
 #define INIT_SYNC_INCREMENT (SYNC_INCREMENT)
 
 // The offset and size of components in the PWM control structure
+#ifdef PWM_BLDC_MODE
 #define OFFSET_OF_CHAN_ID  0
 #define OFFSET_OF_MODE_BUF 8
 #define OFFSET_OF_DATA_OUT 16
 #define SIZE_OF_T_DATA_OUT 40
+#else
+#define OFFSET_OF_CHAN_ID  0
+#define OFFSET_OF_MODE_BUF 24
+#define OFFSET_OF_DATA_OUT 32
+#define SIZE_OF_T_DATA_OUT 40
+#endif
 
 #endif /*DSC_ALT_PWM_H_*/

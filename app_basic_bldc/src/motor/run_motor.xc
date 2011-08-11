@@ -60,16 +60,16 @@ void run_motor(chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_
 	// First send my PWM server the shared memory structure address
 	pwm_share_control_buffer_address_with_server(c_pwm, pwm_ctrl);
 
-	/* 32 bit timer declaration */
+	// Pause to allow the rest of the system to settle
 	t :> ts;
-
-	/* delay function for 5 sec */
 	t when timerafter(ts+ (5*SEC)) :> ts;
 
 	if (!isnull(c_wd)) {
 		/* allow the WD to get going and enable motor */
 		c_wd <: WD_CMD_START;
 	}
+
+	t :> ts;
 
 	/* main loop */
 	while (1)

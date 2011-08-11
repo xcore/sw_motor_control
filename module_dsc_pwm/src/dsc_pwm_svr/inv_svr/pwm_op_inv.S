@@ -49,8 +49,9 @@
 // r1 - p_pwm,
 // r2 - p_pwm_inv,
 // r3 - channel,
-// sp[14] - adc trigger channel
-// sp[15] - dummy port for adc trigger
+// sp[14] - address of shared memory buffer
+// sp[15] - adc trigger channel
+// sp[16] - dummy port for adc trigger
 pwm_op_inv:
 	entsp 13
 
@@ -82,13 +83,15 @@ pwm_op_inv:
 
 	/* load ports and data pointers */
 	//prep for reading port order array
-	ldaw r11, dp[chan_id_buf]
+	ldw r11, sp[14]
 	ldc r0, 12
 	mul r0, r7, r0 // buf * 12
 	add r11, r0, r11 // now at top of correct chan_id_buf
 
 	// prep for reading data_out
-	ldaw r5, dp[pwm_out_data_buf]
+	ldw r5, sp[14]
+	ldc r2, OFFSET_OF_DATA_OUT
+	add r5, r5, r2
 	ldc r2, (SIZE_OF_T_DATA_OUT*3)
 	mul r7, r7, r2 // buf * r2
 	add r5, r5, r7 // now at top of correct array of structs
@@ -125,7 +128,9 @@ pwm_op_inv:
 
 	// read mode
 	ldw r7, sp[8]
-	ldaw r8, dp[mode_buf]
+	ldw r8, sp[14]
+	ldc r10, OFFSET_OF_MODE_BUF
+	add r8, r8, r10
 	ldaw r8, r8[r7]
 	ldw r10, r8[0]
 
@@ -198,9 +203,9 @@ PWM_MODE_1_LOOP:
 
 	// trigger adc
 	#if LOCK_ADC_TO_PWM
-	ldw r8, sp[15] // load port
+	ldw r8, sp[16] // load port
 	setpt res[r8], r7 // pt = sync point
-	ldw r10, sp[14] // load adc trig chanend
+	ldw r10, sp[15] // load adc trig chanend
 	in r8, res[r8] // wait until we hit setpt
 	outct res[r10], ADC_TRIG_TOKEN // send adc trig token
 	ldw r10, sp[11] // load clobbered chanend
@@ -239,16 +244,18 @@ GO_UPDATE_M1:
 
 	/* load ports and data pointers */
 	//prep for reading port order array
-	ldaw r11, dp[chan_id_buf]
+	ldw r11, sp[14]
 	ldc r0, 12
 	mul r0, r7, r0 // buf * 12
 	add r11, r0, r11 // now at top of correct chan_id_buf
 
 	// prep for reading data_out
-	ldaw r5, dp[pwm_out_data_buf]
-	ldc r2, (SIZE_OF_T_DATA_OUT*3)
-	mul r7, r7, r2 // buf * r2
-	add r5, r5, r7 // now at top of correct array of structs
+    ldw r5, sp[14]
+    ldc r2, OFFSET_OF_DATA_OUT
+    add r5, r5, r2
+    ldc r2, (SIZE_OF_T_DATA_OUT*3)
+    mul r7, r7, r2 // buf * r2
+    add r5, r5, r7 // now at top of correct array of structs
 
 	ldc r2, SIZE_OF_T_DATA_OUT
 	ldw r0, r11[0] // chan_id_buf[0]
@@ -281,10 +288,12 @@ GO_UPDATE_M1:
 	ldw r11, r10[r11]
 
 	// read mode
-	ldw r7, sp[12] // load in buffer number
-	ldaw r8, dp[mode_buf] // load pointer to mode_buf
-	ldaw r8, r8[r7] // get the address of mode number
-	ldw r10, r8[0] // read mode number
+    ldw r7, sp[12] // load in buffer number
+    ldw r8, sp[14]
+    ldc r10, OFFSET_OF_MODE_BUF
+    add r8, r8, r10
+    ldaw r8, r8[r7]
+    ldw r10, r8[0]
 
 	// update time stamp => start time = old_start_time + SYNC_INCREMENT
 	ldw r7, sp[13]
@@ -352,9 +361,9 @@ PWM_MODE_2_LOOP:
 
 	// trigger adc
 	#if LOCK_ADC_TO_PWM
-	ldw r8, sp[15] // load port
+	ldw r8, sp[16] // load port
 	setpt res[r8], r7 // pt = sync point
-	ldw r10, sp[14] // load adc trig chanend
+	ldw r10, sp[15] // load adc trig chanend
 	in r8, res[r8] // wait until we hit setpt
 	outct res[r10], ADC_TRIG_TOKEN // send adc trig token
 	ldw r10, sp[11] // load clobbered chanend
@@ -435,9 +444,9 @@ PWM_MODE_3_LOOP:
 
 	// trigger adc
 	#if LOCK_ADC_TO_PWM
-	ldw r8, sp[15] // load port
+	ldw r8, sp[16] // load port
 	setpt res[r8], r7 // pt = sync point
-	ldw r10, sp[14] // load adc trig chanend
+	ldw r10, sp[15] // load adc trig chanend
 	in r8, res[r8] // wait until we hit setpt
 	outct res[r10], ADC_TRIG_TOKEN // send adc trig token
 	ldw r10, sp[11] // load clobbered chanend
@@ -530,9 +539,9 @@ PWM_MODE_4_LOOP:
 
 	// trigger adc
 	#if LOCK_ADC_TO_PWM
-	ldw r8, sp[15] // load port
+	ldw r8, sp[16] // load port
 	setpt res[r8], r7 // pt = sync point
-	ldw r10, sp[14] // load adc trig chanend
+	ldw r10, sp[15] // load adc trig chanend
 	in r8, res[r8] // wait until we hit setpt
 	outct res[r10], ADC_TRIG_TOKEN // send adc trig token
 	ldw r10, sp[11] // load clobbered chanend
@@ -637,9 +646,9 @@ PWM_MODE_5_LOOP:
 	out res[r11], r8
 	// trigger adc
 	#if LOCK_ADC_TO_PWM
-	ldw r8, sp[15] // load port
+	ldw r8, sp[16] // load port
 	setpt res[r8], r7 // pt = sync point
-	ldw r10, sp[14] // load adc trig chanend
+	ldw r10, sp[15] // load adc trig chanend
 	in r8, res[r8] // wait until we hit setpt
 	outct res[r10], ADC_TRIG_TOKEN // send adc trig token
 	ldw r10, sp[11] // load clobbered chanend
@@ -720,9 +729,9 @@ PWM_MODE_6_LOOP:
 
 	// trigger adc
 	#if LOCK_ADC_TO_PWM
-	ldw r8, sp[15] // load port
+	ldw r8, sp[16] // load port
 	setpt res[r8], r7 // pt = sync point
-	ldw r10, sp[14] // load adc trig chanend
+	ldw r10, sp[15] // load adc trig chanend
 	in r8, res[r8] // wait until we hit setpt
 	outct res[r10], ADC_TRIG_TOKEN // send adc trig token
 	ldw r10, sp[11] // load clobbered chanend
@@ -815,9 +824,9 @@ PWM_MODE_7_LOOP:
 
 	// trigger adc
 	#if LOCK_ADC_TO_PWM
-	ldw r8, sp[15] // load port
+	ldw r8, sp[16] // load port
 	setpt res[r8], r7 // pt = sync point
-	ldw r10, sp[14] // load adc trig chanend
+	ldw r10, sp[15] // load adc trig chanend
 	in r8, res[r8] // wait until we hit setpt
 	outct res[r10], ADC_TRIG_TOKEN // send adc trig token
 	ldw r10, sp[11] // load clobbered chanend
@@ -871,16 +880,18 @@ GO_UPDATE_M7:
 
 	/* load ports and data pointers */
 	//prep for reading port order array
-	ldaw r11, dp[chan_id_buf]
+	ldw r11, sp[14]
 	ldc r0, 12
 	mul r0, r7, r0 // buf * 12
 	add r11, r0, r11 // now at top of correct chan_id_buf
 
 	// prep for reading data_out
-	ldaw r5, dp[pwm_out_data_buf]
-	ldc r2, (SIZE_OF_T_DATA_OUT*3)
-	mul r7, r7, r2 // buf * r2
-	add r5, r5, r7 // now at top of correct array of structs
+    ldw r5, sp[14]
+    ldc r2, OFFSET_OF_DATA_OUT
+    add r5, r5, r2
+    ldc r2, (SIZE_OF_T_DATA_OUT*3)
+    mul r7, r7, r2 // buf * r2
+    add r5, r5, r7 // now at top of correct array of structs
 
 	ldc r2, SIZE_OF_T_DATA_OUT
 	ldw r0, r11[0] // chan_id_buf[0]
@@ -913,10 +924,12 @@ GO_UPDATE_M7:
 	ldw r11, r10[r11]
 
 	// read mode
-	ldw r7, sp[12]
-	ldaw r8, dp[mode_buf]
-	ldaw r8, r8[r7]
-	ldw r10, r8[0]
+    ldw r7, sp[12] // load in buffer number
+    ldw r8, sp[14]
+    ldc r10, OFFSET_OF_MODE_BUF
+    add r8, r8, r10
+    ldaw r8, r8[r7]
+    ldw r10, r8[0]
 
 	// get current time stamp
 	ldw r7, sp[13]

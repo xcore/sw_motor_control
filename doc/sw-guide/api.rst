@@ -96,12 +96,12 @@ PWM
 Client functions
 ++++++++++++++++
 
+.. doxygenfunction:: pwm_share_control_buffer_address_with_server
+
 BLDC PWM mode
 ~~~~~~~~~~~~~
 
-.. doxygenfunction:: update_pwm1
-
-.. doxygenfunction:: update_pwm2
+.. doxygenfunction:: update_pwm
 
 Inverting and non-inverting centre aligned PWM
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

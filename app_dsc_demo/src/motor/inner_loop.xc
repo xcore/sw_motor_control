@@ -58,7 +58,7 @@ const unsigned bldc_new_seq[3] = {0,1,2};
  **/
 
 #pragma unsafe arrays
-void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, chanend c_wd, port in p_hall,chanend c_can_eth_shared )
+void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, chanend? c_wd, port in p_hall,chanend c_can_eth_shared )
 {
 	/* Currents from ADC */
 	int Ia_in = 0, Ib_in = 0, Ic_in = 0;
@@ -79,6 +79,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	/* PWM variables */
 	unsigned pwm[3] = {0, 0, 0};
 	int Va = 0, Vb = 0, Vc = 0;
+	t_pwm_control pwm_ctrl;
 
 	/* Speed feed back variable */
 	int iq_set_point = 0;
@@ -92,7 +93,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 
 	/* Position and Speed */
 	unsigned theta = 0, speed = 0, set_speed = 1000;
-	unsigned cmm_speed, ts = 0;
+	unsigned cmm_speed;
 	unsigned comm_shared;
 
 	/* Speed PID structure */
@@ -104,8 +105,16 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	/* Iq PID structure */
 	pid_data pid_q;
 	
-	timer t;
-	t :> ts;
+	// First send my PWM server the shared memory structure address
+	pwm_share_control_buffer_address_with_server(c_pwm, pwm_ctrl);
+
+	// Pause to allow the rest of the system to settle
+	{
+		timer t;
+		unsigned ts;
+		t :> ts;
+		t when timerafter(ts+10*SEC) :> ts;
+	}
 
 	/* Zero pwm */
 	pwm[0] = 0;
@@ -113,11 +122,12 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	pwm[2] = 0;
 
 	/* Update PWM */
-	update_pwm( c_pwm, pwm );
+	update_pwm( pwm_ctrl, c_pwm, pwm );
 
 	/* allow the WD to get going */
-	t when timerafter(ts+10*SEC) :> ts;
-	c_wd <: WD_CMD_START;
+	if (!isnull(c_wd)) {
+		c_wd <: WD_CMD_START;
+	}
 
 	/* PID control initialisation... */
 	init_pid( MOTOR_P, MOTOR_I, MOTOR_D, pid_d);
@@ -221,7 +231,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 				counter++;
 
 				/* Update the PWM values */
-				update_pwm( c_pwm, pwm );
+				update_pwm( pwm_ctrl, c_pwm, pwm );
 
 			}
 			else
@@ -274,7 +284,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 				}
 
 				/* Update the PWM values */
-				update_pwm( c_pwm, pwm );
+				update_pwm( pwm_ctrl, c_pwm, pwm );
 			}
 		break;
 		}

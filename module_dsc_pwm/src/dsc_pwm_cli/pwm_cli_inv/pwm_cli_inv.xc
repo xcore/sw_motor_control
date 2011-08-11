@@ -21,20 +21,16 @@
 #include "dsc_config.h"
 
 #ifdef PWM_INV_MODE
-extern unsigned chan_id_buf[2][3];
-extern unsigned mode_buf[2];
-extern t_out_data pwm_out_data_buf[2][3];
-extern unsigned pwm_cur_buf;
 
-void update_pwm( chanend c, unsigned value[])
+void update_pwm( t_pwm_control& ctrl, chanend c, unsigned value[])
 {
 	unsigned pwm_val[PWM_CHAN_COUNT];
 
 	/* update buffer value for next calculation */
-	if (pwm_cur_buf == 1) {
-		pwm_cur_buf = 0;
+	if (ctrl.pwm_cur_buf == 1) {
+		ctrl.pwm_cur_buf = 0;
 	} else {
-		pwm_cur_buf = 1;
+		ctrl.pwm_cur_buf = 1;
 	}
 
 	/* store new values */
@@ -43,7 +39,7 @@ void update_pwm( chanend c, unsigned value[])
 
 	/* initialise PWM channel list */
 	for (int i = 0; i < PWM_CHAN_COUNT; i++) {
-		chan_id_buf[pwm_cur_buf][i] = i;
+		ctrl.chan_id_buf[ctrl.pwm_cur_buf][i] = i;
 	}
 
 	/* calculate the required outputs */
@@ -52,18 +48,28 @@ void update_pwm( chanend c, unsigned value[])
 		if (pwm_val[i] > (PWM_MAX_VALUE - (32+PWM_DEAD_TIME))) {
 			pwm_val[i] = (PWM_MAX_VALUE - (32+PWM_DEAD_TIME));
 		}
-		calculate_data_out_ref( pwm_val[i], pwm_out_data_buf[pwm_cur_buf][i].ts0, pwm_out_data_buf[pwm_cur_buf][i].out0, pwm_out_data_buf[pwm_cur_buf][i].ts1, pwm_out_data_buf[pwm_cur_buf][i].out1, pwm_out_data_buf[pwm_cur_buf][i].cat );
-		calculate_data_out_ref( (pwm_val[i]+PWM_DEAD_TIME), pwm_out_data_buf[pwm_cur_buf][i].inv_ts0, pwm_out_data_buf[pwm_cur_buf][i].inv_out0, pwm_out_data_buf[pwm_cur_buf][i].inv_ts1, pwm_out_data_buf[pwm_cur_buf][i].inv_out1, pwm_out_data_buf[pwm_cur_buf][i].cat );
+		calculate_data_out_ref( pwm_val[i],
+				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].ts0,
+				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].out0,
+				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].ts1,
+				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].out1,
+				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].cat );
+		calculate_data_out_ref( (pwm_val[i]+PWM_DEAD_TIME),
+				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].inv_ts0,
+				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].inv_out0,
+				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].inv_ts1,
+				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].inv_out1,
+				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].cat );
 	}
 
 	/* now order them and work out the mode */
-	order_pwm( mode_buf[pwm_cur_buf], chan_id_buf[pwm_cur_buf], pwm_out_data_buf[pwm_cur_buf] );
+	order_pwm( ctrl.mode_buf[ctrl.pwm_cur_buf], ctrl.chan_id_buf[ctrl.pwm_cur_buf], ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf] );
 
-	if (mode_buf[pwm_cur_buf] < 1 || mode_buf[pwm_cur_buf] > 7 ) {
+	if (ctrl.mode_buf[ctrl.pwm_cur_buf] < 1 || ctrl.mode_buf[ctrl.pwm_cur_buf] > 7 ) {
 		unsigned e_check = 1;
 		asm("ecallt %0" : "=r"(e_check));
 	}
 
-	c <: pwm_cur_buf;
+	c <: ctrl.pwm_cur_buf;
 }
 #endif

@@ -26,17 +26,11 @@ unsigned mode_buf[2];
 t_out_data pwm_out_data_buf[2][PWM_CHAN_COUNT];
 unsigned pwm_cur_buf;
 
-extern unsigned pwm_val[PWM_CHAN_COUNT];
-
 void update_pwm( chanend c, unsigned value[])
 {
 	unsigned mode;
 	unsigned chan_id[PWM_CHAN_COUNT];
 	t_out_data pwm_out_data[PWM_CHAN_COUNT];
-
-	/* store new values */
-	for (int pwm_chan = 0; pwm_chan < PWM_CHAN_COUNT; pwm_chan++)
-		pwm_val[pwm_chan] = value[pwm_chan];
 
 	for (int i = 0; i < PWM_CHAN_COUNT; i++)
 	{
@@ -46,7 +40,7 @@ void update_pwm( chanend c, unsigned value[])
 	/* calculate the required outputs */
 	for (int i = 0; i < PWM_CHAN_COUNT; i++)
 	{
-		calculate_data_out( pwm_val[i], pwm_out_data[i] );
+		calculate_data_out( value[i], pwm_out_data[i] );
 	}
 
 	/* now order them and work out the mode */

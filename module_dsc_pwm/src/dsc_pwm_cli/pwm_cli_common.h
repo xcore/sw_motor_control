@@ -39,7 +39,14 @@ void calculate_data_out_ref( unsigned value, REFERENCE_PARAM(unsigned,ts0), REFE
 void order_pwm( REFERENCE_PARAM(unsigned,mode), unsigned chan_id[], t_out_data pwm_out_data[]);
 
 
-// Share the control buffer address with the server
+/** \brief Share the control buffer address with the server
+ *
+ *  The PWM client and server share a common block of memory.  The client passes a reference
+ *  to this block through to the server at initalization time.
+ *
+ *  \param c The PWM control channel
+ *  \param ctrl The shared PWM control data structure reference
+ */
 void pwm_share_control_buffer_address_with_server(chanend c, REFERENCE_PARAM(t_pwm_control, ctrl));
 
 #endif /* _PWM_CLI_COMMON__H_ */
