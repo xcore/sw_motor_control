@@ -206,12 +206,6 @@ PWM_MODE_1_LOOP:
 	ldw r10, sp[11] // load clobbered chanend
 	#endif
 
-	#ifdef USE_PWM_CYCLE_COUNTER
-	ldw r8, dp[pwm_inv_cycle_counter]
-	add r8, r8, 1
-	stw r8, dp[pwm_inv_cycle_counter]
-	#endif
-
 	// setup event
 	mov r8, r11
 	ldap r11, GO_UPDATE_M1
@@ -366,12 +360,6 @@ PWM_MODE_2_LOOP:
 	ldw r10, sp[11] // load clobbered chanend
 	#endif
 
-	#ifdef USE_PWM_CYCLE_COUNTER
-	ldw r8, dp[pwm_inv_cycle_counter]
-	add r8, r8, 1
-	stw r8, dp[pwm_inv_cycle_counter]
-	#endif
-
 	// Channel 0
 	ldw r8, r3[2]
 	add r8, r7, r8
@@ -453,12 +441,6 @@ PWM_MODE_3_LOOP:
 	in r8, res[r8] // wait until we hit setpt
 	outct res[r10], ADC_TRIG_TOKEN // send adc trig token
 	ldw r10, sp[11] // load clobbered chanend
-	#endif
-
-	#ifdef USE_PWM_CYCLE_COUNTER
-	ldw r8, dp[pwm_inv_cycle_counter]
-	add r8, r8, 1
-	stw r8, dp[pwm_inv_cycle_counter]
 	#endif
 
 	// Channel 1
@@ -554,12 +536,6 @@ PWM_MODE_4_LOOP:
 	in r8, res[r8] // wait until we hit setpt
 	outct res[r10], ADC_TRIG_TOKEN // send adc trig token
 	ldw r10, sp[11] // load clobbered chanend
-	#endif
-
-	#ifdef USE_PWM_CYCLE_COUNTER
-	ldw r8, dp[pwm_inv_cycle_counter]
-	add r8, r8, 1
-	stw r8, dp[pwm_inv_cycle_counter]
 	#endif
 
 	// Channel 2
@@ -669,12 +645,6 @@ PWM_MODE_5_LOOP:
 	ldw r10, sp[11] // load clobbered chanend
 	#endif
 
-	#ifdef USE_PWM_CYCLE_COUNTER
-	ldw r8, dp[pwm_inv_cycle_counter]
-	add r8, r8, 1
-	stw r8, dp[pwm_inv_cycle_counter]
-	#endif
-
 	// Channel 1
 	ldw r8, r4[2]
 	add r8, r7, r8
@@ -756,12 +726,6 @@ PWM_MODE_6_LOOP:
 	in r8, res[r8] // wait until we hit setpt
 	outct res[r10], ADC_TRIG_TOKEN // send adc trig token
 	ldw r10, sp[11] // load clobbered chanend
-	#endif
-
-	#ifdef USE_PWM_CYCLE_COUNTER
-	ldw r8, dp[pwm_inv_cycle_counter]
-	add r8, r8, 1
-	stw r8, dp[pwm_inv_cycle_counter]
 	#endif
 
 	// Channel 2
@@ -857,12 +821,6 @@ PWM_MODE_7_LOOP:
 	in r8, res[r8] // wait until we hit setpt
 	outct res[r10], ADC_TRIG_TOKEN // send adc trig token
 	ldw r10, sp[11] // load clobbered chanend
-	#endif
-
-	#ifdef USE_PWM_CYCLE_COUNTER
-	ldw r8, dp[pwm_inv_cycle_counter]
-	add r8, r8, 1
-	stw r8, dp[pwm_inv_cycle_counter]
 	#endif
 
 	// update SYNC timestamp

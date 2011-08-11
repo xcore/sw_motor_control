@@ -22,7 +22,9 @@
 #include "adc_ltc1408.h"
 #include "adc_common.h"
 #include <stdlib.h>
-#include <print.h>
+
+// The number of channels to store when sampling the ADC
+#define ADC_CHANS 6
 
 static void configure_adc_ports_ltc1408(clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA)
 {
@@ -35,38 +37,6 @@ static void configure_adc_ports_ltc1408(clock clk, port out SCLK, buffered out p
     set_port_sample_delay( DATA ); // clock in on falling edge
 
     start_clock(clk);
-}
-
-#pragma unsafe arrays
-static void adc_get_data_ltc1408( unsigned adc_val[], unsigned count,  buffered out port:32 CNVST, in buffered port:32 DATA )
-{
-
-	unsigned val1 = 0, val3 = 0, val5 = 0;
-	unsigned ts;
-
-	for (int i = 0; i < count; i++)
-	{
-		// trigger conversion
-		CNVST <: 0x0000002 @ ts;
-		ts += 33;
-		DATA @ ts :> val1;
-		val1 = bitrev(val1);
-		ts += 32;
-		DATA @ ts :> val3;
-		val3 = bitrev(val3);
-		ts += 32;
-		DATA @ ts :> val5;
-		val5 = bitrev(val5);
-
-		adc_val[(i*6)+0] = 0x3FFF & (val1 >> 17);
-		adc_val[(i*6)+1] = 0x3FFF & (val1 >>  1);
-		adc_val[(i*6)+2] = 0x3FFF & (val3 >> 17);
-		adc_val[(i*6)+3] = 0x3FFF & (val3 >>  1);
-		adc_val[(i*6)+4] = 0x3FFF & (val5 >> 17);
-		adc_val[(i*6)+5] = 0x3FFF & (val5 >>  1);
-
-	}
-
 }
 
 #pragma unsafe arrays
@@ -101,7 +71,7 @@ static void adc_get_data_ltc1408_singleshot( int adc_val[], unsigned offset, buf
 
 }
 
-void adc_ltc1408_triggered( chanend c_adc, clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA, chanend c_trig, chanend ?c_logging0, chanend ?c_logging1, chanend ?c_logging2)
+void adc_ltc1408_triggered( chanend c_adc, chanend c_trig[], clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA)
 {
 	int adc_val[6] ;
 	int cmd;
@@ -116,7 +86,7 @@ void adc_ltc1408_triggered( chanend c_adc, clock clk, port out SCLK, buffered ou
 	{
 		select
 		{
-		case inct_byref(c_trig, ct):
+		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) inct_byref(c_trig[trig], ct):
 			if (ct == ADC_TRIG_TOKEN)
 			{
 				t :> ts;
@@ -160,7 +130,7 @@ void adc_ltc1408_triggered( chanend c_adc, clock clk, port out SCLK, buffered ou
 
 
 //#pragma unsafe arrays
-void adc_ltc1408_filtered( chanend c_adc, clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA, chanend ?c_logging0, chanend ?c_logging1, chanend ?c_logging2 )
+void adc_ltc1408_filtered( chanend c_adc, clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA)
 {
 	/* repeated to easily accomodate a rotating adc buffer */
 	static int xcoeffs[] = {
@@ -184,7 +154,7 @@ void adc_ltc1408_filtered( chanend c_adc, clock clk, port out SCLK, buffered out
 	int adc_tmp[ADC_CHANS],adc_filt[ADC_CHANS];
 	int filt_chan = 0, filt_offset = 0;
 	int write_pos=0, adc_chan=0;
-	unsigned trig_ts,cmd,log_flag=0,pos=0,val=0,sample_count = 0,insert_pos=0;
+	unsigned trig_ts,cmd,pos=0,val=0,sample_count = 0,insert_pos=0;
 
 	timer t;
 
@@ -221,14 +191,8 @@ void adc_ltc1408_filtered( chanend c_adc, clock clk, port out SCLK, buffered out
 						c_adc <: adc_filt[2];
 					}
 					break;
-				case 7:
-					log_flag = 1;
-					break;
 				}
 			break;
-//			case t when timerafter(trig_ts+1000000000) :> trig_ts:
-//				log_flag = 1;
-//				break;
 			case DATA :> val:
 				if (sample_count != 1)
 					CNVST <: 0;
@@ -241,19 +205,6 @@ void adc_ltc1408_filtered( chanend c_adc, clock clk, port out SCLK, buffered out
 				adc_chan += 1;
 
 				adc_tmp[adc_chan] = 0x3FFF & (val >>  0);
-
-#if 0
-				if (log_flag == 1)
-				{
-					if (adc_chan == 1)
-					{
-						if (!isnull(c_logging0))
-							c_logging0 <: adc_tmp[0]; // log channel ADC0
-						if (!isnull(c_logging1))
-							c_logging1 <: adc_tmp[1]; // log channel ADC1
-					}
-				}
-#endif
 
 				adc_chan += 1;
 				if (adc_chan >= ADC_CHANS)
@@ -298,17 +249,6 @@ void adc_ltc1408_filtered( chanend c_adc, clock clk, port out SCLK, buffered out
 						adc_val[insert_pos] = adc_tmp[i];
 						insert_pos += ADC_FILT_SAMPLE_COUNT;
 					}
-
-					/* logging */
-#if 0
-					if (log_flag == 1)
-					{
-						if (!isnull(c_logging0))
-							c_logging0 <: adc_tmp[1]; // log channel ADC0
-						if (!isnull(c_logging1))
-							c_logging1 <: adc_tmp[2]; // log channel ADC1
-					}
-#endif
 
 					/* update position */
 					if (pos < ADC_FILT_SAMPLE_COUNT-1) pos += 1;

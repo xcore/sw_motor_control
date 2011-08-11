@@ -8,7 +8,11 @@
 #include <xs1.h>
 #include <platform.h>
 #include <xclib.h>
+#include <adc_common.h>
 #include <adc_7265.h>
+
+// This array determines the mapping from trigger channel to which analogue input to select in the ADC mux
+static unsigned trigger_channel_to_adc_mux[2] = { 0, 2 };
 
 static void configure_adc_ports_7265(clock clk, port out SCLK, port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX)
 {
@@ -56,7 +60,7 @@ static void adc_get_data_7265( int adc_val[], unsigned channel, port out CNVST, 
 
 }
 
-void adc_7265_triggered( chanend c_adc, chanend c_trig, clock clk, port out SCLK, port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
+void adc_7265_triggered( chanend c_adc, chanend c_trig[], clock clk, port out SCLK, port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
 {
 	int adc_val1[2], adc_val2[2];
 	int cmd;
@@ -70,12 +74,12 @@ void adc_7265_triggered( chanend c_adc, chanend c_trig, clock clk, port out SCLK
 	{
 		select
 		{
-		case inct_byref(c_trig, ct):
+		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) inct_byref(c_trig[trig], ct):
 			if (ct == ADC_TRIG_TOKEN)
 			{
 				t :> ts;
 				t when timerafter(ts + 1740) :> ts;
-				adc_get_data_7265( adc_val1, 0, CNVST, DATA_A, DATA_B, MUX );
+				adc_get_data_7265( adc_val1, trigger_channel_to_adc_mux[trig], CNVST, DATA_A, DATA_B, MUX );
 			}
 			break;
 		case c_adc :> cmd:

@@ -33,14 +33,6 @@ unsigned mode_buf[2];
 t_out_data pwm_out_data_buf[2][3];
 unsigned pwm_cur_buf = 0;
 
-#ifdef USE_PWM_CYCLE_COUNTER
-unsigned pwm_inv_cycle_counter = 0;
-unsigned get_pwm_cycle_counter()
-{
-	return pwm_inv_cycle_counter;
-}
-#endif
-
 /*
  * Assembly PWM operation loop
  */

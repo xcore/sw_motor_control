@@ -148,7 +148,7 @@ void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl
 int main ( void )
 {
 	chan c_speed, c_commands, c_can_reset, c_eth_reset;
-	chan c_qei, c_wd, c_pwm, c_adc, c_adc_trig;
+	chan c_qei, c_wd, c_pwm, c_adc, c_adc_trig[1];
 #ifdef USE_CAN
 	chan c_rxChan, c_txChan, c_can_command;
 #endif
@@ -176,10 +176,11 @@ int main ( void )
 
 
 		// Xcore 1 - MOTOR_CORE
-		on stdcore[MOTOR_CORE] : do_pwm( c_pwm, c_adc_trig, ADC_SYNC_PORT, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
 		on stdcore[MOTOR_CORE] : run_motor ( c_pwm, c_qei, c_adc, c_speed, c_wd, p_hall1, c_commands);
-		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );
+		on stdcore[MOTOR_CORE] : do_pwm( c_pwm, c_adc_trig[0], ADC_SYNC_PORT, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei, p_qei1 );
+
+		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );
 	}
 
 	return 0;
