@@ -34,16 +34,13 @@
  *
  *  Implements the server thread for the PWM outputs
  *
+ *  \param motor the index of the motor being controlled
  *  \param c_pwm control channel for setting PWM values
  *  \param p_pwm the buffered IO ports for the 3 PWM channels
  *  \param clk a clock for generating accurate PWM timing
  */
-void do_pwm1( chanend c_pwm, buffered out port:32 p_pwm[], clock clk);
+void do_pwm( chanend c_pwm, buffered out port:32 p_pwm[], clock clk);
 
-/* This should be removed, the functionality should be parameterized and
- * combined with the do_pwm1 function
- */
-void do_pwm2( chanend c_pwm2, buffered out port:32 p_pwm2[], clock clk2);
 
 #elif defined PWM_INV_MODE || defined PWM_NOINV_MODE
 

@@ -23,23 +23,23 @@
  *
  * This is the server thread implementation for the LTC1408 ADC device.
  *
- * \param c_adc the control channel
+ * \param c_adc the array of ADC control channels
  * \param clk the clock for the ADC device serial port
  * \param SCLK the port which feeds the ADC serial clock
  * \param CNVST the ADC convert strobe
  * \param DATA the ADC data port
  */
-void adc_ltc1408_filtered( chanend c_adc, clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA);
+void adc_ltc1408_filtered( chanend c_adc[], clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA);
 
 /** \brief Execute the triggered ADC server
  *
  * This is the server thread implementation for the LTC1408 ADC device.
  *
- * \param c_adc the control channel
+ * \param c_adc the array of ADC control channels
  * \param c_trig the array of channels to receive triggers from the PWM modules
  * \param clk the clock for the ADC device serial port
  * \param SCLK the port which feeds the ADC serial clock
  * \param CNVST the ADC convert strobe
  * \param DATA the ADC data port
  */
-void adc_ltc1408_triggered( chanend c_adc, chanend c_trig[], clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA);
+void adc_ltc1408_triggered( chanend c_adc[], chanend c_trig[], clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA);

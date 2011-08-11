@@ -27,9 +27,10 @@
 // LCD, LED & Button Ports
 on stdcore[0]: lcd_interface_t lcd_ports = { PORT_SPI_CLK, PORT_SPI_MOSI, PORT_SPI_SS_DISPLAY, PORT_SPI_DSA };
 
-on stdcore[1]: port in p_qei = PORT_M1_ENCODER;
+on stdcore[1]: port in p_qei1 = PORT_M1_ENCODER;
+on stdcore[1]: port in p_qei2 = PORT_M2_ENCODER;
 
-void display(chanend c)
+void display(chanend c1, chanend c2)
 {
 	char my_string[50];
 
@@ -48,14 +49,20 @@ void display(chanend c)
 		{
 			case tmr when timerafter(t) :> void :
 			{
-				unsigned pos = get_qei_position(c);
-				unsigned spd = get_qei_speed(c);
+				unsigned pos1 = get_qei_position(c1);
+				unsigned spd1 = get_qei_speed(c1);
+				unsigned pos2 = get_qei_position(c2);
+				unsigned spd2 = get_qei_speed(c2);
 
-				sprintf(my_string, " Position %d\n", pos );
+				sprintf(my_string, " Position1 %d\n", pos1 );
+				lcd_draw_text_row( my_string, 0, lcd_ports );
+				sprintf(my_string, " Speed1 %d\n", spd1 );
 				lcd_draw_text_row( my_string, 1, lcd_ports );
 
-				sprintf(my_string, " Speed %d\n", spd );
+				sprintf(my_string, " Position2 %d\n", pos2 );
 				lcd_draw_text_row( my_string, 2, lcd_ports );
+				sprintf(my_string, " Speed2 %d\n", spd2 );
+				lcd_draw_text_row( my_string, 3, lcd_ports );
 
 				t += 10000000;
 			}
@@ -67,15 +74,16 @@ void display(chanend c)
 // Program Entry Point
 int main ( void )
 {
-	chan c_qei;
+	chan c_qei1, c_qei2;
 
 	par
 	{
 		// Xcore 1 - INTERFACE_CORE
-		on stdcore[0] : display(c_qei);
+		on stdcore[0] : display(c_qei1, c_qei2);
 
 		// Xcore 2 - MOTOR_CORE
-		on stdcore[1] : do_qei ( c_qei, p_qei );
+		on stdcore[1] : do_qei( c_qei1, p_qei1 );
+		on stdcore[1] : do_qei( c_qei2, p_qei2 );
 	}
 
 	return 0;

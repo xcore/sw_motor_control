@@ -49,9 +49,10 @@
 .cc_top pwm_op_bldc.func, pwm_op_bldc
 .text
 
-// r0 - buffer
+// r0 - buffer index
 // r1 - p_pwm[],
 // r2 - channel
+// r3 - pointer to control structure
 pwm_op_bldc:
 	entsp 7
 
@@ -65,7 +66,7 @@ pwm_op_bldc:
 	/*
 	 * now arrange stuff:
 	 * r0 - pwm port 0, r1 - 			 r2 - out_data0,
-	 * r3 - 			r4 - mode,  	 r5 - sync_point
+	 * r3 - ctrl ptr	r4 - mode,  	 r5 - sync_point
 	 * r6 - tmp0        r7 - tmp1,  	 r8 - chanend
 	 * r9 - 			r10-
 	 */
@@ -77,24 +78,23 @@ pwm_op_bldc:
 	mov r8, r2 // move channel to r8
 
 	//prep for reading ports
-	ldaw r1, dp[chan_id_buf] // load data pointer
 	ldc r0, 4 // entry is 4 bytes long
 	mul r0, r6, r0 // buf * length, to get to the right place in the array
-	add r1, r0, r1 // r1 = pointer to port id
+	add r1, r0, r3 // r1 = pointer to port id
 
 	// r0 = chan_id_buf[buf]
 	ldw r0, r1[0]
 	ldw r0, r7[r0] // get channel
 
 	// prep for reading data_out
-	ldaw r3, dp[pwm_out_data_buf] // data pointer
+	ldc r4, OFFSET_OF_DATA_OUT
+	add r4, r3, r4
 	ldc r7, (SIZE_OF_T_DATA_OUT) // size of structure
 	mul r7, r7, r6 // buf * struct size -> to get to the right place in the array
-	add r3, r3, r7 // add offset to pointer, now at top of correct array of structs
-	mov r2, r3 // out_data0
+	add r2, r7, r4 // add offset to pointer, now at top of correct array of structs
 
 	// read mode
-	ldaw r4, dp[mode_buf]
+	add r4, r3, OFFSET_OF_MODE_BUF
 	ldaw r4, r4[r6]
 	ldw r4, r4[0]
 	
@@ -153,27 +153,26 @@ GO_UPDATE_M1:
 	// load up ports
 	ldw r7, sp[6]
 
-	//prep for reading ports
-	ldaw r1, dp[chan_id_buf] // load data pointer
-	ldc r0, 4 // entry is 4 bytes long
-	mul r0, r6, r0 // buf * length, to get to the right place in the array
-	add r1, r0, r1 // r1 = pointer to port id
+    //prep for reading ports
+    ldc r0, 4 // entry is 4 bytes long
+    mul r0, r6, r0 // buf * length, to get to the right place in the array
+    add r1, r0, r3 // r1 = pointer to port id
 
-	// r0 = chan_id_buf[buf]
-	ldw r0, r1[0]
-	ldw r0, r7[r0] // get channel
+    // r0 = chan_id_buf[buf]
+    ldw r0, r1[0]
+    ldw r0, r7[r0] // get channel
 
-	// prep for reading data_out
-	ldaw r3, dp[pwm_out_data_buf]
-	ldc r7, (SIZE_OF_T_DATA_OUT)
-	mul r7, r7, r6
-	add r3, r3, r7 // now at top of correct array of structs
-	mov r2, r3
+    // prep for reading data_out
+    ldc r4, OFFSET_OF_DATA_OUT
+    add r4, r3, r4
+    ldc r7, (SIZE_OF_T_DATA_OUT) // size of structure
+    mul r7, r7, r6 // buf * struct size -> to get to the right place in the array
+    add r2, r7, r4 // add offset to pointer, now at top of correct array of structs
 
-	// read mode
-	ldaw r4, dp[mode_buf]
-	ldaw r4, r4[r6]
-	ldw r4, r4[0]
+    // read mode
+    add r4, r3, OFFSET_OF_MODE_BUF
+    ldaw r4, r4[r6]
+    ldw r4, r4[0]
 
 	// update SYNC timestamp
 	ldc r6, SYNC_INCREMENT

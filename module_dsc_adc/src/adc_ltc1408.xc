@@ -71,7 +71,7 @@ static void adc_get_data_ltc1408_singleshot( int adc_val[], unsigned offset, buf
 
 }
 
-void adc_ltc1408_triggered( chanend c_adc, chanend c_trig[], clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA)
+void adc_ltc1408_triggered( chanend c_adc[], chanend c_trig[], clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA)
 {
 	int adc_val[6] ;
 	int cmd;
@@ -94,43 +94,28 @@ void adc_ltc1408_triggered( chanend c_adc, chanend c_trig[], clock clk, port out
 				adc_get_data_ltc1408_singleshot( adc_val, 0, CNVST, DATA, clk );
 			}
 			break;
-		case c_adc :> cmd:
-			switch (cmd)
-			{
-			case 0:
+		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) c_adc[trig] :> cmd:
+			if (trig == 0) {
 				master {
-					c_adc <: adc_val[0];
-					c_adc <: adc_val[1];
-					c_adc <: adc_val[2];
+					c_adc[trig] <: adc_val[0];
+					c_adc[trig] <: adc_val[1];
+					c_adc[trig] <: adc_val[2];
 				}
-				break;
-			case 3:
+			} else {
 				master {
-					c_adc <: adc_val[3];
-					c_adc <: adc_val[4];
-					c_adc <: adc_val[5];
+					c_adc[trig] <: adc_val[3];
+					c_adc[trig] <: adc_val[4];
+					c_adc[trig] <: adc_val[5];
 				}
-				break;
-			case 6:
-				master {
-					c_adc <: adc_val[0];
-					c_adc <: adc_val[1];
-					c_adc <: adc_val[2];
-					c_adc <: adc_val[3];
-					c_adc <: adc_val[4];
-					c_adc <: adc_val[5];
-				}
-				break;
 			}
-		break;
+			break;
 		}
 
 	}
 }
 
 
-//#pragma unsafe arrays
-void adc_ltc1408_filtered( chanend c_adc, clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA)
+void adc_ltc1408_filtered( chanend c_adc[], clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA)
 {
 	/* repeated to easily accomodate a rotating adc buffer */
 	static int xcoeffs[] = {
@@ -180,15 +165,15 @@ void adc_ltc1408_filtered( chanend c_adc, clock clk, port out SCLK, buffered out
     {
     	select
     	{
-			case c_adc :> cmd:
+			case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) c_adc[trig] :> cmd:
 				switch (cmd)
 				{
 				case 0:
 					master
 					{
-						c_adc <: adc_filt[0];
-						c_adc <: adc_filt[1];
-						c_adc <: adc_filt[2];
+						c_adc[trig] <: adc_filt[0];
+						c_adc[trig] <: adc_filt[1];
+						c_adc[trig] <: adc_filt[2];
 					}
 					break;
 				}

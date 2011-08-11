@@ -54,7 +54,7 @@ static void configure_adc_ports_max1379(clock clk, port out SCLK,  port out CNVS
 	return {adc1, adc2};
 }
 
-void run_adc_max1379( chanend c_adc, clock clk, port out SCLK,  port out CNVST,  port out SEL, in buffered port:32 DATA)
+void run_adc_max1379( chanend c_adc[], clock clk, port out SCLK,  port out CNVST,  port out SEL, in buffered port:32 DATA)
 {
 	timer t;
 	unsigned ts;
@@ -71,7 +71,7 @@ void run_adc_max1379( chanend c_adc, clock clk, port out SCLK,  port out CNVST, 
 	
 	while (1)
 	{
-		c_adc :> adc_chan; // adc request
+		c_adc[0] :> adc_chan; // adc request
 		
 		switch (adc_chan)
 		{
@@ -89,8 +89,8 @@ void run_adc_max1379( chanend c_adc, clock clk, port out SCLK,  port out CNVST, 
 				break;
 		}
 		
-		c_adc <: adc1;
-		c_adc <: adc2;
+		c_adc[0] <: adc1;
+		c_adc[0] <: adc2;
 	}
 }
 

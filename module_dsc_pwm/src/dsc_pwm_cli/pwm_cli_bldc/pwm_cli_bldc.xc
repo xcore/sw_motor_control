@@ -22,16 +22,6 @@
 #include "pwm_cli_bldc.h"
 
 #ifdef PWM_BLDC_MODE
-	extern unsigned chan_id_buf[2];
-	extern unsigned mode_buf[2];
-	extern t_out_data pwm_out_data_buf[2];
-	extern unsigned pwm_cur_buf;
-
-	extern unsigned chan_id_buf2[2];
-	extern unsigned mode_buf2[2];
-	extern t_out_data pwm_out_data_buf2[2];
-	extern unsigned pwm_cur_buf2;
-
 
 /* Note: This function will only look at 1 channel */
 static void order_pwm_bldc( unsigned &mode, unsigned &chan_id, t_out_data pwm_out_data)
@@ -50,43 +40,24 @@ static void order_pwm_bldc( unsigned &mode, unsigned &chan_id, t_out_data pwm_ou
 	}
 }
 
-void update_pwm1( chanend c, unsigned value, unsigned pwm_chan )
+void update_pwm( t_pwm_control& ctrl, chanend c, unsigned value, unsigned pwm_chan )
 {
 	/* update the buffer we write to */
-	if (pwm_cur_buf == 0)
-		pwm_cur_buf = 1;
-	else pwm_cur_buf = 0;
+	if (ctrl.pwm_cur_buf == 0)
+		ctrl.pwm_cur_buf = 1;
+	else ctrl.pwm_cur_buf = 0;
 
 	/* get active channels and load into buffer */
-	chan_id_buf[pwm_cur_buf] = pwm_chan;
+	ctrl.chan_id_buf[ctrl.pwm_cur_buf] = pwm_chan;
 
 	/* calculate the required outputs */
-	calculate_data_out( value, pwm_out_data_buf[pwm_cur_buf] );
+	calculate_data_out( value, ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf] );
 
 	/* now order them and work out the mode */
-	order_pwm_bldc( mode_buf[pwm_cur_buf], chan_id_buf[pwm_cur_buf], pwm_out_data_buf[pwm_cur_buf] );
+	order_pwm_bldc( ctrl.mode_buf[ctrl.pwm_cur_buf], ctrl.chan_id_buf[ctrl.pwm_cur_buf], ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf] );
 
 	/* trigger update */
-	c <: pwm_cur_buf;
+	c <: ctrl;
 }
 
-void update_pwm2( chanend c2, unsigned value2, unsigned pwm_chan2 )
-{
-	/* update the buffer we write to */
-	if (pwm_cur_buf2 == 0)
-		pwm_cur_buf2 = 1;
-	else pwm_cur_buf2 = 0;
-
-	/* get active channels and load into buffer */
-	chan_id_buf2[pwm_cur_buf2] = pwm_chan2;
-
-	/* calculate the required outputs */
-	calculate_data_out( value2, pwm_out_data_buf2[pwm_cur_buf2] );
-
-	/* now order them and work out the mode */
-	order_pwm_bldc( mode_buf2[pwm_cur_buf2], chan_id_buf2[pwm_cur_buf2], pwm_out_data_buf2[pwm_cur_buf2] );
-
-	/* trigger update */
-	c2 <: pwm_cur_buf2;
-}
 #endif

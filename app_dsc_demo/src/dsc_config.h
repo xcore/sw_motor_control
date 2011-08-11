@@ -28,6 +28,9 @@
 // PWM_BLDC_MODE - output only 2 enabled channels at a time
 #define PWM_INV_MODE 1
 
+// Define the number of motors
+#define NUMBER_OF_MOTORS 1
+
 // Define dead time period in 10ns period, i.e. dead time = PWM_DEAD_TIME * 10ns
 #define PWM_DEAD_TIME 120
 

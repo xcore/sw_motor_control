@@ -26,13 +26,10 @@
 #include "dsc_pwm_common.h"
 #include "dsc_pwm_common_types.h"
 
-
 /*
  * Basic BLDC pwm operation
  */
-
-void do_pwm_bldc1( chanend c_pwm, buffered out port:32 p_pwm[], clock clk);
-void do_pwm_bldc2( chanend c_pwm2, buffered out port:32 p_pwm2[], clock clk2);
+void do_pwm_bldc( chanend c_pwm, buffered out port:32 p_pwm[], clock clk);
 
 
 #endif

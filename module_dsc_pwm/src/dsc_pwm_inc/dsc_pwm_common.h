@@ -36,7 +36,10 @@
 #define SYNC_INCREMENT (PWM_MAX_VALUE)
 #define INIT_SYNC_INCREMENT (SYNC_INCREMENT)
 
-/* refers to data type in dsc_pwm_common_types.h - if they don't correlate then stuff will break */
-#define SIZE_OF_T_DATA_OUT	40
+// The offset and size of components in the PWM control structure
+#define OFFSET_OF_CHAN_ID  0
+#define OFFSET_OF_MODE_BUF 8
+#define OFFSET_OF_DATA_OUT 16
+#define SIZE_OF_T_DATA_OUT 40
 
 #endif /*DSC_ALT_PWM_H_*/

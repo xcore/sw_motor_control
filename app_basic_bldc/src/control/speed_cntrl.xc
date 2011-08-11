@@ -36,7 +36,7 @@ static int Kp=1*8000, Ki=40, Kd=0;
 
 /* speed_control1() function updates pwm value based on pid regulator values
  * and sends the updated values to other threads using channels for motor 1*/
-void speed_control1(chanend c_control, chanend c_lcd,chanend c_can_eth_shared )
+void speed_control(chanend c_control, chanend c_lcd,chanend c_can_eth_shared )
 {
 	unsigned ts, set_speed = 1000, speed = 0, uPwm = 0, temp, cmd, startup = 1, error_flag1=0;
 	int pwm = 0, calced_pwm = 0 ;
@@ -131,107 +131,6 @@ void speed_control1(chanend c_control, chanend c_lcd,chanend c_can_eth_shared )
 			   }
 
 			break;
-		}
-
-	}
-}
-
-/* speed_control2() function updates pwm value based on pid regulator values
- * and sends the updated values to other threads using channels for motor 2 */
-void speed_control2 (chanend c_control2, chanend c_lcd2,chanend c_can_eth_shared2 )
-{
-	unsigned ts, set_speed = 1000, speed = 0, uPwm = 0, temp, cmd, startup = 1, error_flag2=0;
-	int pwm = 0, calced_pwm = 0;
-	/* 32 bit timer declaration */
-	timer t;
-	/* pid variables */
-	pid_data pid;
-
-	/* initialise PID settings */
-	init_pid( Kp, Ki, Kd, pid );
-	/* taking current timer value */
-	t :> ts;
-
-	/* motor wakeup function */
-	while (startup < 2000)
-	{
-		c_control2 <: 2;
-		c_control2 <: 200;
-		startup++;
-	/* delay function for 1ms */
-		t when timerafter (ts + MSec) :> ts;
-	}
-
-	/*main loop for speed control */
-	while (1)
-	{
-		#pragma ordered
-		select
-		{
-		/* updates control parameters for every 1/2 ms */
-		case t when timerafter (ts + MSEC_2) :> ts:
-		/* to get updated speed value from runmotor function */
-			c_control2 <: 1;
-			c_control2 :> speed;
-
-		/* 304 rpm/V - assume 24V maps to PWM_MAX_VALUE */
-			calced_pwm =  (set_speed * PWM_MAX_VALUE) / (PER_UNIT*24);
-
-		/* Updating pwm as per speed feedback and speed reference */
-			pwm = calced_pwm  + pid_regulator_delta_cust_error((int)(set_speed - speed), pid );
-
-			if (pwm > 4000)
-				pwm = 4000;
-			if (pwm < 190)
-				pwm = 190;
-
-			uPwm = (unsigned)pwm;
-			c_control2 <: 2;
-			c_control2 <: uPwm;
-#ifdef USE_XSCOPE
-			xscope_probe_data(1, uPwm);
-#endif
-			break;
-
-		case c_lcd2 :> cmd: /* Process a command received from the display */
-			if (cmd == CMD_GET_IQ2)
-			{
-				c_lcd2 <: speed;
-#ifdef USE_XSCOPE
-				xscope_probe_data(3, speed);
-#endif
-			}
-			else if (cmd == CMD_SET_SPEED2)
-			{
-				c_lcd2 :> set_speed;
-			}
-			else if(cmd == CMD_DIR2)
-			{
-				c_lcd2 :> temp;
-				c_control2 <: 7;
-				c_control2 <: temp;
-			}
-			break;
-		case c_can_eth_shared2 :> cmd: /* Process a command received from the CAN or ETHERNET */
-		    if (cmd == CMD_GET_VALS)
-			{
-		    	c_can_eth_shared2 <: speed;
-				//c_commands_can2 <: error_flag2;
-
-			 }
-	       else if (cmd == CMD_SET_SPEED)
-		     {
-	    	   c_can_eth_shared2 :> set_speed;
-
-		     }
-
-		   else
-			 {
-			 // Ignore invalid command
-			 }
-
-		    break;
-
 		}
 
 	}

@@ -44,22 +44,15 @@
 	#define CMD_GET_IQ		2
 	#define CMD_SET_SPEED	3
     #define CMD_DIR         4
-	#define CMD_GET_IQ2		5
-	#define CMD_SET_SPEED2	6
-	#define CMD_DIR2        7
 	#define STEP_SPEED 		50
 	#define _30_Msec		2000000
 	#define _Msec_2_		50000
 	#define MSec 			100000
 	#define CAN_RS_LO		2
 
-	#ifdef __XC__
-		void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_reset,out port p_shared_rs,chanend c_eth_command );
-	#endif
 #endif
 
 #ifdef BLDC_FOC
-
 	#define ETH_RST_HI 		0
 	#define ETH_RST_LO		1
 	#define CAN_RS_LO		2
@@ -69,10 +62,10 @@
 	#define CMD_GET_IQ		2
 	#define CMD_SET_SPEED	3
     #define CMD_GET_VALS2	4
+#endif
 
-	#ifdef __XC__
-		void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_command,out port p_shared_rs,chanend c_eth_command);
-	#endif
+#ifdef __XC__
+	void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface_t, p), in port btns, chanend c_can_reset, out port p_shared_rs, chanend c_eth_command);
 #endif
 
 #endif /* SHARED_IO_H_ */

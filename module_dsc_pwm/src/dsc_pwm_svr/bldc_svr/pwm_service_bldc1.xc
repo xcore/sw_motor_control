@@ -31,18 +31,12 @@
 /* bridge needs to be controlled by the application   */
 /******************************************************/
 
-unsigned chan_id_buf[2];
-unsigned mode_buf[2];
-t_out_data pwm_out_data_buf[2];
-unsigned pwm_cur_buf = 0;
-
-
 /*
  * Operate PWM output - runs forever internally as updates are done using shared memory
  */
-extern unsigned pwm_op_bldc( unsigned buf, buffered out port:32 p_pwm[], chanend c );
+extern unsigned pwm_op_bldc(unsigned buf, buffered out port:32 p_pwm[], chanend c );
 
-static void do_pwm_port_config_bldc(  buffered out port:32 p_pwm[], clock clk )
+static void do_pwm_port_config_bldc(buffered out port:32 p_pwm[], clock clk )
 {
 	unsigned i;
 
@@ -57,7 +51,7 @@ static void do_pwm_port_config_bldc(  buffered out port:32 p_pwm[], clock clk )
 
 }
 
-void do_pwm_bldc1( chanend c_pwm, buffered out port:32 p_pwm[], clock clk)
+void do_pwm_bldc( chanend c_pwm, buffered out port:32 p_pwm[], clock clk)
 {
 	unsigned mode;
 

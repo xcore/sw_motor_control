@@ -27,23 +27,10 @@
 #include "lcd_logo.h"
 #include "print.h"
 
-void splash(REFERENCE_PARAM(lcd_interface_t, p) )
-{
-	timer t;
-	unsigned ts;
-
-	lcd_draw_image(xmos_logo, p);
-	t :> ts;
-	t when timerafter(ts+300000000) :> ts;
-	lcd_clear(p);					// Clear the display RAM
-	lcd_comm_out(p, 0xB0);		// Reset page and column addresses
-	lcd_comm_out(p, 0x10);		// column address upper 4 bits + 0x10
-	lcd_comm_out(p, 0x00);		// column address lower 4 bits + 0x00
-}
 
 #ifdef BLDC_BASIC
 /* Manages the display, buttons and shared ports. */
-void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_command,out port p_shared_rs,chanend c_eth_command )
+void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_command,out port p_shared_rs,chanend c_eth_command )
 {
 	unsigned int time, MIN_VAL=0, speed1 = 0, speed2 = 0, set_speed = INITIAL_SET_SPEED;
 	/* Default port value on device boot */
@@ -61,9 +48,6 @@ void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lc
 	/* Output the default value to the port */
 	p.p_core1_shared <:0;
 
-	// Show the splash screen
-	splash(p);
-
 	/* Get the initial time value */
 	timer_1 :> time;
 
@@ -75,11 +59,11 @@ void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lc
 		/* Timer event at 10Hz */
 			case timer_1 when timerafter(time + 10000000) :> time:
 		/* Get the motor 1 speed and motor 2 speed */
-				c_lcd1 <: CMD_GET_IQ;
-				c_lcd1 :> speed1;
-				c_lcd1 :> set_speed;
-				c_lcd2 <: CMD_GET_IQ2;
-				c_lcd2 :> speed2;
+			for (int m=0; m<NUMBER_OF_MOTORS; m++) {
+				c_speed[m] <: CMD_GET_IQ;
+				c_speed[m] :> speed1;
+				c_speed[m] :> set_speed;
+			}
 
 				//can commands
 
@@ -150,13 +134,12 @@ void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lc
 					set_speed += PWM_INC_DEC_VAL;
 					if (set_speed > MAX_RPM)
 						set_speed = MAX_RPM;
+
 		/* Update the speed control loop */
-					c_lcd1 <: CMD_SET_SPEED;
-					c_lcd1 <: set_speed;
-					c_lcd2 <: CMD_SET_SPEED2;
-					c_lcd2 <: set_speed;
-
-
+					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
+						c_speed[m] <: CMD_SET_SPEED;
+						c_speed[m] <: set_speed;
+					}
 
 		/* Increment the debouncer */
 					btn_en = 8;
@@ -171,10 +154,10 @@ void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lc
 						MIN_VAL = set_speed;
 					}
 		/* Update the speed control loop */
-					c_lcd1 <: CMD_SET_SPEED;
-					c_lcd1 <: set_speed;
-					c_lcd2 <: CMD_SET_SPEED2;
-					c_lcd2 <: set_speed;
+					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
+						c_speed[m] <: CMD_SET_SPEED;
+						c_speed[m] <: set_speed;
+					}
 
 		/* Increment the debouncer */
 					btn_en = 8;
@@ -188,41 +171,45 @@ void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lc
 					{
 						set_speed -= STEP_SPEED;
 		/* Update the speed control loop */
-						c_lcd1 <: CMD_SET_SPEED;
-						c_lcd1 <: set_speed;
-						c_lcd2 <: CMD_SET_SPEED2;
-						c_lcd2 <: set_speed;
+						for (int m=0; m<NUMBER_OF_MOTORS; m++) {
+							c_speed[m] <: CMD_SET_SPEED;
+							c_speed[m] <: set_speed;
+						}
 						timer_2 :> ts;
 						timer_2 when timerafter(ts + _30_Msec) :> ts;
 					}
 					set_speed  =0;
 		/* Update the speed control loop */
-					c_lcd1 <: CMD_SET_SPEED;
-					c_lcd1 <: set_speed;
-					c_lcd2 <: CMD_SET_SPEED2;
-					c_lcd2 <: set_speed;
+					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
+						c_speed[m] <: CMD_SET_SPEED;
+						c_speed[m] <: set_speed;
+					}
 		/* Update the direction change */
-					c_lcd1 <: CMD_DIR;
-					c_lcd1 <: toggle;
-					c_lcd2 <: CMD_DIR2;
-					c_lcd2 <: toggle;
+					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
+						c_speed[m] <: CMD_DIR;
+						c_speed[m] <: toggle;
+
+					}
+
 		/* to avoid jerks during the direction change*/
 					while(set_speed < temp)
 					{
 						set_speed += STEP_SPEED;
-						c_lcd1 <: CMD_SET_SPEED;
-						c_lcd1 <: set_speed;
-						c_lcd2 <: CMD_SET_SPEED2;
-						c_lcd2 <: set_speed;
+						for (int m=0; m<NUMBER_OF_MOTORS; m++) {
+							c_speed[m] <: CMD_SET_SPEED;
+							c_speed[m] <: set_speed;
+						}
+
 						timer_2 :> ts;
 						timer_2 when timerafter(ts + _30_Msec) :> ts;
 					}
 					set_speed  = temp;
 		/* Update the speed control loop */
-					c_lcd1 <: CMD_SET_SPEED;
-					c_lcd1 <: set_speed;
-					c_lcd2 <: CMD_SET_SPEED2;
-					c_lcd2 <: set_speed;
+					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
+						c_speed[m] <: CMD_SET_SPEED;
+						c_speed[m] <: set_speed;
+					}
+
 		/* Increment the debouncer */
 					btn_en = 8;
 				}
@@ -237,7 +224,7 @@ void display_shared_io_motor( chanend c_lcd1, chanend c_lcd2, REFERENCE_PARAM(lc
 
 #ifdef BLDC_FOC
 
-void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_command,out port p_shared_rs,chanend c_eth_command)
+void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_command,out port p_shared_rs,chanend c_eth_command)
 {
 	unsigned int time,  value;
 	unsigned int port_val = 0b0010;		// Default port value on device boot
@@ -256,25 +243,6 @@ void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t
 	// Output the default value to the port
 	p.p_core1_shared <: 0;
 
-	// Initiate the LCD
-	lcd_comm_out(p, 0xE2);		// RESET
-	lcd_comm_out(p, 0xA0);		// RAM->SEG output = normal
-	lcd_comm_out(p, 0xAE);		// Display OFF
-	lcd_comm_out(p, 0xC0);		// COM scan direction = normal
-	lcd_comm_out(p, 0xA2);		// 1/9 bias
-	lcd_comm_out(p, 0xC8);		// Reverse
-	lcd_comm_out(p, 0x2F);		// power control set
-	lcd_comm_out(p, 0x20);		// resistor ratio set
-	lcd_comm_out(p, 0x81);		// Electronic volume command (set contrast)
-	lcd_comm_out(p, 0x3F);		// Electronic volume value (contrast value)
-	lcd_clear(p);				// Clear the display RAM
-	lcd_comm_out(p, 0xB0);		// Reset page and column addresses
-	lcd_comm_out(p, 0x10);		// column address upper 4 bits + 0x10
-	lcd_comm_out(p, 0x00);		// column address lower 4 bits + 0x00
-
-	/* display splash screen */
-	splash(p);
-
 	// Get the initial time value
 	t :> time;
 
@@ -287,9 +255,9 @@ void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t
 			case t when timerafter(time + 10000000) :> time:
 
 	// Get actual speed
-				c_speed <: 2;
-				c_speed :> speed;
-				c_speed :> set_speed;
+				c_speed[0] <: 2;
+				c_speed[0] :> speed;
+				c_speed[0] :> set_speed;
 
 	// Calculate the strings here
 
@@ -361,8 +329,10 @@ void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t
 					}
 
 	// Update the speed control loop
-					c_speed <: CMD_SET_SPEED;
-					c_speed <: set_speed;
+					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
+						c_speed[m] <: CMD_SET_SPEED;
+						c_speed[m] <: set_speed;
+					}
 
 	// Increment the debouncer
 					btn_en = 12;
@@ -378,8 +348,10 @@ void display_shared_io_manager( chanend c_speed, REFERENCE_PARAM(lcd_interface_t
 					}
 
 	// Update the speed control loop
-					c_speed <: CMD_SET_SPEED;
-					c_speed <: set_speed;
+					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
+						c_speed[m] <: CMD_SET_SPEED;
+						c_speed[m] <: set_speed;
+					}
 
 	// Increment the debouncer
 					btn_en = 12;

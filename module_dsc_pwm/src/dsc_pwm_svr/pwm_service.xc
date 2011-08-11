@@ -55,14 +55,9 @@
 
 #ifdef PWM_BLDC_MODE
 
-	void do_pwm1( chanend c_pwm, buffered out port:32 p_pwm_lo[], clock clk)
+	void do_pwm( chanend c_pwm, buffered out port:32 p_pwm_lo[], clock clk)
 	{
-		do_pwm_bldc1( c_pwm, p_pwm_lo, clk);
-	}
-
-	void do_pwm2( chanend c_pwm2, buffered out port:32 p_pwm_lo2[], clock clk2)
-	{
-		do_pwm_bldc2( c_pwm2, p_pwm_lo2, clk2);
+		do_pwm_bldc(c_pwm, p_pwm_lo, clk);
 	}
 
 #endif

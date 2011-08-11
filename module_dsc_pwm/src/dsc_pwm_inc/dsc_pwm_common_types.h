@@ -49,5 +49,13 @@ typedef struct PWM_OUT_DATA
 	unsigned value;
 } t_out_data;
 
+// Shared memory structure for the client->server
+typedef struct {
+	unsigned chan_id_buf[2];
+	unsigned mode_buf[2];
+	t_out_data pwm_out_data_buf[2];
+	unsigned pwm_cur_buf;
+} t_pwm_control;
+
 
 #endif /* DSC_ALT_PWM_COMMON_TYPES_H_ */

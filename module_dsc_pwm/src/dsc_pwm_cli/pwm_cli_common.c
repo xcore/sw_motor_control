@@ -62,7 +62,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 		return;
 	}
 
-	if (long_single == 1 && sngle == 2) {
+	else if (long_single == 1 && sngle == 2) {
 		*mode = 7;
 		/* need to find the long single and put it first */
 		for (int i = 0; i < PWM_CHAN_COUNT; i++)
@@ -79,7 +79,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 		asm("ecallt %0" : "=r"(e_check));
 	}
 
-	if (dble == 1 && sngle == 2) {
+	else if (dble == 1 && sngle == 2) {
 		*mode = 2;
 		/* need to find the double and put it first */
 		for (int i = 1; i < PWM_CHAN_COUNT; i++)
@@ -96,7 +96,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 		asm("ecallt %0" : "=r"(e_check));
 	}
 
-	if (dble == 2 && sngle == 1) {
+	else if (dble == 2 && sngle == 1) {
 		*mode = 3;
 
 		/* need to find the single and put it last */
@@ -107,6 +107,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 				chan_id_tmp = chan_id[PWM_CHAN_COUNT-1];
 				chan_id[PWM_CHAN_COUNT-1] = chan_id[i];
 				chan_id[i] = chan_id_tmp;
+				break;
 			}
 		}
 
@@ -128,7 +129,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 		return;
 	}
 
-	if (dble == 3) {
+	else if (dble == 3) {
 		*mode = 4;
 
 		/* now order by length*/
@@ -149,7 +150,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 		return;
 	}
 
-	if (long_single == 1 && dble == 1 && sngle == 1) {
+	else if (long_single == 1 && dble == 1 && sngle == 1) {
 		*mode = 5;
 
 		/* need to find the single and put it last */
@@ -159,6 +160,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 				chan_id_tmp = chan_id[PWM_CHAN_COUNT-1];
 				chan_id[PWM_CHAN_COUNT-1] = chan_id[i];
 				chan_id[i] = chan_id_tmp;
+				break;
 			}
 		}
 
@@ -169,6 +171,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 				chan_id_tmp = chan_id[1];
 				chan_id[1] = chan_id[i];
 				chan_id[i] = chan_id_tmp;
+				break;
 			}
 		}
 
@@ -179,7 +182,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 		return;
 	}
 
-	if (long_single == 1 && dble == 2) {
+	else if (long_single == 1 && dble == 2) {
 		*mode = 6;
 
 		/* need to find the long single and put it first */
@@ -188,6 +191,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 				chan_id_tmp = chan_id[0];
 				chan_id[0] = chan_id[i];
 				chan_id[i] = chan_id_tmp;
+				break;
 			}
 		}
 
@@ -197,6 +201,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 				chan_id_tmp = chan_id[1];
 				chan_id[1] = chan_id[i];
 				chan_id[i] = chan_id_tmp;
+				break;
 			}
 		}
 
@@ -232,7 +237,7 @@ void calculate_data_out( unsigned value, t_out_data *pwm_out_data )
 	}
 
 	// close to PWM_MAX_VALUE
-	if (value >= (PWM_MAX_VALUE-31))
+	else if (value >= (PWM_MAX_VALUE-31))
 	{
 		unsigned tmp;
 		pwm_out_data->cat = LONG_SINGLE;
@@ -251,7 +256,7 @@ void calculate_data_out( unsigned value, t_out_data *pwm_out_data )
 	}
 
 	// low mid range
-	if (value < 64)
+	else if (value < 64)
 	{
 		unsigned tmp;
 		pwm_out_data->cat = DOUBLE;
@@ -319,7 +324,7 @@ void calculate_data_out_ref( unsigned value, unsigned *ts0, unsigned *out0, unsi
 	/* Its pretty impossible to apply dead time to values this high... so update function should clamp the values to
 	 * PWM_MAX - (31+PWM_DEAD_TIME)
 	 */
-	if (value >= (PWM_MAX_VALUE-31))
+	else if (value >= (PWM_MAX_VALUE-31))
 	{
 		unsigned tmp;
 		*cat = LONG_SINGLE;
@@ -338,7 +343,7 @@ void calculate_data_out_ref( unsigned value, unsigned *ts0, unsigned *out0, unsi
 	}
 
 	// low mid range
-	if (value < 64)
+	else if (value < 64)
 	{
 		unsigned tmp;
 		*cat = DOUBLE;
