@@ -16,22 +16,20 @@
  * below. The modifications to the code are still covered by the 
  * copyright notice above.
  *
- **/                                   
+ **/
+
 #include "pwm_cli_common.h"
 #include "dsc_pwm_common.h"
 #include "dsc_config.h"
 
-unsigned pwm_val[PWM_CHAN_COUNT];
-
-extern unsigned chan_id_buf[2][PWM_CHAN_COUNT];
-extern unsigned mode_buf[2];
-extern t_out_data pwm_out_data_buf[2][PWM_CHAN_COUNT];
-extern unsigned pwm_cur_buf;
-
-void init_pwm_vals( )
+void pwm_share_control_buffer_address_with_server(chanend c, t_pwm_control* ctrl)
 {
-	for (int i = 0; i < PWM_CHAN_COUNT; i++)
-		pwm_val[i] = 0;
+  __asm__ volatile ("outct  res[%0], 0x1;"
+	  "chkct  res[%0], 0x1;"
+	  "out    res[%0], %1;"
+	  "outct  res[%0], 0x1;"
+	  "chkct  res[%0], 0x1;"  :: "r"(c),"r"(ctrl));
+  return;
 }
 
 /*

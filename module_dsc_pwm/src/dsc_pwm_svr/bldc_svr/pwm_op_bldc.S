@@ -30,11 +30,14 @@
 
 #ifdef PWM_BLDC_MODE
 
-.extern chan_id_buf
-.extern pwm_out_data_buf
-.extern mode_buf
-
 .extern pwm_op_bldc
+
+.section .text
+
+
+
+// Main PWM Service routine
+
 .globl pwm_op_bldc.nstackwords
 .globl pwm_op_bldc.maxthreads
 .globl pwm_op_bldc.maxtimers
@@ -45,9 +48,8 @@
 .linkset pwm_op_bldc.maxtimers, 0
 .linkset pwm_op_bldc.maxthreads, 0
 
-.globl pwm_op_bldc
 .cc_top pwm_op_bldc.func, pwm_op_bldc
-.text
+.globl pwm_op_bldc
 
 // r0 - buffer index
 // r1 - p_pwm[],

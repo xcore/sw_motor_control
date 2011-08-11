@@ -21,6 +21,8 @@
 #define _PWM_CLI_COMMON__H_
 
 #include <xs1.h>
+#include <xccompat.h>
+
 #include "dsc_pwm_common_types.h"
 #include "dsc_pwm_common.h"
 
@@ -30,19 +32,14 @@
 void init_pwm_vals( );
 
 // Calculate timings for PWM output
-#ifdef __XC__
-	void calculate_data_out( unsigned value, t_out_data &pwm_out_data );
-	void calculate_data_out_ref( unsigned value, unsigned &ts0, unsigned &out0, unsigned &ts1, unsigned &out1, e_pwm_cat &cat );
-#else
-	void calculate_data_out( unsigned value, t_out_data *pwm_out_data );
-	void calculate_data_out_ref( unsigned value, unsigned *ts0, unsigned *out0, unsigned *ts1, unsigned *out1, e_pwm_cat *cat );
-#endif
+void calculate_data_out( unsigned value, REFERENCE_PARAM(t_out_data,pwm_out_data) );
+void calculate_data_out_ref( unsigned value, REFERENCE_PARAM(unsigned,ts0), REFERENCE_PARAM(unsigned,out0), REFERENCE_PARAM(unsigned,ts1), REFERENCE_PARAM(unsigned,out1), REFERENCE_PARAM(e_pwm_cat,cat));
 
 // Calculate required ordering of operation
-#ifdef __XC__
-	void order_pwm( unsigned &mode, unsigned chan_id[], t_out_data pwm_out_data[]);
-#else
-	void order_pwm( unsigned *mode, unsigned chan_id[], t_out_data pwm_out_data[]);
-#endif
+void order_pwm( REFERENCE_PARAM(unsigned,mode), unsigned chan_id[], t_out_data pwm_out_data[]);
+
+
+// Share the control buffer address with the server
+void pwm_share_control_buffer_address_with_server(chanend c, REFERENCE_PARAM(t_pwm_control, ctrl));
 
 #endif /* _PWM_CLI_COMMON__H_ */

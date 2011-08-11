@@ -32,7 +32,7 @@
 /* Manages the display, buttons and shared ports. */
 void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface_t, p), in port btns,chanend c_can_command,out port p_shared_rs,chanend c_eth_command )
 {
-	unsigned int time, MIN_VAL=0, speed1 = 0, speed2 = 0, set_speed = INITIAL_SET_SPEED;
+	unsigned int time, MIN_VAL=0, speed[2], set_speed = INITIAL_SET_SPEED;
 	/* Default port value on device boot */
 	unsigned int port_val = 0b0001;
 	unsigned int btn_en = 0;
@@ -61,7 +61,7 @@ void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface
 		/* Get the motor 1 speed and motor 2 speed */
 			for (int m=0; m<NUMBER_OF_MOTORS; m++) {
 				c_speed[m] <: CMD_GET_IQ;
-				c_speed[m] :> speed1;
+				c_speed[m] :> speed[m];
 				c_speed[m] :> set_speed;
 			}
 
@@ -79,10 +79,10 @@ void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface
 				sprintf(my_string, "  Set Speed: %04d RPM\n", set_speed );
 				lcd_draw_text_row( my_string, 1, p );
 
-				sprintf(my_string, "  Speed1 : 	 %04d RPM\n", speed1 );
+				sprintf(my_string, "  Speed1 : 	 %04d RPM\n", speed[0] );
 				lcd_draw_text_row( my_string, 2, p );
 
-				sprintf(my_string, "  Speed2 : 	 %04d RPM\n", speed2 );
+				sprintf(my_string, "  Speed2 : 	 %04d RPM\n", speed[1] );
 				lcd_draw_text_row( my_string, 3, p );
 
 		/* Switch debouncing - run through and decrement their counters. */

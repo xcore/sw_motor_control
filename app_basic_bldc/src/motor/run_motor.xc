@@ -55,14 +55,18 @@ void run_motor(chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_
 	unsigned state0 = 0, statenot0 =0 ;
 	unsigned set_speed=500;
 	t_pwm_control pwm_ctrl;
+	timer t;
+
+	// First send my PWM server the shared memory structure address
+	pwm_share_control_buffer_address_with_server(c_pwm, pwm_ctrl);
 
 	/* 32 bit timer declaration */
-	timer t;
 	t :> ts;
-	/* delay function for 10 sec */
-	t when timerafter(ts+ (10 *SEC)) :> ts;
 
-	if (isnull(c_wd)) {
+	/* delay function for 5 sec */
+	t when timerafter(ts+ (5*SEC)) :> ts;
+
+	if (!isnull(c_wd)) {
 		/* allow the WD to get going and enable motor */
 		c_wd <: WD_CMD_START;
 	}
@@ -78,25 +82,25 @@ void run_motor(chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_
 		case c_control :> cmd:
 			switch (cmd)
 			{
-		/* updates speed changes between threads */
-			case 1:
-				c_control <: speed;
-				break;
+			/* updates speed changes between threads */
+				case 1:
+					c_control <: speed;
+					break;
 
-		/* upadates pwm values between threads*/
-			case 2:
-				c_control :> pwm_val;
-				break;
+				/* upadates pwm values between threads*/
+				case 2:
+					c_control :> pwm_val;
+					break;
 
-		/* upadates direction changes of motor rotation based on Button C */
-			case 4:
-				c_control :> dir_flag;
-				break;
+				/* upadates direction changes of motor rotation based on Button C */
+				case 4:
+					c_control :> dir_flag;
+					break;
 
-			default:
-			break;
+				default:
+					break;
 			}
-		break;
+			break;
 		}
 
 		/* handling hall states */
@@ -145,7 +149,7 @@ void run_motor(chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_
 		if (dir_flag)
 		{
 			high_chan = bldc_high_seq[hall_state];
-		/* do output and switch on the IGBT's */
+			/* do output and switch on the IGBT's */
 			p_pwm_lo[0] <: bldc_ph_a_lo[hall_state];
 			p_pwm_lo[1] <: bldc_ph_b_lo[hall_state];
 			p_pwm_lo[2] <: bldc_ph_c_lo[hall_state];
@@ -153,7 +157,7 @@ void run_motor(chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_
 		else
 		{
 			high_chan = bldc_high_seq1[hall_state];
-		/* do output and switch on the IGBT's */
+			/* do output and switch on the IGBT's */
 			p_pwm_lo[0] <: bldc_ph_a_lo1[hall_state];
 			p_pwm_lo[1] <: bldc_ph_b_lo1[hall_state];
 			p_pwm_lo[2] <: bldc_ph_c_lo1[hall_state];

@@ -57,7 +57,7 @@ void update_pwm( t_pwm_control& ctrl, chanend c, unsigned value, unsigned pwm_ch
 	order_pwm_bldc( ctrl.mode_buf[ctrl.pwm_cur_buf], ctrl.chan_id_buf[ctrl.pwm_cur_buf], ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf] );
 
 	/* trigger update */
-	c <: ctrl;
+	c <: ctrl.pwm_cur_buf;
 }
 
 #endif

@@ -34,7 +34,7 @@
 /*
  * Operate PWM output - runs forever internally as updates are done using shared memory
  */
-extern unsigned pwm_op_bldc(unsigned buf, buffered out port:32 p_pwm[], chanend c );
+extern unsigned pwm_op_bldc(unsigned buf, buffered out port:32 p_pwm[], chanend c, unsigned ctrl );
 
 static void do_pwm_port_config_bldc(buffered out port:32 p_pwm[], clock clk )
 {
@@ -51,10 +51,14 @@ static void do_pwm_port_config_bldc(buffered out port:32 p_pwm[], clock clk )
 
 }
 
-void do_pwm_bldc( chanend c_pwm, buffered out port:32 p_pwm[], clock clk)
+void do_pwm_bldc( chanend c_pwm, buffered out port:32 p_pwm[], clock clk )
 {
-	unsigned mode;
+	unsigned mode, control;
 
+	// First set the shared memory address from the client
+	c_pwm :> control;
+
+	// Configure the ports
 	do_pwm_port_config_bldc( p_pwm, clk);
 
 	/* wait for initial update */
@@ -63,7 +67,7 @@ void do_pwm_bldc( chanend c_pwm, buffered out port:32 p_pwm[], clock clk)
 	while (1)
 	{
 		/* we never actually come out of this, activity on channel triggers buffer change over */
-		mode = pwm_op_bldc( mode, p_pwm, c_pwm );
+		mode = pwm_op_bldc( mode, p_pwm, c_pwm, control );
 	}
 
 }

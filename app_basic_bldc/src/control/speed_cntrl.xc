@@ -67,19 +67,19 @@ void speed_control(chanend c_control, chanend c_lcd,chanend c_can_eth_shared )
 		{
 		/* updates control parameters for every 1/2 ms */
 		case t when timerafter (ts + MSEC_2) :> ts:
-		/* to get updated speed value from runmotor function */
+			/* to get updated speed value from runmotor function */
 			c_control <: 1;
 			c_control :> speed;
 
-		/* 304 rpm/V - assume 24V maps to PWM_MAX_VALUE */
+			/* 304 rpm/V - assume 24V maps to PWM_MAX_VALUE */
 			calced_pwm =  (set_speed * PWM_MAX_VALUE) / (PER_UNIT*24);
 
-		/* Updating pwm as per speed feedback and speed reference */
+			/* Updating pwm as per speed feedback and speed reference */
 			pwm = calced_pwm  + pid_regulator_delta_cust_error((int)(set_speed - speed), pid );
-		/* Maximum and Minimum PWM limits */
+			/* Maximum and Minimum PWM limits */
 
-		if (pwm > 4000)
-		    pwm=4000;
+			if (pwm > 4000)
+				pwm=4000;
 
 			if (pwm < 100)
 				pwm = 100;
