@@ -61,6 +61,9 @@
 // Define the number of poles the motor has
 #define NUMBER_OF_POLES	8
 
+// Define this to remove the zero offset calibration in the ADC client
+#define ADC_DISABLE_CALIBRATION
+
 // Define this to enable the CAN interface
 //#define USE_CAN
 

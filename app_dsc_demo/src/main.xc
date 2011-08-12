@@ -112,6 +112,7 @@ on stdcore[MOTOR_CORE]: in port ADC_SYNC_PORT1 = XS1_PORT_16A;
 on stdcore[MOTOR_CORE]: in port ADC_SYNC_PORT2 = XS1_PORT_16B;
 on stdcore[MOTOR_CORE]: clock adc_clk = XS1_CLKBLK_2;
 
+#ifdef USE_ETH
 
 // Function to initise and run the TCP/IP server
 void init_tcp_server(chanend c_mac_rx, chanend c_mac_tx, chanend c_xtcp[], chanend c_connect_status)
@@ -158,13 +159,17 @@ void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl
 		// Run the Ethernet server
 		ethernet_server(p_mii, mac_address, c_mac_rx, 1, c_mac_tx, 1, p_smi, c_connect_status);
 }
+#endif
 
+
+#ifdef USE_CAN
 void init_can_phy( chanend c_rxChan, chanend c_txChan, clock p_can_clk, buffered in port:32 p_can_rx, port p_can_tx, out port p_shared_rs)
 {
 	p_shared_rs <: 0;
 
 	canPhyRxTx( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx );
 }
+#endif
 
 
 // Program Entry Point
