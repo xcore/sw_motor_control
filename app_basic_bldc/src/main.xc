@@ -36,7 +36,6 @@
 // CAN control headers
 #ifdef USE_CAN
 #include "control_comms_can.h"
-#include "CanPhy.h"
 #endif
 
 // Ethernet control headers
@@ -107,9 +106,9 @@ int main ( void )
 	par
 	{
 #ifdef USE_CAN
-		on stdcore[INTERFACE_CORE] : do_comms_can( c_commands, c_rxChan, c_txChan, c_can_reset);
+		on stdcore[INTERFACE_CORE] : do_comms_can( c_commands, c_rxChan, c_txChan);
 
-		on stdcore[INTERFACE_CORE] : canPhyRxTx( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx );
+		on stdcore[INTERFACE_CORE] : init_can_phy( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx, p_shared_rs );
 #endif
 
 #ifdef USE_ETH

@@ -32,7 +32,7 @@
 
 #define COUNTER_MASK  0xfff
 
-void do_comms_can( chanend c_commands[], chanend rxChan, chanend txChan, chanend c_control_can)
+void do_comms_can( chanend c_commands[], chanend rxChan, chanend txChan)
 {
 	struct CanPacket p;
 	unsigned int sender_address, count = 1, value;
@@ -41,9 +41,6 @@ void do_comms_can( chanend c_commands[], chanend rxChan, chanend txChan, chanend
 	unsigned int error_flag[2] = {0,0};
 	unsigned int Ia[2],Ib[2],Ic[2],Iq_set_point[2],Id_out[2],Iq_out[2]; // motor1 parameters
 
-
-    //enable CAN
-    c_control_can<:CAN_RS_LO;
 	// Loop forever processing packets
 	while( 1 )
 	{
@@ -54,6 +51,7 @@ void do_comms_can( chanend c_commands[], chanend rxChan, chanend txChan, chanend
 		// Increment the count
 		count = (count + 1) & COUNTER_MASK;
 
+		printhex(p.ID);
 		// Check that the packet is for us (Address = 0x1)
 		if (p.ID == 0x1 )
 	      {

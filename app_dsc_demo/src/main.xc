@@ -23,23 +23,29 @@
 #include <platform.h>
 #include <print.h>
 
-#include "CanPhy.h"
 #include "adc_7265.h"
-#include "control_comms_can.h"
-#include "control_comms_eth.h"
 #include "dsc_config.h"
-#include "ethernet_server.h"
-#include "getmac.h"
 #include "hall_input.h"
 #include "inner_loop.h"
 #include "pos_estimator.h"
 #include "pwm_cli.h"
 #include "pwm_service.h"
 #include "shared_io.h"
-#include "uip_server.h"
 #include "watchdog.h"
+
+#ifdef USE_ETH
+#include "control_comms_eth.h"
+#include "ethernet_server.h"
+#include "getmac.h"
+#include "uip_server.h"
 #include "xtcp_client.h"
 #include "qei_server.h"
+#endif
+
+#ifdef USE_CAN
+#include "control_comms_can.h"
+#include "CanPhy.h"
+#endif
 
 #ifdef USE_XSCOPE
 #include <xscope.h>
@@ -153,6 +159,14 @@ void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl
 		ethernet_server(p_mii, mac_address, c_mac_rx, 1, c_mac_tx, 1, p_smi, c_connect_status);
 }
 
+void init_can_phy( chanend c_rxChan, chanend c_txChan, clock p_can_clk, buffered in port:32 p_can_rx, port p_can_tx, out port p_shared_rs)
+{
+	p_shared_rs <: 0;
+
+	canPhyRxTx( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx );
+}
+
+
 // Program Entry Point
 int main ( void )
 {
@@ -160,7 +174,7 @@ int main ( void )
 	chan c_qei[2], c_pwm[2], c_adc[2], c_adc_trig[2];
 
 #ifdef USE_CAN
-	chan c_rxChan, c_txChan, c_can_command;
+	chan c_rxChan, c_txChan;
 #endif
 #ifdef USE_ETH
 	chan c_mac_rx[1], c_mac_tx[1], c_xtcp[1], c_connect_status;
@@ -171,8 +185,8 @@ int main ( void )
 	{
 		// Xcore 0 - INTERFACE_CORE
 #ifdef USE_CAN
-		on stdcore[INTERFACE_CORE] : do_comms_can( c_commands, c_rxChan, c_txChan, c_can_reset);
-		on stdcore[INTERFACE_CORE] : canPhyRxTx( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx );
+		on stdcore[INTERFACE_CORE] : do_comms_can( c_commands, c_rxChan, c_txChan);
+		on stdcore[INTERFACE_CORE] : init_can_phy( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx, p_shared_rs );
 #endif
 
 #ifdef USE_ETH

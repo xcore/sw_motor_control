@@ -27,7 +27,11 @@
 void init_tcp_server(chanend c_mac_rx, chanend c_mac_tx, chanend c_xtcp[], chanend c_connect_status);
 
 
-// Function to initise and run the Ethernet server
+// Function to initialise and run the Ethernet server
 void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl, clock clk_smi, clock clk_mii, smi_interface_t &p_smi, mii_interface_t &p_mii, chanend c_mac_rx[], chanend c_mac_tx[], chanend c_connect_status, out port p_reset);
+
+// Function to initialise and run the CAN PHY
+void init_can_phy( chanend c_rxChan, chanend c_txChan, clock p_can_clk, buffered in port:32 p_can_rx, port p_can_tx, out port p_shared_rs);
+
 
 #endif /* INITIALISATION_H_ */

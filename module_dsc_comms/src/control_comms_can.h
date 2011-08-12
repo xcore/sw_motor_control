@@ -30,9 +30,8 @@
  *  \param c_commands Channel array for interfacing to the motors
  *  \param rxChan Connect to the rxChan port on the canPhyRxTx
  *  \param txChan Connect to the txChan port on the canPhyRxTx
- *  \param c_control_can Control channel for the CAN PHY
  */
-void do_comms_can( chanend c_commands[], chanend rxChan, chanend txChan, chanend c_control_can);
+void do_comms_can( chanend c_commands[], chanend rxChan, chanend txChan);
 
 #endif /* _CONTROL_COMMS_CAN_H_ */
 

@@ -17,8 +17,24 @@
  * copyright notice above.
  *
  **/
+#include <xs1.h>
 
-#include <print.h>
+#include "dsc_config.h"
+
+#ifdef USE_CAN
+
+#include "CanPhy.h"
+
+void init_can_phy( chanend c_rxChan, chanend c_txChan, clock p_can_clk, buffered in port:32 p_can_rx, port p_can_tx, out port p_shared_rs)
+{
+	p_shared_rs <: 0;
+
+	canPhyRxTx( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx );
+}
+
+#endif
+
+#ifdef USE_ETH
 
 #include "ethernet_server.h"
 #include "getmac.h"
@@ -66,4 +82,5 @@ void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl
 	ethernet_server(p_mii, mac_address, c_mac_rx, 1, c_mac_tx, 1, p_smi, c_connect_status);
 }
 
+#endif
 
