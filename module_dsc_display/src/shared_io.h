@@ -45,7 +45,7 @@
 
 
 #ifdef __XC__
-	void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface_t, p), in port btns, out port leds, chanend c_can_reset, out port p_shared_rs, chanend c_eth_command);
+	void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface_t, p), in port btns, out port leds);
 #endif
 
 #endif /* SHARED_IO_H_ */

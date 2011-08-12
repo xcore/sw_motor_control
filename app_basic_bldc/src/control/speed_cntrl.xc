@@ -118,25 +118,24 @@ void speed_control(chanend c_control, chanend c_lcd,chanend c_can_eth_shared )
 			 {
 				 c_can_eth_shared <: speed;
 				 c_can_eth_shared <: set_speed;
-				//c_commands_can <: error_flag1;
-			  }
+				 c_can_eth_shared <: error_flag1;
+			 }
+			 else if (cmd == CMD_GET_VALS2)
+			 {
+				// Send four values of nothing
+				c_can_eth_shared <: 0;
+				c_can_eth_shared <: 0;
+				c_can_eth_shared <: 0;
+				c_can_eth_shared <: 0;
+			 }
 			 else if (cmd == CMD_SET_SPEED)
-			  {
+			 {
 				 c_can_eth_shared :> set_speed;
-
-			   }
-			  else if (cmd == CMD_GET_VALS2)
-			  {
-				  // Send four values of nothing
-				  c_can_eth_shared <: 0;
-				  c_can_eth_shared <: 0;
-				  c_can_eth_shared <: 0;
-				  c_can_eth_shared <: 0;
-			  }
-			  else
-			  {
+			 }
+			 else
+			 {
 				// Ignore invalid command
-			  }
+			 }
 
 			break;
 		}

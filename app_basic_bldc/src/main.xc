@@ -94,7 +94,7 @@ on stdcore[INTERFACE_CORE]: mii_interface_t mii = { XS1_CLKBLK_1, XS1_CLKBLK_2, 
 
 int main ( void )
 {
-	chan c_wd, c_commands[NUMBER_OF_MOTORS], c_speed[NUMBER_OF_MOTORS], c_control[NUMBER_OF_MOTORS], c_pwm[NUMBER_OF_MOTORS], c_eth_reset, c_can_reset, c_eth_command;
+	chan c_wd, c_commands[NUMBER_OF_MOTORS], c_speed[NUMBER_OF_MOTORS], c_control[NUMBER_OF_MOTORS], c_pwm[NUMBER_OF_MOTORS];
 
 #ifdef USE_CAN
 	chan c_rxChan, c_txChan;
@@ -115,7 +115,7 @@ int main ( void )
 #ifdef USE_ETH
 		on stdcore[INTERFACE_CORE] : init_tcp_server( c_mac_rx[0], c_mac_tx[0], c_xtcp, c_connect_status );
 		on stdcore[MOTOR_CORE] : do_comms_eth( c_commands, c_xtcp[0] );
-		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, c_eth_command); // +4 threads
+		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, p_shared_rs); // +4 threads
 #endif
 
 		/* L2 */
@@ -134,7 +134,7 @@ int main ( void )
 					XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT, "rpm"
 			);
 #endif
-			display_shared_io_manager( c_speed, lcd_ports, p_btns, p_leds, c_can_reset, p_shared_rs, c_eth_command);
+			display_shared_io_manager( c_speed, lcd_ports, p_btns, p_leds);
 		}
 
 		/* L1 */

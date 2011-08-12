@@ -132,9 +132,12 @@ void init_tcp_server(chanend c_mac_rx, chanend c_mac_tx, chanend c_xtcp[], chane
 
 
 // Function to initise and run the Ethernet server
-void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl, clock clk_smi, clock clk_mii, smi_interface_t &p_smi, mii_interface_t &p_mii, chanend c_mac_rx[], chanend c_mac_tx[], chanend c_connect_status )
+void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl, clock clk_smi, clock clk_mii, smi_interface_t &p_smi, mii_interface_t &p_mii, chanend c_mac_rx[], chanend c_mac_tx[], chanend c_connect_status, out port p_reset )
 {
 		int mac_address[2];
+
+		// Bring the ethernet PHY out of reset
+		p_reset <: 0x2;
 
 		// Get the MAC address
 		ethernet_getmac_otp(p_otp_data, p_otp_addr, p_otp_ctrl, (mac_address, char[]));
@@ -149,7 +152,7 @@ void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl
 // Program Entry Point
 int main ( void )
 {
-	chan c_wd, c_speed[2], c_commands[2], c_can_reset, c_eth_reset;
+	chan c_wd, c_speed[2], c_commands[2];
 	chan c_qei[2], c_pwm[2], c_adc[2], c_adc_trig[2];
 
 #ifdef USE_CAN
@@ -171,11 +174,11 @@ int main ( void )
 #ifdef USE_ETH
 		on stdcore[MOTOR_CORE] : init_tcp_server( c_mac_rx[0], c_mac_tx[0], c_xtcp, c_connect_status );
 		on stdcore[INTERFACE_CORE] : do_comms_eth( c_commands, c_xtcp[0] );
-		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status);
+		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, p_shared_rs);
 #endif
 
 		on stdcore[INTERFACE_CORE] : do_wd( c_wd, i2c_wd );
-		on stdcore[INTERFACE_CORE] : display_shared_io_manager( c_speed, lcd_ports, p_btns, p_leds, c_can_reset, p_shared_rs, c_eth_reset);
+		on stdcore[INTERFACE_CORE] : display_shared_io_manager( c_speed, lcd_ports, p_btns, p_leds);
 
 
 		// Xcore 1 - MOTOR_CORE

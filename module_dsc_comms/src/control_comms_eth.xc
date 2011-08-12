@@ -259,7 +259,7 @@ void do_comms_eth( chanend c_commands[], chanend tcp_svr )
 					}
                 	else if (rx_buf[0] == '^'&& rx_buf[1] == '1' && rx_buf[2] == '|')
                 	{
-                		if (n == 7)
+                		if (n >= 7)
                 		{
                 			// Convert the value into the set speed
                 			set_speed  = from_hex_string(rx_buf[3]) << 12;

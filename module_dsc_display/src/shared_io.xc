@@ -28,17 +28,17 @@
 #include "print.h"
 
 /* Manages the display, buttons and shared ports. */
-void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface_t, p), in port btns, out port leds, chanend c_can_command,out port p_shared_rs,chanend c_eth_command )
+void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface_t, p), in port btns, out port leds )
 {
 	unsigned int time, MIN_VAL=0, speed[2], set_speed = INITIAL_SET_SPEED;
 	/* Default port value on device boot */
-	unsigned int port_val = 0b0001;
+
 	unsigned int btn_en = 0;
 	unsigned toggle = 1,  value;
 	char my_string[50];
 	unsigned ts,temp=0;
 	timer timer_1,timer_2;
-	unsigned can_command,eth_command;
+
 
 	leds <: 0;
 
@@ -95,41 +95,6 @@ void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface
 				if ( btn_en > 0)
 					btn_en--;
 			}
-			break;
-
-			//Enable CAN PHY
-			case c_can_command :> can_command :
-
-					switch (can_command)
-					{
-
-					 case CAN_RS_LO :
-						    port_val &= 0b1110;
-						    p_shared_rs<:port_val;
-							break;
-
-					default :
-						   // ERROR
-							break;
-					 }
-
-            break;
-
-            //Enable ETHERNET PHY
-		    case c_eth_command :> eth_command :
-		    {
-				switch (eth_command)
-				{
-					case 1 :
-						port_val |= 0b0010;
-						p_shared_rs<:port_val;
-						break;
-
-					default :
-						// ERROR
-						break;
-				}
-		    }
 			break;
 
 			case !btn_en => btns when pinsneq(value) :> value:
