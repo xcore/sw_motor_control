@@ -41,6 +41,10 @@
 #include "xtcp_client.h"
 #include "qei_server.h"
 
+#ifdef USE_XSCOPE
+#include <xscope.h>
+#endif
+
 // LCD & Button Ports
 
 on stdcore[INTERFACE_CORE]: lcd_interface_t lcd_ports = { PORT_SPI_CLK, PORT_SPI_MOSI, PORT_SPI_SS_DISPLAY, PORT_SPI_DSA };
@@ -182,7 +186,18 @@ int main ( void )
 
 
 		// Xcore 1 - MOTOR_CORE
-		on stdcore[MOTOR_CORE] : run_motor( c_pwm[0], c_qei[0], c_adc[0], c_speed[0], c_wd, p_hall1, c_commands[0]);
+		on stdcore[MOTOR_CORE] : {
+#ifdef USE_XSCOPE
+			xscope_register(4,
+					XSCOPE_CONTINUOUS, "Ia", XSCOPE_UINT , "n",
+					XSCOPE_CONTINUOUS, "Ib", XSCOPE_UINT , "n",
+					XSCOPE_CONTINUOUS, "Ic", XSCOPE_UINT , "n",
+					XSCOPE_CONTINUOUS, "Speed", XSCOPE_UINT , "n"
+			);
+#endif
+			run_motor( c_pwm[0], c_qei[0], c_adc[0], c_speed[0], c_wd, p_hall1, c_commands[0]);
+		}
+
 		on stdcore[MOTOR_CORE] : do_pwm( c_pwm[0], c_adc_trig[0], ADC_SYNC_PORT1, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei[0], p_qei1 );
 

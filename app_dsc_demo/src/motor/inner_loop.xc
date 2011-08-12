@@ -28,6 +28,10 @@
 #include "shared_io.h"
 #include "watchdog.h"
 
+#ifdef USE_XSCOPE
+#include <xscope.h>
+#endif
+
 #define MOTOR_P 2100
 #define MOTOR_I 6
 #define MOTOR_D 0
@@ -287,6 +291,13 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 
 				/* Update the PWM values */
 				update_pwm( pwm_ctrl, c_pwm, pwm );
+
+#ifdef USE_XSCOPE
+				xscope_probe_data(0, Ia_in);
+				xscope_probe_data(1, Ib_in);
+				xscope_probe_data(2, Ic_in);
+				xscope_probe_data(3, speed);
+#endif
 			}
 		break;
 		}
