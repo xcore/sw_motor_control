@@ -20,10 +20,13 @@
  *
  **/                                   
 #include <xs1.h>
+#include "dsc_config.h"
 
-#define ADC_CALIB_POINTS	64
+#define ADC_CALIB_POINTS	256
 
+#ifndef ADC_DISABLE_CALIBRATION
 static int Ia_calib = 0, Ib_calib = 0, Ic_calib = 0;
+#endif
 
 void do_adc_calibration( chanend c_adc )
 {
@@ -50,9 +53,9 @@ void do_adc_calibration( chanend c_adc )
 	Ic_calib = Ic_calib << 2;
 
 	/* calculate average */
-	Ia_calib = (Ia_calib >> 6);
-	Ib_calib = (Ib_calib >> 6);
-	Ic_calib = (Ic_calib >> 6);
+	Ia_calib = (Ia_calib / ADC_CALIB_POINTS);
+	Ib_calib = (Ib_calib / ADC_CALIB_POINTS);
+	Ic_calib = (Ic_calib / ADC_CALIB_POINTS);
 #endif
 }
 

@@ -125,6 +125,9 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	pwm[1] = 0;
 	pwm[2] = 0;
 
+	/* ADC centrepoint calibration before we start the PWM */
+	do_adc_calibration( c_adc );
+
 	/* Update PWM */
 	update_pwm( pwm_ctrl, c_pwm, pwm );
 
@@ -137,9 +140,6 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	init_pid( MOTOR_P, MOTOR_I, MOTOR_D, pid_d);
 	init_pid( MOTOR_P, MOTOR_I, MOTOR_D, pid_q);
 	init_pid( Kp, Ki, Kd, pid );
-
-	/* ADC centrepoint calibration */
-	do_adc_calibration( c_adc );
 
 	/* Main loop */
 	while (1)
