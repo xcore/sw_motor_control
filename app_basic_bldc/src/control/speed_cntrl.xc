@@ -125,10 +125,18 @@ void speed_control(chanend c_control, chanend c_lcd,chanend c_can_eth_shared )
 				 c_can_eth_shared :> set_speed;
 
 			   }
+			  else if (cmd == CMD_GET_VALS2)
+			  {
+				  // Send four values of nothing
+				  c_can_eth_shared <: 0;
+				  c_can_eth_shared <: 0;
+				  c_can_eth_shared <: 0;
+				  c_can_eth_shared <: 0;
+			  }
 			  else
 			  {
 				// Ignore invalid command
-			   }
+			  }
 
 			break;
 		}

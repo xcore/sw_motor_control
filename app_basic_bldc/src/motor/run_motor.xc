@@ -26,6 +26,10 @@
 /* number of pole pairs are TWO so we are defining that below*/
 #define MOTOR_POLE_PAIRS (NUMBER_OF_POLES>>1)
 
+#define SEC 100000000
+#define SPEED_COUNT 1500000000
+#define STATE_LIMIT 250
+
 /* counter clockwise direction commutation sequence for low side of bridge */
 static unsigned bldc_ph_a_lo[6] = {0,1,1,0,0,0};
 static unsigned bldc_ph_b_lo[6] = {0,0,0,1,1,0};

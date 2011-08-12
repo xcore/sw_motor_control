@@ -27,19 +27,12 @@
  *
  *  Use it in conjunction with the thread 'canPhyRxTx' from the module module_can.
  *
- *  \param c_speed Channel for interfacing to the higher level motor control (shared_io_motor)
+ *  \param c_commands Channel array for interfacing to the motors
  *  \param rxChan Connect to the rxChan port on the canPhyRxTx
  *  \param txChan Connect to the txChan port on the canPhyRxTx
+ *  \param c_control_can Control channel for the CAN PHY
  */
-#ifdef BLDC_BASIC
-void do_comms_can( chanend c_commands_can, chanend rxChan, chanend txChan, chanend c_control_can,chanend c_commands_can2);
-#endif  //BLDC_BASIC
+void do_comms_can( chanend c_commands[], chanend rxChan, chanend txChan, chanend c_control_can);
 
-
-// TODO: This should be combined with the above and the number of motor control channels should be made
-// into a parameter and the motor control channels made into an array
-#ifdef BLDC_FOC
-void do_comms_can( chanend c_commands_can, chanend rxChan, chanend txChan, chanend c_control_can);
-#endif  //BLDC_FOC
 #endif /* _CONTROL_COMMS_CAN_H_ */
 

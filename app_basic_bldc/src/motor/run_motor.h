@@ -26,13 +26,6 @@
 #include "hall_input.h"
 #include "pwm_cli.h"
 
-#define INIT_PWM_VAL 	500
-#define SEC 100000000
-#define SPEED_COUNT 1500000000
-#define STATE_LIMIT 250
-#define CMD_GET_VALS 1
-#define CMD_SET_SPEED 2
-
 /* run the motor using pwm on the high side and normal switching on the low side */
 void run_motor(chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_lo[], chanend? c_wd);
 

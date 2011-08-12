@@ -160,8 +160,9 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 			}
 
 			break;
-     //This case responds to CAN or ETHERNET commands
-		case c_can_eth_shared :>comm_shared:
+
+			//This case responds to CAN or ETHERNET commands
+			case c_can_eth_shared :>comm_shared:
 			if(comm_shared == CMD_GET_VALS)
 			{
 				c_can_eth_shared <: speed;
@@ -186,9 +187,10 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 			}
 
 			break;
-		/* Initially the below case runs in open loop with the hall sensor responses and then reverts
-		 * back to main FOC algorithem */
-		default:
+
+			/* Initially the below case runs in open loop with the hall sensor responses and then reverts
+			 * back to main FOC algorithem */
+			default:
 			/* Initial startup code using HALL mode */
 			if (bldc_hall_mode==1)
 			{

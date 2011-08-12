@@ -54,7 +54,8 @@
 
 /* core with LCD and BUTTON interfaces */
 on stdcore[INTERFACE_CORE]: lcd_interface_t lcd_ports = { PORT_SPI_CLK, PORT_SPI_MOSI, PORT_SPI_SS_DISPLAY, PORT_SPI_DSA };
-on stdcore[INTERFACE_CORE]: in port btns = PORT_BUTTONS;
+on stdcore[INTERFACE_CORE]: in port p_btns = PORT_BUTTONS;
+on stdcore[INTERFACE_CORE]: out port p_leds = PORT_LEDS;
 
 /* motor1 core ports */
 on stdcore[MOTOR_CORE]: port in p_hall1 = PORT_M1_HALLSENSOR;
@@ -93,41 +94,36 @@ on stdcore[INTERFACE_CORE]: mii_interface_t mii = { XS1_CLKBLK_1, XS1_CLKBLK_2, 
 
 int main ( void )
 {
-	chan c_wd, c_speed[NUMBER_OF_MOTORS], c_control[NUMBER_OF_MOTORS], c_pwm[NUMBER_OF_MOTORS], c_eth_reset, c_can_reset, c_eth_command;
+	chan c_wd, c_commands[NUMBER_OF_MOTORS], c_speed[NUMBER_OF_MOTORS], c_control[NUMBER_OF_MOTORS], c_pwm[NUMBER_OF_MOTORS], c_eth_reset, c_can_reset, c_eth_command;
 
 #ifdef USE_CAN
-	chan c_rxChan, c_txChan,c_commands_can,c_commands_can2;
+	chan c_rxChan, c_txChan;
 #endif
 
 #ifdef USE_ETH
-	chan c_mac_rx[1], c_mac_tx[1], c_xtcp[1], c_connect_status,c_commands_eth,c_commands_eth2;
+	chan c_mac_rx[1], c_mac_tx[1], c_xtcp[1], c_connect_status;
 #endif
 
 	par
 	{
 #ifdef USE_CAN
-		on stdcore[INTERFACE_CORE] : do_comms_can( c_commands_can, c_rxChan, c_txChan, c_can_reset, c_commands_can2);
+		on stdcore[INTERFACE_CORE] : do_comms_can( c_commands, c_rxChan, c_txChan, c_can_reset);
 
 		on stdcore[INTERFACE_CORE] : canPhyRxTx( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx );
 #endif
 
 #ifdef USE_ETH
 		on stdcore[INTERFACE_CORE] : init_tcp_server( c_mac_rx[0], c_mac_tx[0], c_xtcp, c_connect_status );
-		on stdcore[MOTOR_CORE] : do_comms_eth( c_commands_eth, c_commands_eth2, c_xtcp[0] );
+		on stdcore[MOTOR_CORE] : do_comms_eth( c_commands, c_xtcp[0] );
 		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, c_eth_command); // +4 threads
 #endif
 
 		/* L2 */
 		on stdcore[INTERFACE_CORE]: do_wd(c_wd, i2c_wd);
-#ifdef USE_CAN
-		on stdcore[INTERFACE_CORE]: speed_control( c_control[0], c_speed[0], c_commands_can);
-		on stdcore[INTERFACE_CORE]: speed_control( c_control[1], c_speed[1], c_commands_can2 );
-#endif
 
-#ifdef USE_ETH
-		on stdcore[MOTOR_CORE]: speed_control( c_control[0], c_speed[0], c_commands_eth);
-		on stdcore[MOTOR_CORE]: speed_control( c_control[1], c_speed[1], c_commands_eth2);
-#endif
+		on stdcore[MOTOR_CORE]: speed_control( c_control[0], c_speed[0], c_commands[0]);
+		on stdcore[MOTOR_CORE]: speed_control( c_control[1], c_speed[1], c_commands[1]);
+
 		on stdcore[INTERFACE_CORE]: {
 #ifdef USE_XSCOPE
 			xscope_register(5,
@@ -138,7 +134,7 @@ int main ( void )
 					XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT, "rpm"
 			);
 #endif
-			display_shared_io_manager( c_speed, lcd_ports, btns, c_can_reset, p_shared_rs, c_eth_command);
+			display_shared_io_manager( c_speed, lcd_ports, p_btns, p_leds, c_can_reset, p_shared_rs, c_eth_command);
 		}
 
 		/* L1 */

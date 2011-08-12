@@ -44,7 +44,8 @@
 // LCD & Button Ports
 
 on stdcore[INTERFACE_CORE]: lcd_interface_t lcd_ports = { PORT_SPI_CLK, PORT_SPI_MOSI, PORT_SPI_SS_DISPLAY, PORT_SPI_DSA };
-on stdcore[INTERFACE_CORE]: in port btns = PORT_BUTTONS;
+on stdcore[INTERFACE_CORE]: in port p_btns = PORT_BUTTONS;
+on stdcore[INTERFACE_CORE]: out port p_leds = PORT_LEDS;
 
 //CAN and ETH reset port
 on stdcore[INTERFACE_CORE] : out port p_shared_rs=PORT_SHARED_RS;
@@ -98,6 +99,7 @@ on stdcore[MOTOR_CORE]: buffered in port:32 ADC_DATA_A = PORT_ADC_MISOA;
 on stdcore[MOTOR_CORE]: buffered in port:32 ADC_DATA_B = PORT_ADC_MISOB;
 on stdcore[MOTOR_CORE]: out port ADC_MUX = PORT_ADC_MUX;
 on stdcore[MOTOR_CORE]: in port ADC_SYNC_PORT1 = XS1_PORT_16A;
+on stdcore[MOTOR_CORE]: in port ADC_SYNC_PORT2 = XS1_PORT_16B;
 on stdcore[MOTOR_CORE]: clock adc_clk = XS1_CLKBLK_2;
 
 
@@ -147,8 +149,8 @@ void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl
 // Program Entry Point
 int main ( void )
 {
-	chan c_wd, c_speed[1], c_commands, c_can_reset, c_eth_reset;
-	chan c_qei[1], c_pwm[1], c_adc[1], c_adc_trig[1];
+	chan c_wd, c_speed[2], c_commands[2], c_can_reset, c_eth_reset;
+	chan c_qei[2], c_pwm[2], c_adc[2], c_adc_trig[2];
 
 #ifdef USE_CAN
 	chan c_rxChan, c_txChan, c_can_command;
@@ -173,13 +175,17 @@ int main ( void )
 #endif
 
 		on stdcore[INTERFACE_CORE] : do_wd( c_wd, i2c_wd );
-		on stdcore[INTERFACE_CORE] : display_shared_io_manager( c_speed, lcd_ports, btns, c_can_reset, p_shared_rs, c_eth_reset);
+		on stdcore[INTERFACE_CORE] : display_shared_io_manager( c_speed, lcd_ports, p_btns, p_leds, c_can_reset, p_shared_rs, c_eth_reset);
 
 
 		// Xcore 1 - MOTOR_CORE
-		on stdcore[MOTOR_CORE] : run_motor( c_pwm[0], c_qei[0], c_adc[0], c_speed[0], c_wd, p_hall1, c_commands);
+		on stdcore[MOTOR_CORE] : run_motor( c_pwm[0], c_qei[0], c_adc[0], c_speed[0], c_wd, p_hall1, c_commands[0]);
 		on stdcore[MOTOR_CORE] : do_pwm( c_pwm[0], c_adc_trig[0], ADC_SYNC_PORT1, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei[0], p_qei1 );
+
+//		on stdcore[MOTOR_CORE] : run_motor( c_pwm[1], c_qei[1], c_adc[1], c_speed[1], null, p_hall2, c_commands[1]);
+//		on stdcore[MOTOR_CORE] : do_pwm( c_pwm[1], c_adc_trig[1], ADC_SYNC_PORT2, p_pwm_hi2, p_pwm_lo2, pwm_clk2 );
+//		on stdcore[MOTOR_CORE] : do_qei ( c_qei[1], p_qei2 );
 
 		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );
 	}

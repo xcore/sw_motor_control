@@ -22,19 +22,13 @@
 #include <xs1.h>
 #include "qei_commands.h"
 
-#define QEI_SPEED_AVG 10
-unsigned qei_avg_buffer[QEI_SPEED_AVG] = {0};
-unsigned qei_buf_pos = 0;
-
 unsigned get_qei_position ( chanend c_qei )
 {
-	unsigned tmp;
 	unsigned r;
 
 	c_qei <: QEI_CMD_POS_REQ;
-	c_qei :> tmp;
+	c_qei :> r;
 
-	r = tmp ;
 	return r;
 }
 
@@ -58,16 +52,6 @@ int get_qei_speed ( chanend c_qei )
 #endif
 		r <<= 1; // double to get RPM
 	}
-
-	qei_avg_buffer[qei_buf_pos++] = r;
-	if (qei_buf_pos >= QEI_SPEED_AVG)
-		qei_buf_pos = 0;
-
-	r = 0;
-	for (int i = 0; i < QEI_SPEED_AVG; i++)
-		r += qei_avg_buffer[i];
-
-	r = r / QEI_SPEED_AVG;
 
 	return r;
 }

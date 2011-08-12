@@ -21,7 +21,6 @@
 #define _CONTROL_COMMS_ETH_H_
 #include <dsc_config.h>
 
-#ifdef BLDC_BASIC
 
 /** \brief Implement the high level Ethernet control server
  *
@@ -31,11 +30,7 @@
  * \param c_commands_eth2 Command channel for motor 2
  * \param tcp_svr channel to the TCP/IP thread
  */
-void do_comms_eth( chanend c_commands_eth,chanend c_commands_eth2, chanend tcp_svr );
+void do_comms_eth( chanend c_commands[], chanend tcp_svr );
 
-#endif
 
-#ifdef BLDC_FOC
-void do_comms_eth( chanend c_commands_eth, chanend tcp_svr );
-#endif
 #endif /* _CONTROL_COMMS_ETH_H_ */

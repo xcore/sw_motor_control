@@ -21,7 +21,7 @@
 #define ADC_TRIG_TOKEN  1
 
 // The number of trigger channels coming from PWM units
-#define ADC_NUMBER_OF_TRIGGERS 1
+#define ADC_NUMBER_OF_TRIGGERS 2
 
 // Count of the number of elements in the ADC filter array
 #define ADC_FILT_SAMPLE_COUNT 31

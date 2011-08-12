@@ -21,11 +21,6 @@
 
 #ifdef PWM_NOINV_MODE
 
-unsigned chan_id_buf[2][PWM_CHAN_COUNT];
-unsigned mode_buf[2];
-t_out_data pwm_out_data_buf[2][PWM_CHAN_COUNT];
-unsigned pwm_cur_buf;
-
 void update_pwm( chanend c, unsigned value[])
 {
 	unsigned mode;
