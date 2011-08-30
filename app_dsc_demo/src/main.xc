@@ -175,8 +175,9 @@ void init_can_phy( chanend c_rxChan, chanend c_txChan, clock p_can_clk, buffered
 // Program Entry Point
 int main ( void )
 {
-	chan c_wd, c_speed[2], c_commands[2];
-	chan c_qei[2], c_pwm[2], c_adc[2], c_adc_trig[2];
+	chan c_wd, c_speed[NUMBER_OF_MOTORS], c_commands[NUMBER_OF_MOTORS];
+	chan c_qei[NUMBER_OF_MOTORS], c_pwm[NUMBER_OF_MOTORS];
+	chan c_adc[NUMBER_OF_MOTORS], c_adc_trig[NUMBER_OF_MOTORS];
 
 #ifdef USE_CAN
 	chan c_rxChan, c_txChan;

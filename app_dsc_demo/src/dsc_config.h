@@ -86,6 +86,6 @@
 
 #define BLDC_FOC
 
-#define USE_XSCOPE
+//#define USE_XSCOPE
 
 #endif /* _DSC_CONFIG__H_ */
