@@ -26,6 +26,9 @@
 // The number of channels to store when sampling the ADC
 #define ADC_CHANS 6
 
+// These are the calibration values
+static int calibration_a[2] = {0,0}, calibration_b[2] = {0,0}, calibration_c[2] = {0,0};
+
 static void configure_adc_ports_ltc1408(clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA)
 {
     configure_clock_rate_at_least(clk, 100, 10);
@@ -71,9 +74,23 @@ static void adc_get_data_ltc1408_singleshot( int adc_val[], unsigned offset, buf
 
 }
 
+static void calibrate(clock clk, buffered out port:32 CNVST, in buffered port:32 DATA)
+{
+	int adc_val[6];
+
+	adc_get_data_ltc1408_singleshot( adc_val, 0, CNVST, DATA, clk );
+	calibration_a[0] = adc_val[0];
+	calibration_b[0] = adc_val[1];
+	calibration_c[0] = adc_val[2];
+	calibration_a[1] = adc_val[3];
+	calibration_b[1] = adc_val[4];
+	calibration_c[1] = adc_val[5];
+}
+
+
 void adc_ltc1408_triggered( chanend c_adc[], chanend c_trig[], clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA)
 {
-	int adc_val[6] ;
+	int adc_val[6];
 	int cmd;
 	unsigned char ct;
 
@@ -95,17 +112,19 @@ void adc_ltc1408_triggered( chanend c_adc[], chanend c_trig[], clock clk, port o
 			}
 			break;
 		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) c_adc[trig] :> cmd:
-			if (trig == 0) {
+			if (cmd == 1) {
+				calibrate(clk, CNVST, DATA);
+			} else if (trig == 0) {
 				master {
-					c_adc[trig] <: adc_val[0];
-					c_adc[trig] <: adc_val[1];
-					c_adc[trig] <: adc_val[2];
+					c_adc[trig] <: adc_val[0] - calibration_a[0];
+					c_adc[trig] <: adc_val[1] - calibration_b[0];
+					c_adc[trig] <: adc_val[2] - calibration_c[0];
 				}
 			} else {
 				master {
-					c_adc[trig] <: adc_val[3];
-					c_adc[trig] <: adc_val[4];
-					c_adc[trig] <: adc_val[5];
+					c_adc[trig] <: adc_val[3] - calibration_a[1];
+					c_adc[trig] <: adc_val[4] - calibration_b[1];
+					c_adc[trig] <: adc_val[5] - calibration_c[1];
 				}
 			}
 			break;
@@ -114,141 +133,4 @@ void adc_ltc1408_triggered( chanend c_adc[], chanend c_trig[], clock clk, port o
 	}
 }
 
-
-void adc_ltc1408_filtered( chanend c_adc[], clock clk, port out SCLK, buffered out port:32 CNVST, in buffered port:32 DATA)
-{
-	/* repeated to easily accomodate a rotating adc buffer */
-	static int xcoeffs[] = {
-	  -1837118, -1292872,  -495230,   558396,  1855534,  3368050,
-	   5052608,  6852256,  8699044, 10517552, 12229104, 13756388,
-	  15028144, 15983602, 16576332, 16777214, 16576332, 15983602,
-	  15028144, 13756388, 12229104, 10517552,  8699044,  6852256,
-	   5052608,  3368050,  1855534,   558396,  -495230, -1292872,
-	  -1837118,
-	  -1837118, -1292872,  -495230,   558396,  1855534,  3368050,
-	   5052608,  6852256,  8699044, 10517552, 12229104, 13756388,
-	  15028144, 15983602, 16576332, 16777214, 16576332, 15983602,
-	  15028144, 13756388, 12229104, 10517552,  8699044,  6852256,
-	   5052608,  3368050,  1855534,   558396,  -495230, -1292872,
-	  -1837118,
-	};
-
-	int adc_val[ADC_FILT_SAMPLE_COUNT * ADC_CHANS];
-
-	int h,l,r,i,j;
-	int adc_tmp[ADC_CHANS],adc_filt[ADC_CHANS];
-	int filt_chan = 0, filt_offset = 0;
-	int write_pos=0, adc_chan=0;
-	unsigned trig_ts,cmd,pos=0,val=0,sample_count = 0,insert_pos=0;
-
-	timer t;
-
-	configure_adc_ports_ltc1408(clk, SCLK, CNVST, DATA);
-
-    t :> trig_ts;
-
-    stop_clock(clk);
-
-	#define ADC_CONVERSION_TRIG (1<<31)
-    CNVST <: ADC_CONVERSION_TRIG;
-    clearbuf(DATA);
-    start_clock(clk);
-    sample_count = 3;
-    pos = 0;
-    adc_chan = 2; // we start at ADC 2
-    /* initialise write position */
-    write_pos = ADC_FILT_SAMPLE_COUNT;
-
-    CNVST <: 0;
-
-    while (1)
-    {
-    	select
-    	{
-			case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) c_adc[trig] :> cmd:
-				switch (cmd)
-				{
-				case 0:
-					master
-					{
-						c_adc[trig] <: adc_filt[0];
-						c_adc[trig] <: adc_filt[1];
-						c_adc[trig] <: adc_filt[2];
-					}
-					break;
-				}
-			break;
-			case DATA :> val:
-				if (sample_count != 1)
-					CNVST <: 0;
-				else
-					CNVST <: ADC_CONVERSION_TRIG; 	// trigger conversion
-
-				val = bitrev(val);
-
-				adc_tmp[adc_chan] = 0x3FFF & (val >> 16);
-				adc_chan += 1;
-
-				adc_tmp[adc_chan] = 0x3FFF & (val >>  0);
-
-				adc_chan += 1;
-				if (adc_chan >= ADC_CHANS)
-					adc_chan = 0;
-
-				switch (sample_count)
-				{
-				case 3:
-					h=l=0;
-					#pragma loop unroll
-					for (j = 0; j < 10; j++) {h,l} = macs(xcoeffs[pos+j], adc_val[filt_offset+j], h, l);
-					sample_count = 2;
-					break;
-				case 2:
-					#pragma loop unroll
-					for (j = 10; j < 20; j++) {h,l} = macs(xcoeffs[pos+j], adc_val[filt_offset+j], h, l);
-					sample_count = 1;
-					break;
-				case 1:
-					/* finish filtering */
-					#pragma loop unroll
-					for (j = 20; j < ADC_FILT_SAMPLE_COUNT; j++) {h,l} = macs(xcoeffs[pos+j], adc_val[filt_offset+j], h, l);
-
-					r  = (l >> 12) & 0x000FFFFF;
-					r |= (h << 20) & 0xFFF00000;
-					r >>= 12;
-					{r,l} = macs(r,312640474,0,0);
-
-					/* store filtered value */
-					adc_filt[filt_chan] = r;
-
-					/* update channel we are filtering and calculate buffer offset */
-					if (filt_chan < ADC_CHANS-1) filt_chan += 1;
-					else filt_chan = 0;
-					filt_offset = filt_chan*ADC_FILT_SAMPLE_COUNT;
-
-					/* insert new values */
-					insert_pos = pos;
-					#pragma loop unroll
-					for (i=0; i < ADC_CHANS; i++)
-					{
-						adc_val[insert_pos] = adc_tmp[i];
-						insert_pos += ADC_FILT_SAMPLE_COUNT;
-					}
-
-					/* update position */
-					if (pos < ADC_FILT_SAMPLE_COUNT-1) pos += 1;
-					else pos = 0;
-
-					/* reset state machine to top */
-					sample_count = 3;
-					break;
-				}
-
-
-				break;
-    	}
-    }
-
-
-}
 

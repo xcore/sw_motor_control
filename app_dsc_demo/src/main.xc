@@ -32,6 +32,7 @@
 #include "pwm_service.h"
 #include "shared_io.h"
 #include "watchdog.h"
+#include "qei_server.h"
 
 #ifdef USE_ETH
 #include "control_comms_eth.h"
@@ -39,7 +40,6 @@
 #include "getmac.h"
 #include "uip_server.h"
 #include "xtcp_client.h"
-#include "qei_server.h"
 #endif
 
 #ifdef USE_CAN
@@ -221,9 +221,11 @@ int main ( void )
 		on stdcore[MOTOR_CORE] : do_pwm( c_pwm[0], c_adc_trig[0], ADC_SYNC_PORT1, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei[0], p_qei1 );
 
-//		on stdcore[MOTOR_CORE] : run_motor( c_pwm[1], c_qei[1], c_adc[1], c_speed[1], null, p_hall2, c_commands[1]);
-//		on stdcore[MOTOR_CORE] : do_pwm( c_pwm[1], c_adc_trig[1], ADC_SYNC_PORT2, p_pwm_hi2, p_pwm_lo2, pwm_clk2 );
-//		on stdcore[MOTOR_CORE] : do_qei ( c_qei[1], p_qei2 );
+#if NUMBER_OF_MOTORS > 1
+		on stdcore[MOTOR_CORE] : run_motor( c_pwm[1], c_qei[1], c_adc[1], c_speed[1], null, p_hall2, c_commands[1]);
+		on stdcore[MOTOR_CORE] : do_pwm( c_pwm[1], c_adc_trig[1], ADC_SYNC_PORT2, p_pwm_hi2, p_pwm_lo2, pwm_clk2 );
+		on stdcore[MOTOR_CORE] : do_qei ( c_qei[1], p_qei2 );
+#endif
 
 		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );
 	}

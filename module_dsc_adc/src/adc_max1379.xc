@@ -20,10 +20,16 @@
 #include <xs1.h>
 #include <xclib.h>
 #include <platform.h>
+
+#include "adc_common.h"
 #include "adc_max1379.h"
 
 #define MS 100000
 #define US 100
+
+// These are the calibration values
+static int calibration_a[2] = {0,0}, calibration_b[2] = {0,0}, calibration_c[2] = {0,0};
+
 
 static void configure_adc_ports_max1379(clock clk, port out SCLK,  port out CNVST, in buffered port:32 DATA)
 {
@@ -54,14 +60,31 @@ static void configure_adc_ports_max1379(clock clk, port out SCLK,  port out CNVS
 	return {adc1, adc2};
 }
 
+static void calibrate(port out CNVST,  port out SEL, in buffered port:32 DATA)
+{
+	unsigned adc1, adc2;
+	SEL <: 0;
+	{adc1, adc2} = adc_get_data_max1379(CNVST, DATA);
+	calibration_a[0] = adc1;
+	calibration_b[0] = adc2;
+	calibration_c[0] = -(adc1+adc2);
+
+	SEL <: 1;
+	{adc1, adc2} = adc_get_data_max1379(CNVST, DATA);
+	calibration_a[1] = adc1;
+	calibration_b[1] = adc2;
+	calibration_c[1] = -(adc1+adc2);
+}
+
+
 void run_adc_max1379( chanend c_adc[], clock clk, port out SCLK,  port out CNVST,  port out SEL, in buffered port:32 DATA)
 {
 	timer t;
-	unsigned ts;
+	unsigned ts, cmd;
 	
-	unsigned adc1, adc2, adc_chan;
+	int adc1, adc2, adc3;
 	
-	configure_adc_ports_max1379(clk, SCLK,  CNVST, DATA);
+	configure_adc_ports_max1379(clk, SCLK, CNVST, DATA);
 	
 	SEL <: 0;
 
@@ -71,26 +94,23 @@ void run_adc_max1379( chanend c_adc[], clock clk, port out SCLK,  port out CNVST
 	
 	while (1)
 	{
-		c_adc[0] :> adc_chan; // adc request
-		
-		switch (adc_chan)
-		{
-			case 1:
-				SEL <: 0;
-				{adc1, adc2} = adc_get_data_max1379 (CNVST, DATA);
-				break;
-			case 2:
-				SEL <: 1;				
-				{adc1, adc2} = adc_get_data_max1379(CNVST, DATA);
-				break;
-			default:
-				adc1 = 0;
-				adc2 = 0;
+		select {
+			case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) c_adc[trig] :> cmd:
+				if (cmd == 1) {
+					calibrate(CNVST, SEL, DATA);
+				} else {
+					SEL <: trig;
+					{adc1, adc2} = adc_get_data_max1379(CNVST, DATA);
+					adc3 = -(adc1 + adc2);
+
+					master {
+						c_adc[0] <: adc1 - calibration_a[trig];
+						c_adc[0] <: adc2 - calibration_b[trig];
+						c_adc[0] <: adc3 - calibration_c[trig];
+					}
+				}
 				break;
 		}
-		
-		c_adc[0] <: adc1;
-		c_adc[0] <: adc2;
 	}
 }
 

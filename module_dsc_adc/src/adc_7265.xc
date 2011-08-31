@@ -12,7 +12,10 @@
 #include <adc_7265.h>
 
 // This array determines the mapping from trigger channel to which analogue input to select in the ADC mux
-static unsigned trigger_channel_to_adc_mux[2] = { 0, 2 };
+static int trigger_channel_to_adc_mux[2] = { 0, 2 };
+
+// These are the calibration values
+static unsigned calibration_a[2] = {0,0}, calibration_b[2] = {0,0}, calibration_c[2] = {0,0};
 
 static void configure_adc_ports_7265(clock clk, port out SCLK, port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX)
 {
@@ -60,6 +63,22 @@ static void adc_get_data_7265( int adc_val[], unsigned channel, port out CNVST, 
 
 }
 
+static void calibrate(port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX)
+{
+	int adc[2];
+
+	adc_get_data_7265( adc, trigger_channel_to_adc_mux[0], CNVST, DATA_A, DATA_B, MUX );
+	calibration_a[0] = adc[0];
+	calibration_b[0] = adc[1];
+	calibration_c[0] = -(adc[0]+adc[1]);
+
+	adc_get_data_7265( adc, trigger_channel_to_adc_mux[1], CNVST, DATA_A, DATA_B, MUX );
+	calibration_a[0] = adc[0];
+	calibration_b[0] = adc[1];
+	calibration_c[0] = -(adc[0]+adc[1]);
+}
+
+
 #pragma unsafe arrays
 void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, port out SCLK, port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
 {
@@ -71,6 +90,7 @@ void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, port out 
 	unsigned ts;
 
 	configure_adc_ports_7265( clk, SCLK, CNVST, DATA_A, DATA_B, MUX );
+
 	while (1)
 	{
 		select
@@ -84,10 +104,14 @@ void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, port out 
 			}
 			break;
 		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) c_adc[trig] :> cmd:
-			master {
-				c_adc[trig] <: adc_val[trig][0];
-				c_adc[trig] <: adc_val[trig][1];
-				c_adc[trig] <: -(adc_val[trig][0] + adc_val[trig][1]);
+			if (cmd == 1) {
+				calibrate(CNVST, DATA_A, DATA_B, MUX);
+			} else {
+				master {
+					c_adc[trig] <: adc_val[trig][0] - calibration_a[trig];
+					c_adc[trig] <: adc_val[trig][1] - calibration_b[trig];
+					c_adc[trig] <: -(adc_val[trig][0] + adc_val[trig][1]) - calibration_c[trig];
+				}
 			}
 			break;
 		}

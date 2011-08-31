@@ -22,63 +22,14 @@
 #include <xs1.h>
 #include "dsc_config.h"
 
-#define ADC_CALIB_POINTS	256
-
-#ifndef ADC_DISABLE_CALIBRATION
-static int Ia_calib = 0, Ib_calib = 0, Ic_calib = 0;
-#endif
-
 void do_adc_calibration( chanend c_adc )
 {
-#ifndef ADC_DISABLE_CALIBRATION
-	unsigned a,b,c;
-	for (int i = 0; i < ADC_CALIB_POINTS; i++)
-	{
-		/* get ADC reading */
-		c_adc <: 0;
-		slave
-		{
-			c_adc :> a;
-			c_adc :> b;
-			c_adc :> c;
-		}
-		Ia_calib += a;
-		Ib_calib += b;
-		Ic_calib += c;
-	}
-
-	/* convert to 14 bit from 12 bit */
-	Ia_calib = Ia_calib << 2;
-	Ib_calib = Ib_calib << 2;
-	Ic_calib = Ic_calib << 2;
-
-	/* calculate average */
-	Ia_calib = (Ia_calib / ADC_CALIB_POINTS);
-	Ib_calib = (Ib_calib / ADC_CALIB_POINTS);
-	Ic_calib = (Ic_calib / ADC_CALIB_POINTS);
-#endif
-}
-
-{unsigned, unsigned, unsigned} get_adc_vals_raw( chanend c_adc )
-{
-	unsigned a, b, c;
-
-	c_adc <: 0;
-
-	slave
-	{
-		c_adc :> a;
-		c_adc :> b;
-		c_adc :> c;
-	}
-
-	return {a,b,c};
+	c_adc <: 1;
 }
 
 {int, int, int} get_adc_vals_calibrated_int16( chanend c_adc )
 {
-	unsigned a, b, c;
-	int Ia, Ib, Ic;
+	int a, b, c;
 
 	/* request and then receive adc data */
 	c_adc <: 0;
@@ -95,13 +46,7 @@ void do_adc_calibration( chanend c_adc )
 	b = b << 2;
 	c = c << 2;
 
-#ifndef ADC_DISABLE_CALIBRATION
-	Ia = a - Ia_calib;
-  	Ib = b - Ib_calib;
-  	Ic = c - Ic_calib;
-#endif
-
-	return {Ia, Ib, Ic};
+	return {a, b, c};
 }
 
 
