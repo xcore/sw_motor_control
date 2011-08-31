@@ -120,25 +120,21 @@ on stdcore[MOTOR_CORE]: clock adc_clk = XS1_CLKBLK_2;
 // Function to initise and run the TCP/IP server
 void init_tcp_server(chanend c_mac_rx, chanend c_mac_tx, chanend c_xtcp[], chanend c_connect_status)
 {
-	#if USE_DHCP
-		xtcp_ipconfig_t ipconfig =
-		{
-		  {0,0,0,0},		// ip address
-		  {0,0,0,0},		// netmask
-		  {0,0,0,0}       	// gateway
-		};
-
-		printstr("Using Dynamic IP config\n");
-	#else
-		xtcp_ipconfig_t ipconfig =
-		{
-		  {169, 254,0,1},	// ip address
-		  {255,255,0,0},	// netmask
-		  {0,0,0,0}       	// gateway
-		};
-
-		printstr("Using Static IP config\n");
-	#endif
+#if 0
+	xtcp_ipconfig_t ipconfig =
+	{
+	  {0,0,0,0},		// ip address
+	  {0,0,0,0},		// netmask
+	  {0,0,0,0}       	// gateway
+	};
+#else
+	xtcp_ipconfig_t ipconfig =
+	{
+	  {169, 254, 0, 1},	// ip address
+	  {255,255,0,0},	// netmask
+	  {0,0,0,0}       	// gateway
+	};
+#endif
 
 	// Start the TCP/IP server
 	uip_server(c_mac_rx, c_mac_tx, c_xtcp, 1, ipconfig, c_connect_status);

@@ -31,7 +31,6 @@
 #include "watchdog.h"
 #include "shared_io.h"
 #include "speed_cntrl.h"
-#include "initialisation.h"
 
 // CAN control headers
 #ifdef USE_CAN
@@ -94,6 +93,72 @@ on stdcore[INTERFACE_CORE]: clock clk_smi = XS1_CLKBLK_3;
 on stdcore[INTERFACE_CORE]: smi_interface_t smi = { PORT_ETH_MDIO, PORT_ETH_MDC, 0 };
 on stdcore[INTERFACE_CORE]: mii_interface_t mii = { XS1_CLKBLK_1, XS1_CLKBLK_2, PORT_ETH_RXCLK, PORT_ETH_RXER, PORT_ETH_RXD, PORT_ETH_RXDV, PORT_ETH_TXCLK, PORT_ETH_TXEN, PORT_ETH_TXD };
 #endif
+
+
+#ifdef USE_CAN
+
+#include "CanPhy.h"
+
+void init_can_phy( chanend c_rxChan, chanend c_txChan, clock p_can_clk, buffered in port:32 p_can_rx, port p_can_tx, out port p_shared_rs)
+{
+	p_shared_rs <: 0;
+
+	canPhyRxTx( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx );
+}
+
+#endif
+
+#ifdef USE_ETH
+
+#include "ethernet_server.h"
+#include "getmac.h"
+#include "uip_server.h"
+
+int mac_address[2];
+
+// Function to initialise and run the TCP/IP server
+void init_tcp_server(chanend c_mac_rx, chanend c_mac_tx, chanend c_xtcp[], chanend c_connect_status)
+{
+#if 0
+	xtcp_ipconfig_t ipconfig =
+	{
+	  {0,0,0,0},		// ip address
+	  {0,0,0,0},		// netmask
+	  {0,0,0,0}       	// gateway
+	};
+#else
+	xtcp_ipconfig_t ipconfig =
+	{
+	  {169, 254, 0, 1},	// ip address
+	  {255,255,0,0},	// netmask
+	  {0,0,0,0}       	// gateway
+	};
+#endif
+
+	// Start the TCP/IP server
+	uip_server(c_mac_rx, c_mac_tx, c_xtcp, 1, ipconfig, c_connect_status);
+}
+
+
+// Function to initialise and run the Ethernet server
+void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl, clock clk_smi, clock clk_mii, smi_interface_t &p_smi, mii_interface_t &p_mii, chanend c_mac_rx[], chanend c_mac_tx[], chanend c_connect_status, out port p_reset)
+{
+	// Bring the ethernet PHY out of reset
+	p_reset <: 0x2;
+
+	// Get the MAC address
+	ethernet_getmac_otp(p_otp_data, p_otp_addr, p_otp_ctrl, (mac_address, char[]));
+
+	// Initiate the PHY
+	phy_init(clk_smi, null, p_smi, p_mii);
+
+	// Run the Ethernet server
+	ethernet_server(p_mii, mac_address, c_mac_rx, 1, c_mac_tx, 1, p_smi, c_connect_status);
+}
+
+#endif
+
+
 
 int main ( void )
 {
