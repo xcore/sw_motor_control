@@ -11,43 +11,56 @@
 #include <adc_common.h>
 #include <adc_7265.h>
 
+#pragma xta command "analyze loop adc_7265_main_loop"
+#pragma xta command "set required - 40 us"
+
 // This array determines the mapping from trigger channel to which analogue input to select in the ADC mux
 static int trigger_channel_to_adc_mux[2] = { 0, 2 };
 
 // These are the calibration values
 static unsigned calibration_a[2] = {0,0}, calibration_b[2] = {0,0}, calibration_c[2] = {0,0};
 
-static void configure_adc_ports_7265(clock clk, port out SCLK, port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX)
+static void configure_adc_ports_7265(clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, out port MUX)
 {
-    configure_clock_rate_at_least(clk, 100, 6);
+	// configure the clock to be 16MHz
+    configure_clock_rate_at_least(clk, 16, 1);
     configure_port_clock_output(SCLK, clk);
+
+    // ports require postive strobes, but the ADC needs a negative strobe. use the port pin invert function
+    // to satisfy both
     configure_out_port(CNVST, clk, 1);
-	configure_in_port(DATA_A, clk);
-	configure_in_port(DATA_B, clk);
+    set_port_inv(CNVST);
+    CNVST <: 0;
 
-    set_port_sample_delay( DATA_A ); // clock in on falling edge
-    set_port_sample_delay( DATA_B ); // clock in on falling edge
+    // configure the data ports to strobe data in to the buffer using the serial clock
+	configure_in_port_strobed_slave(DATA_A, CNVST, clk);
+	configure_in_port_strobed_slave(DATA_B, CNVST, clk);
 
+	// sample the data in on falling edge of the serial clock
+    set_port_sample_delay( DATA_A );
+    set_port_sample_delay( DATA_B );
+
+    // start the ADC serial clock port
     start_clock(clk);
 }
 
 #pragma unsafe arrays
-static void adc_get_data_7265( int adc_val[], unsigned channel, port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
+static void adc_get_data_7265( int adc_val[], unsigned channel, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, out port MUX )
 {
 	unsigned val1 = 0, val3 = 0;
 	unsigned ts;
 
 	MUX <: channel;
 
-	CNVST <: 0 @ts;
+	CNVST <: 1 @ts;
 	ts += 16;
-	CNVST @ts <: 1;
+	CNVST @ts <: 0;
 
-	par
-	{
-			DATA_A @ ts :> val1;
-			DATA_B @ ts :> val3;
-	}
+	endin(DATA_A);
+	endin(DATA_B);
+
+	DATA_A :> val1;
+	DATA_B :> val3;
 
 	val1 = bitrev(val1);
 	val3 = bitrev(val3);
@@ -63,7 +76,7 @@ static void adc_get_data_7265( int adc_val[], unsigned channel, port out CNVST, 
 
 }
 
-static void calibrate(port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX)
+static void calibrate(port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, out port MUX)
 {
 	int adc[2];
 
@@ -80,7 +93,7 @@ static void calibrate(port out CNVST, in buffered port:32 DATA_A, in buffered po
 
 
 #pragma unsafe arrays
-void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, port out SCLK, port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
+void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
 {
 	int adc_val[ADC_NUMBER_OF_TRIGGERS][2];
 	int cmd;
@@ -93,6 +106,8 @@ void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, port out 
 
 	while (1)
 	{
+#pragma xta endpoint "adc_7265_main_loop"
+#pragma ordered
 		select
 		{
 		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) inct_byref(c_trig[trig], ct):

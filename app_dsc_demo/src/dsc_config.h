@@ -1,10 +1,4 @@
 /**
- * Module:  app_dsc_demo
- * Version: 1v0alpha1
- * Build:   1887e6b30ecc00395f02fb3a27027fd6fcf3a300
- * File:    dsc_config.h
- * Modified by : A Srikanth
- * Last Modified on : 05-Jul-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 

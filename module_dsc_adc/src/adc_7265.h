@@ -24,6 +24,6 @@
  *  \param MUX a port to allow the selection of the analogue MUX input
  *
  */
-void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, port out SCLK, port out CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX );
+void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX );
 
 #endif /* ADC_7265_H_ */

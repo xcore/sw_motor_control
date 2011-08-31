@@ -1,10 +1,4 @@
-  /**
- * Module:  app_dsc_demo
- * Version: 1v0alpha1
- * Build:   dcbd8f9dde72e43ef93c00d47bed86a114e0d6ac
- * File:    main.xc
- * Modified by : A Srikanth
- * Last Modified on : 06-Jul-2011
+/**
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -107,7 +101,7 @@ on stdcore[MOTOR_CORE]: port in p_qei2 = PORT_M2_ENCODER;
 on stdcore[INTERFACE_CORE]: out port i2c_wd = PORT_WATCHDOG;
 
 on stdcore[MOTOR_CORE]: out port ADC_SCLK = PORT_ADC_CLK;
-on stdcore[MOTOR_CORE]: out port ADC_CNVST = PORT_ADC_CONV;
+on stdcore[MOTOR_CORE]: port ADC_CNVST = PORT_ADC_CONV;
 on stdcore[MOTOR_CORE]: buffered in port:32 ADC_DATA_A = PORT_ADC_MISOA;
 on stdcore[MOTOR_CORE]: buffered in port:32 ADC_DATA_B = PORT_ADC_MISOB;
 on stdcore[MOTOR_CORE]: out port ADC_MUX = PORT_ADC_MUX;

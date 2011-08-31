@@ -68,8 +68,18 @@ Running the firmware
   Controlling the motor speed
     Button A increases the demand speed in steps of 100 RPM.  Button B decreases the motor speed in steps of 100 RPM.
 
-  Controlling the motor direction
-    Button C reverses the direction of the motor.
+
+The watchdog timer hardware override
+------------------------------------
+
+On the power board there is a watchdog timer override button.  This allows a physical override to prevent the XMOS
+device watchdog pulse stream to reach the watchdog timer cutout device.  By default, jumper J6 on the power board will
+be present.  This means the watchdog circuit on the power board will be directly connected to the XMOS device.
+
+By removing jumper J6, the button SW1 will need to be held to enable the connection between the XMOS device and the
+watchdog circuit on the power board.  This configuration is useful when testing out new algorithms.  The user would
+hold the button down for normal operation, but if an error occurs and there is a risk of damage to the motors or
+the power board, the button can be quickly released to prevent the FETs from being energized further.
 
 
 
