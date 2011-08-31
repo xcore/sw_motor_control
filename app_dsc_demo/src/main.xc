@@ -51,8 +51,11 @@
 #include <xscope.h>
 #endif
 
-// LCD & Button Ports
+// Define where everything is
+#define INTERFACE_CORE 0
+#define MOTOR_CORE 1
 
+// LCD & Button Ports
 on stdcore[INTERFACE_CORE]: lcd_interface_t lcd_ports = { PORT_SPI_CLK, PORT_SPI_MOSI, PORT_SPI_SS_DISPLAY, PORT_SPI_DSA };
 on stdcore[INTERFACE_CORE]: in port p_btns = PORT_BUTTONS;
 on stdcore[INTERFACE_CORE]: out port p_leds = PORT_LEDS;

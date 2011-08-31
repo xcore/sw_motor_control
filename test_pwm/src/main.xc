@@ -20,10 +20,14 @@ on stdcore[1]: clock pwm_clk = XS1_CLKBLK_1;
 void do_test(chanend c_pwm)
 {
 	unsigned value[3];
+	t_pwm_control pwm_ctrl;
+
+	pwm_share_control_buffer_address_with_server(c_pwm, pwm_ctrl);
+
 	value[0] = 15;
 	value[1] = 1000;
 	value[2] = 4080;
-	update_pwm(c_pwm, value);
+	update_pwm(pwm_ctrl, c_pwm, value);
 }
 
 int main ( void )

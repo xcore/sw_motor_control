@@ -45,6 +45,31 @@ code. This file can set the following defines:
     This is the number of poles in the motor.  It is therefore ratio of the number of
     electrical rotations to each physical rotation.
 
+**USE_CAN**
+
+    When defined, the CAN controller in included in the executable. This option is
+    mutually exclusive with Ethernet.
+    
+**USE_ETH**
+
+    When defined, the Ethernet controller is included in the executable.  This option is
+    mutually exclusive with CAN.
+
+**TCP_CONTROL_PORT**
+
+    When the Ethernet controller is included, this is the TCP port that the server
+    listens on, for receiving control information.
+
+**MIN_RPM*
+
+    The minimum RPM that the controllers can set.
+
+**MAX_RPM**
+
+    The maximum RPM that the controllers can set.
+
+
+
 ADC
 ---
 
@@ -53,16 +78,12 @@ Client functions
 
 .. doxygenfunction:: do_adc_calibration
 
-.. doxygenfunction:: get_adc_vals_raw
-
 .. doxygenfunction:: get_adc_vals_calibrated_int16
 
 Server functions
 ++++++++++++++++
 
 .. doxygenfunction:: adc_7265_triggered
-
-.. doxygenfunction:: adc_ltc1408_filtered
 
 .. doxygenfunction:: adc_ltc1408_triggered
 

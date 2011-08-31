@@ -41,20 +41,6 @@
 // It is triggered over a channel. Set this define to 0 to disable this feature
 #define LOCK_ADC_TO_PWM 1
 
-// Define where everything is
-#define INTERFACE_CORE 0
-#define MOTOR_CORE 1
-
-// Define the ethernet OTP core for getting the mac address, this should be the same as the
-// core that the ethernet thread runs on, unless you give the ethernet thread the mac address
-// in some other way
-#define ETHERNET_OTP_CORE 0
-
-// Check to prevent error where the OTP is on a different core
-#if ETHERNET_OTP_CORE != INTERFACE_CORE
-	#error OTP and Interfaces are defined on different cores.
-#endif
-
 // Define the port for the control app to connect to
 #define TCP_CONTROL_PORT 9595
 
@@ -72,12 +58,6 @@
 	#error Both CAN and Ethernet are enabled.
 #endif
 
-// Value to increase/decrease the speed by when the button is pressed
-#define PWM_INC_DEC_VAL 100
-
-// Initial speed set point in RPM
-#define INITIAL_SET_SPEED 0
-
 // Minimum RPM value for the motor
 #define MIN_RPM 500
 
@@ -86,6 +66,7 @@
 
 #define BLDC_FOC
 
+// Define this to include XSCOPE support
 //#define USE_XSCOPE
 
 #endif /* _DSC_CONFIG__H_ */

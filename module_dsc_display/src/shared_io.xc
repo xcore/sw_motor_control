@@ -20,25 +20,35 @@
  **/
 
 #include "xs1.h"
-#include <dsc_config.h>
+#include <stdio.h>
+
+#include "dsc_config.h"
+
 #include "lcd.h"
 #include "shared_io.h"
-#include "stdio.h"
 #include "lcd_logo.h"
-#include "print.h"
+
+#ifndef NUMBER_OF_MOTORS
+#define NUMBER_OF_MOTORS 1
+#endif
+
+#ifndef MIN_RPM
+#define MIN_RPM 100
+#endif
+
+#ifndef MAX_RPM
+#define MAX_RPM 3000
+#endif
 
 /* Manages the display, buttons and shared ports. */
 void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface_t, p), in port btns, out port leds )
 {
-	unsigned int time, MIN_VAL=0, speed[2], set_speed = INITIAL_SET_SPEED;
-	/* Default port value on device boot */
-
+	unsigned int time, MIN_VAL=0, speed[2], set_speed = 1000;
 	unsigned int btn_en = 0;
 	unsigned toggle = 1,  value;
 	char my_string[50];
 	unsigned ts,temp=0;
 	timer timer_1,timer_2;
-
 
 	leds <: 0;
 
@@ -108,7 +118,7 @@ void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface
 					leds <: 1;
 
 					/* Increase the speed, by the increment */
-					set_speed += PWM_INC_DEC_VAL;
+					set_speed += 100;
 					if (set_speed > MAX_RPM)
 						set_speed = MAX_RPM;
 
@@ -126,7 +136,7 @@ void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface
 				{
 					leds <: 2;
 
-					set_speed -= PWM_INC_DEC_VAL;
+					set_speed -= 100;
 					/* Limit the speed to the minimum value */
 					if (set_speed < MIN_RPM)
 					{
