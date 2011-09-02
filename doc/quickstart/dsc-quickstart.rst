@@ -8,7 +8,7 @@ Setting up the hardware
   The XMOS Brushless DC Motor development platform comes as two separate boards.  The first board is the
   control and processing board.  This is joined with a 50 way ribbon cable to the power board.
 
-      - Connect the power board to the control board with the 40 way ribbon cable.
+      - Connect the power board to the control board with the 50 way ribbon cable.
 
       - Connect the first motor to the MOTOR1 connector on the power board, and the second motor to
         the MOTOR2 connection.
@@ -54,14 +54,16 @@ Building the firmware
   
     *app_dsc_demo/bin/Release/dsc_basic_bldc.xe*
 
-  This can be run on the hardware by executing:
-
-    *xrun app_dsc_demo/bin/Release/dsc_basic_bldc.xe*
-
-
+  Alternatively, the project can be imported into the XDE tool. Once it is imported, the sw_motor_control project can
+  be selected, and the options for building and running each application can be selected.
 
 Running the firmware
 --------------------
+
+  The main FOC application can be run on the hardware by executing the following command within an XMOS command line:
+
+    *xrun app_dsc_demo/bin/Release/dsc_basic_bldc.xe*
+
   LCD feedback
     The LCD shows the current speed of each motor, and the demand speed.  Both motors have the same demand speed.
 

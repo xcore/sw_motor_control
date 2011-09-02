@@ -293,10 +293,19 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 				update_pwm( pwm_ctrl, c_pwm, pwm );
 
 #ifdef USE_XSCOPE
-				xscope_probe_data(0, Ia_in);
-				xscope_probe_data(1, Ib_in);
-				xscope_probe_data(2, Ic_in);
-				xscope_probe_data(3, speed);
+				{
+					static unsigned int counter=0;
+					if (++counter > 10) {
+						counter = 0;
+//						xscope_probe_data(0, theta);
+//						xscope_probe_data(1, speed);
+						xscope_probe_data(0, Ia_in);
+						xscope_probe_data(1, Ib_in);
+						xscope_probe_data(2, Ic_in);
+//						xscope_probe_data(5, set_speed);
+//						xscope_probe_data(6, pwm[0]);
+					}
+				}
 #endif
 			}
 		break;

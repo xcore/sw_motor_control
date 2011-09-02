@@ -11,6 +11,9 @@
 #include <adc_common.h>
 #include <adc_7265.h>
 
+#define ADC_FILTER_7265
+
+
 #pragma xta command "analyze loop adc_7265_main_loop"
 #pragma xta command "set required - 40 us"
 
@@ -18,7 +21,13 @@
 static int trigger_channel_to_adc_mux[2] = { 0, 2 };
 
 // These are the calibration values
-static unsigned calibration_a[2] = {0,0}, calibration_b[2] = {0,0}, calibration_c[2] = {0,0};
+static unsigned calibration[ADC_NUMBER_OF_TRIGGERS][2];
+
+// Mode to say if we are currently calibrating the ADC
+static int calibration_mode = -1;
+
+// Accumultor for the calibration average
+static int calibration_acc[2], calibration_count;
 
 static void configure_adc_ports_7265(clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, out port MUX)
 {
@@ -71,26 +80,15 @@ static void adc_get_data_7265( int adc_val[], unsigned channel, port CNVST, in b
 	val1 = 0x00000FFF & val1;
 	val3 = 0x00000FFF & val3;
 
+#ifdef ADC_FILTER_7265
+	adc_val[0] = (adc_val[0] >> 1) + (val1 >> 1);
+	adc_val[1] = (adc_val[1] >> 1) + (val3 >> 1);
+#else
 	adc_val[0] = val1;
 	adc_val[1] = val3;
+#endif
 
 }
-
-static void calibrate(port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, out port MUX)
-{
-	int adc[2];
-
-	adc_get_data_7265( adc, trigger_channel_to_adc_mux[0], CNVST, DATA_A, DATA_B, MUX );
-	calibration_a[0] = adc[0];
-	calibration_b[0] = adc[1];
-	calibration_c[0] = -(adc[0]+adc[1]);
-
-	adc_get_data_7265( adc, trigger_channel_to_adc_mux[1], CNVST, DATA_A, DATA_B, MUX );
-	calibration_a[0] = adc[0];
-	calibration_b[0] = adc[1];
-	calibration_c[0] = -(adc[0]+adc[1]);
-}
-
 
 #pragma unsafe arrays
 void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
@@ -116,16 +114,35 @@ void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, out port 
 				t :> ts;
 				t when timerafter(ts + 1740) :> ts;
 				adc_get_data_7265( adc_val[trig], trigger_channel_to_adc_mux[trig], CNVST, DATA_A, DATA_B, MUX );
+				if (calibration_mode == trig) {
+					calibration_acc[0] += adc_val[trig][0];
+					calibration_acc[1] += adc_val[trig][1];
+					calibration_count++;
+					if (calibration_count == 512) {
+						calibration[trig][0] = calibration_acc[0] / 512;
+						calibration[trig][1] = calibration_acc[1] / 512;
+						calibration_mode = -1;
+					}
+				}
 			}
 			break;
 		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) c_adc[trig] :> cmd:
 			if (cmd == 1) {
-				calibrate(CNVST, DATA_A, DATA_B, MUX);
+				if (calibration_mode != -1) {
+					calibration_mode = -1;
+				} else {
+					calibration_mode = trig;
+					calibration_count=0;
+					calibration_acc[0]=0;
+					calibration_acc[1]=0;
+				}
 			} else {
 				master {
-					c_adc[trig] <: adc_val[trig][0] - calibration_a[trig];
-					c_adc[trig] <: adc_val[trig][1] - calibration_b[trig];
-					c_adc[trig] <: -(adc_val[trig][0] + adc_val[trig][1]) - calibration_c[trig];
+					unsigned a = adc_val[trig][0] - calibration[trig][0];
+					unsigned b = adc_val[trig][1] - calibration[trig][1];
+					c_adc[trig] <: a;
+					c_adc[trig] <: b;
+					c_adc[trig] <: -(a+b);
 				}
 			}
 			break;

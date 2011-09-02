@@ -201,11 +201,14 @@ int main ( void )
 		// Xcore 1 - MOTOR_CORE
 		on stdcore[MOTOR_CORE] : {
 #ifdef USE_XSCOPE
-			xscope_register(4,
+			xscope_register(3,
 					XSCOPE_CONTINUOUS, "Ia", XSCOPE_UINT , "n",
 					XSCOPE_CONTINUOUS, "Ib", XSCOPE_UINT , "n",
-					XSCOPE_CONTINUOUS, "Ic", XSCOPE_UINT , "n",
-					XSCOPE_CONTINUOUS, "Speed", XSCOPE_UINT , "n"
+					XSCOPE_CONTINUOUS, "Ic", XSCOPE_UINT , "n"
+//					XSCOPE_CONTINUOUS, "Speed", XSCOPE_UINT , "n",
+//					XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT , "n",
+//					XSCOPE_CONTINUOUS, "Theta", XSCOPE_UINT , "n"
+//					XSCOPE_CONTINUOUS, "PWM[0]", XSCOPE_UINT , "n"
 			);
 #endif
 			run_motor( c_pwm[0], c_qei[0], c_adc[0], c_speed[0], c_wd, p_hall1, c_commands[0]);
