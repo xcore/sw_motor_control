@@ -184,7 +184,7 @@ void lcd_clear( REFERENCE_PARAM(lcd_interface_t, p) )
 
 
 // Draw an image to the display
-void lcd_draw_image( unsigned char image[], REFERENCE_PARAM(lcd_interface_t, p) )
+void lcd_draw_image( const unsigned char image[], REFERENCE_PARAM(lcd_interface_t, p) )
 {
 	unsigned int i, j, n = 0;
 	unsigned char page = 0xB0;						// Page Address + 0xB0
@@ -215,7 +215,7 @@ void lcd_draw_image( unsigned char image[], REFERENCE_PARAM(lcd_interface_t, p) 
 
 
 // Draw a row of text to the display
-void lcd_draw_text_row( char string[], int lcd_row, REFERENCE_PARAM(lcd_interface_t, p) )
+void lcd_draw_text_row( const char string[], int lcd_row, REFERENCE_PARAM(lcd_interface_t, p) )
 {
 	unsigned int i = 0, offset, col_pos = 0;
 
@@ -231,22 +231,23 @@ void lcd_draw_text_row( char string[], int lcd_row, REFERENCE_PARAM(lcd_interfac
 	// Loop through all the characters
 	while (1)
 	{
+		char c = string[i];
 		// If we are at the end of the string, or it's too long, break.
-		if ((string[i] == '\0') || (string[i] == '\n') || (i >= 21 ))
+		if ((c == '\0') || (c == '\n') || (i >= 21 ))
 		{
 			break;
 		}
 
 		// Check char is in range, otherwise unsafe arrays break
-		if ((string[i] < 32) || (string[i] > 127))
+		if ((c < 32) || (c > 127))
 		{
 			// If not, print a space instead
-			string[i] = ' ';
+			c = ' ';
 		}
 
 #pragma unsafe arrays
 		// Calculate the offset into the array
-		offset = (string[i] - 32) * FONT_WIDTH;
+		offset = (c - 32) * FONT_WIDTH;
 
 		// Print a char, along with a space between chars
 		lcd_data_out(p, font[offset++]);

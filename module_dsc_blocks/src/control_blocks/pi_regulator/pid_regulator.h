@@ -27,15 +27,15 @@
 #define __PI_REGULATOR_H__
 
 #ifdef BLDC_BASIC
-
 #define PID_RESOLUTION	15
-
 #endif
 
 #ifdef BLDC_FOC
-
 #define PID_RESOLUTION	13
+#endif
 
+#ifndef PID_RESOLUTION
+#define PID_RESOLUTION 15
 #endif
 
 #define PID_MAX_OUTPUT	32768

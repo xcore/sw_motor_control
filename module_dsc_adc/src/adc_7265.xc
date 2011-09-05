@@ -102,6 +102,11 @@ void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, out port 
 
 	configure_adc_ports_7265( clk, SCLK, CNVST, DATA_A, DATA_B, MUX );
 
+	for (unsigned int c=0; c<ADC_NUMBER_OF_TRIGGERS; ++c) {
+		adc_val[c][0] = 0;
+		adc_val[c][1] = 0;
+	}
+
 	while (1)
 	{
 #pragma xta endpoint "adc_7265_main_loop"

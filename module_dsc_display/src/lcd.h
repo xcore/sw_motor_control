@@ -79,7 +79,7 @@ void lcd_clear( REFERENCE_PARAM(lcd_interface_t, p) );
  * \param image a byte array containing the image data.
  * \param p the LCD interface description
  */
-void lcd_draw_image( unsigned char image[], REFERENCE_PARAM(lcd_interface_t, p) );
+void lcd_draw_image( const unsigned char image[], REFERENCE_PARAM(lcd_interface_t, p) );
 
 /** \brief Write text to a row on the LCD
  *
@@ -90,7 +90,7 @@ void lcd_draw_image( unsigned char image[], REFERENCE_PARAM(lcd_interface_t, p) 
  * \param lcd_row the character row on which to display the string
  * \param p the LCD interface description
  */
-void lcd_draw_text_row( char string[], int lcd_row, REFERENCE_PARAM(lcd_interface_t, p) );
+void lcd_draw_text_row( const char string[], int lcd_row, REFERENCE_PARAM(lcd_interface_t, p) );
 
 /** \brief Macro for writing data to the LCD
  *
