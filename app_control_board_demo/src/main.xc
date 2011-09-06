@@ -311,6 +311,10 @@ void do_demo_interface(chanend c_xtcp, chanend commands)
 					pwm[0][p] = pwm_mode_values[pwm_state[p]][0];
 					pwm[1][p] = pwm_mode_values[pwm_state[p]][1];
 					pwm[2][p] = pwm_mode_values[pwm_state[p]][2];
+					commands <: input_mode;
+					commands <: pwm[0][p];
+					commands <: pwm[1][p];
+					commands <: pwm[2][p];
 					break;
 				case 0x7: // Button D
 					switch (input_mode)
@@ -326,6 +330,10 @@ void do_demo_interface(chanend c_xtcp, chanend commands)
 					pwm[0][p] = pwm_mode_values[pwm_state[p]][0];
 					pwm[1][p] = pwm_mode_values[pwm_state[p]][1];
 					pwm[2][p] = pwm_mode_values[pwm_state[p]][2];
+					commands <: input_mode;
+					commands <: pwm[0][p];
+					commands <: pwm[1][p];
+					commands <: pwm[2][p];
 					break;
 				default:
 					break;
@@ -464,6 +472,11 @@ void do_demo_interface(chanend c_xtcp, chanend commands)
 							pwm[2][0] = result3;
 							sprintf(tx_buf, "Motor1 PWM set to: %d,%d,%d\r\n", result1, result2, result3);
 							xtcp_init_send(c_xtcp, conn);
+
+							commands <: CMD_PWM_1;
+							commands <: pwm[0][0];
+							commands <: pwm[1][0];
+							commands <: pwm[2][0];
 						}
 						break;
 						case CMD_PWM_2:
@@ -474,6 +487,11 @@ void do_demo_interface(chanend c_xtcp, chanend commands)
 							pwm[2][1] = result3;
 							sprintf(tx_buf, "Motor2 PWM set to: %d,%d,%d\r\n", result1, result2, result3);
 							xtcp_init_send(c_xtcp, conn);
+
+							commands <: CMD_PWM_2;
+							commands <: pwm[0][1];
+							commands <: pwm[1][1];
+							commands <: pwm[2][1];
 						}
 						break;
 						case CMD_QEI:
