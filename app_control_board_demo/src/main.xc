@@ -26,6 +26,7 @@
 #include <string.h>
 #include <safestring.h>
 #include <print.h>
+#include <stdlib.h>
 
 #include "adc_7265.h"
 #include "adc_client.h"
@@ -201,21 +202,39 @@ void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl
 	ethernet_server(p_mii, mac_address, c_mac_rx, 1, c_mac_tx, 1, p_smi, c_connect_status);
 }
 
+{unsigned, unsigned} parse_number(char buffer[], unsigned start)
+{
+	unsigned p,n;
+	char num[12];
+	for(p=start; buffer[p]!=0; p++) {
+		if (buffer[p] >= '0' && buffer[p] <= '9') break;
+	}
+	if (buffer[p]==0) return { 0, p };
+
+	for(n=0; buffer[p]!=0; p++, n++) {
+		if (buffer[p] < '0' || buffer[p] > '9') break;
+		num[n] = buffer[p];
+	}
+	num[n] = 0;
+	return { atoi(num), p };
+}
+
+
 unsigned parse_command(char rx_buf[], unsigned rx_length, int &result1, int &result2, int &result3)
 {
-	unsigned cmd;
+	unsigned cmd, p;
 	unsigned found;
-
-	printstr(rx_buf);
 
 	if (rx_buf[0] == 0xd || rx_buf[1] == 0x0a) return -1;
 
+	rx_buf[rx_length] = 0;
+
 	for (cmd=0; cmd<CMD_HELP; ++cmd) {
 		found=1;
-		for (unsigned c=0; net_commands[cmd][c]!=0; ++c) {
-			char ch=rx_buf[c];
+		for (p=0; net_commands[cmd][p]!=0; ++p) {
+			char ch=rx_buf[p];
 			if (ch >= 'A' && ch <='Z') ch += ('a'-'A');
-			if (ch != net_commands[cmd][c]) {
+			if (ch != net_commands[cmd][p]) {
 				found=0;
 				break;
 			}
@@ -224,6 +243,10 @@ unsigned parse_command(char rx_buf[], unsigned rx_length, int &result1, int &res
 	}
 
 	if (found==0) return CMD_HELP;
+
+	{ result1, p } = parse_number(rx_buf, p);
+	{ result2, p } = parse_number(rx_buf, p);
+	{ result3, p } = parse_number(rx_buf, p);
 
 	return cmd;
 }
