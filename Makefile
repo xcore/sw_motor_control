@@ -40,7 +40,7 @@
 # This variable should contain a space separated list of all
 # the directories containing buildable applications (usually
 # prefixed with the app_ prefix)
-BUILD_SUBDIRS = app_basic_bldc app_dsc_demo app_control_board_test
+BUILD_SUBDIRS = app_basic_bldc app_dsc_demo app_control_board_test app_control_board_demo
 
 # This variable should contain a space separated list of all
 # the directories containing buildable plugins (usually

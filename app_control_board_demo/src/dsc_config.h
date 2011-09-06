@@ -44,7 +44,7 @@
 #define LOCK_ADC_TO_PWM 1
 
 // Define the port for the control app to connect to
-#define TCP_CONTROL_PORT 9595
+#define TCP_CONTROL_PORT 23
 
 // Define this to include XSCOPE support
 //#define USE_XSCOPE

@@ -23,6 +23,9 @@
 #include <platform.h>
 
 #include <stdio.h>
+#include <string.h>
+#include <safestring.h>
+#include <print.h>
 
 #include "adc_7265.h"
 #include "adc_client.h"
@@ -46,27 +49,45 @@
 #include <xscope.h>
 #endif
 
-#define CMD_READ_ADC 	0
-#define CMD_READ_HALL 	1
-#define CMD_PWM_1 		2
-#define CMD_PWM_2 		3
-#define CMD_QEI 		4
+#define CMD_WELCOME		0
+#define CMD_READ_ADC 	1
+#define CMD_READ_HALL 	2
+#define CMD_PWM_1 		3
+#define CMD_PWM_2 		4
+#define CMD_QEI 		5
+#define CMD_HELP		6
 
 const char net_commands[][8] = {
+	"ip",
 	"adc",
 	"hall",
 	"pwm1",
 	"pwm2",
-	"qei"
+	"qei",
+	"help"
 };
 
 const char mode_titles[][21] = {
+	"XMOS Control Demo",
 	"Current ADC values",
 	"Current hall sensor",
 	"PWM for motor 1",
 	"PWM for motor 2",
 	"Quadrature encoder"
 };
+
+static const char s_welcome_message[] =
+		"XMOS Motor Control Board demonstration\r\n\n"
+		"Type 'HELP' for a list of commands\r\n"
+		"(Please use a line mode terminal)\r\n";
+
+static const char s_help_message[] =
+		"Command:\r\n\n"
+		"ADC\t\t\t- Read the ADC\r\n"
+		"HALL\t\t\t- Read the Hall sensors\r\n"
+		"PWM1 a,b,c\t\t- Set the PWM values for motor 1\r\n"
+		"PWM2 a,b,c\t\t- Set the PWM values for motor 2\r\n"
+		"QEI\t\t\t- Read the quadrature encoder position\r\n\n";
 
 const unsigned pwm_mode_values[13][3] = {
 		{0x100,0x100,0x100},
@@ -138,11 +159,10 @@ on stdcore[MOTOR_CORE]: in port ADC_SYNC_PORT1 = XS1_PORT_16A;
 on stdcore[MOTOR_CORE]: in port ADC_SYNC_PORT2 = XS1_PORT_16B;
 on stdcore[MOTOR_CORE]: clock adc_clk = XS1_CLKBLK_2;
 
-
 // Function to initialise and run the TCP/IP server
 void init_tcp_server(chanend c_mac_rx, chanend c_mac_tx, chanend c_xtcp[], chanend c_connect_status)
 {
-#if 0
+#if 1
 	xtcp_ipconfig_t ipconfig =
 	{
 	  {0,0,0,0},		// ip address
@@ -181,6 +201,32 @@ void init_ethernet_server( port p_otp_data, out port p_otp_addr, port p_otp_ctrl
 	ethernet_server(p_mii, mac_address, c_mac_rx, 1, c_mac_tx, 1, p_smi, c_connect_status);
 }
 
+unsigned parse_command(char rx_buf[], unsigned rx_length, int &result1, int &result2, int &result3)
+{
+	unsigned cmd;
+	unsigned found;
+
+	printstr(rx_buf);
+
+	if (rx_buf[0] == 0xd || rx_buf[1] == 0x0a) return -1;
+
+	for (cmd=0; cmd<CMD_HELP; ++cmd) {
+		found=1;
+		for (unsigned c=0; net_commands[cmd][c]!=0; ++c) {
+			char ch=rx_buf[c];
+			if (ch >= 'A' && ch <='Z') ch += ('a'-'A');
+			if (ch != net_commands[cmd][c]) {
+				found=0;
+				break;
+			}
+		}
+		if (found==1) break;
+	}
+
+	if (found==0) return CMD_HELP;
+
+	return cmd;
+}
 
 void do_demo_interface(chanend c_xtcp, chanend commands)
 {
@@ -197,21 +243,23 @@ void do_demo_interface(chanend c_xtcp, chanend commands)
 	xtcp_connection_t conn;
 	unsigned char tx_buf[512];
 	unsigned char rx_buf[512];
-	unsigned tx_length=0, rx_length;
+	unsigned rx_length;
 
 	// Input mode
-	unsigned input_mode = CMD_READ_ADC;
+	unsigned input_mode = CMD_WELCOME;
 
 	// Initialise the LCD
 	lcd_ports_init(lcd_ports);
 	tmr :> timestamp;
 	timestamp += 1000000;
 
-	// listen on a port
+	// Listen for connections on TCP control port
 	xtcp_listen(c_xtcp, TCP_CONTROL_PORT, XTCP_PROTOCOL_TCP);
 
 	while (1)
 	{
+		int result1, result2, result3;
+
 		select
 		{
 			case (buttons_active==1) => p_btns when pinsneq(buttons) :> buttons:
@@ -221,10 +269,10 @@ void do_demo_interface(chanend c_xtcp, chanend commands)
 				switch (buttons)
 				{
 				case 0xE: // Button A
-					input_mode = (input_mode==CMD_QEI)? CMD_READ_ADC : input_mode+1;
+					input_mode = (input_mode==CMD_QEI)? CMD_WELCOME : input_mode+1;
 					break;
 				case 0xD: // Button B
-					input_mode = (input_mode==CMD_READ_ADC)? CMD_QEI : input_mode-1;
+					input_mode = (input_mode==CMD_WELCOME)? CMD_QEI : input_mode-1;
 					break;
 				case 0xB: // Button C
 					switch (input_mode)
@@ -267,12 +315,25 @@ void do_demo_interface(chanend c_xtcp, chanend commands)
 
 			case tmr when timerafter(timestamp) :> void:
 			{
-				int result1, result2, result3;
-
 				lcd_draw_text_row(mode_titles[input_mode], 0, lcd_ports);
 
 				switch (input_mode)
 				{
+				case CMD_WELCOME:
+				{
+					xtcp_ipconfig_t ip;
+					xtcp_get_ipconfig(c_xtcp, ip);
+
+					if (ip.ipaddr[0] == 0) {
+						safestrcpy(rx_buf, "IP: acquiring");
+					} else {
+						sprintf(rx_buf, "IP: %d.%d.%d.%d", ip.ipaddr[0], ip.ipaddr[1], ip.ipaddr[2], ip.ipaddr[3]);
+					}
+					lcd_draw_text_row(rx_buf, 1, lcd_ports);
+					sprintf(rx_buf, "Port: %d", TCP_CONTROL_PORT);
+					lcd_draw_text_row(rx_buf, 2, lcd_ports);
+					break;
+				}
 				case CMD_READ_ADC:
 					commands <: CMD_READ_ADC;
 					commands :> result1;
@@ -331,32 +392,107 @@ void do_demo_interface(chanend c_xtcp, chanend commands)
 			// Get an event
 			case xtcp_event(c_xtcp, conn):
 			{
-				// We have received an event from the TCP stack, so respond appropriately
-				switch (conn.event)
-				{
-						case XTCP_NEW_CONNECTION:
-							break;
+				unsigned command;
 
-						case XTCP_RECV_DATA:
-							// Get the packet
-							rx_length = xtcp_recv(c_xtcp, rx_buf);
-							break;
+				if (conn.local_port == TCP_CONTROL_PORT) {
 
-						case XTCP_SENT_DATA:
-							xtcp_send(c_xtcp, null, 0);
-							break;
+					// We have received an event from the TCP stack, so respond appropriately
+					switch (conn.event)
+					{
+					case XTCP_NEW_CONNECTION:
+						safestrcpy(tx_buf, s_welcome_message);
+						xtcp_init_send(c_xtcp, conn);
+						break;
 
-						case XTCP_REQUEST_DATA:
-						case XTCP_RESEND_DATA:
-							xtcp_send(c_xtcp, tx_buf, tx_length);
-							break;
+					case XTCP_RECV_DATA:
+						// Get the packet
+						rx_length = xtcp_recv(c_xtcp, rx_buf);
+						switch (parse_command(rx_buf, rx_length, result1, result2, result3)) {
+						case CMD_READ_ADC:
+						{
+							unsigned result4, dummy;
+							input_mode = CMD_READ_ADC;
+							commands <: CMD_READ_ADC;
+							commands :> result1;
+							commands :> result2;
+							commands :> dummy;
+							commands :> result3;
+							commands :> result4;
+							commands :> dummy;
+							sprintf(tx_buf, "ADC1: 0x%x 0x%x\r\nADC2: 0x%x 0x%x\r\n", result1, result2, result3, result4);
+							xtcp_init_send(c_xtcp, conn);
+						}
+						break;
+						case CMD_READ_HALL:
+						{
+							input_mode = CMD_READ_HALL;
+							commands <: CMD_READ_HALL;
+							commands :> result1;
+							commands :> result2;
+							sprintf(tx_buf, "Hall sensors: %x,%x\r\n", result1, result2);
+							xtcp_init_send(c_xtcp, conn);
+						}
+						break;
+						case CMD_PWM_1:
+						{
+							input_mode = CMD_PWM_1;
+							pwm[0][0] = result1;
+							pwm[1][0] = result2;
+							pwm[2][0] = result3;
+							sprintf(tx_buf, "Motor1 PWM set to: %d,%d,%d\r\n", result1, result2, result3);
+							xtcp_init_send(c_xtcp, conn);
+						}
+						break;
+						case CMD_PWM_2:
+						{
+							input_mode = CMD_PWM_2;
+							pwm[0][1] = result1;
+							pwm[1][1] = result2;
+							pwm[2][1] = result3;
+							sprintf(tx_buf, "Motor2 PWM set to: %d,%d,%d\r\n", result1, result2, result3);
+							xtcp_init_send(c_xtcp, conn);
+						}
+						break;
+						case CMD_QEI:
+						{
+							input_mode = CMD_QEI;
+							commands <: CMD_QEI;
+							commands :> result1;
+							commands :> result2;
+							sprintf(tx_buf, "QEI positions: %d,%d\r\n", result1, result2);
+							xtcp_init_send(c_xtcp, conn);
+						}
+						break;
+						case CMD_HELP:
+						{
+							safestrcpy(tx_buf, s_help_message);
+							xtcp_init_send(c_xtcp, conn);
+						}
+						break;
+						}
+						break;
 
-						case XTCP_TIMED_OUT:
-						case XTCP_ABORTED:
-						case XTCP_CLOSED:
-							xtcp_close(c_xtcp, conn);
+					case XTCP_SENT_DATA:
+						// Indicate that we have sent everything
+						xtcp_send(c_xtcp, null, 0);
+						break;
 
-							break;
+					case XTCP_REQUEST_DATA:
+					case XTCP_RESEND_DATA:
+						// Send the data buffer
+						xtcp_send(c_xtcp, tx_buf, strlen(tx_buf));
+						break;
+
+					case XTCP_TIMED_OUT:
+					case XTCP_ABORTED:
+					case XTCP_CLOSED:
+						// Ask for connection to be closed
+						xtcp_close(c_xtcp, conn);
+						break;
+					}
+
+					// Mark event as handled
+					conn.event = XTCP_ALREADY_HANDLED;
 				}
 			}
 			break;
@@ -375,6 +511,12 @@ void do_demo_motor(chanend commands, chanend c_pwm[], chanend c_qei[], chanend c
 
 	pwm_share_control_buffer_address_with_server(c_pwm[0], pwm_ctrl1);
 	pwm_share_control_buffer_address_with_server(c_pwm[1], pwm_ctrl2);
+
+	pwm[0] = 0;
+	pwm[1] = 0;
+	pwm[2] = 0;
+	update_pwm(pwm_ctrl1, c_pwm[0], pwm);
+	update_pwm(pwm_ctrl2, c_pwm[1], pwm);
 
 	while (1)
 	{
@@ -438,7 +580,7 @@ int main ( void )
 
 	par
 	{
-		on stdcore[INTERFACE_CORE] : init_tcp_server( c_mac_rx[0], c_mac_tx[0], c_xtcp, c_connect_status );
+		on stdcore[MOTOR_CORE] : init_tcp_server( c_mac_rx[0], c_mac_tx[0], c_xtcp, c_connect_status );
 		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, p_shared_rs);
 
 		on stdcore[INTERFACE_CORE] : do_demo_interface(c_xtcp[0], c_demo_commands);
