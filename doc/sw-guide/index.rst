@@ -19,19 +19,21 @@ The framework consists of a number of modules that provide functions for an inte
    * Quadrature Encoder Interface (QEI)
    * Analogue to Digital Converter (ADC) Interface
    * Hall Sensor Interface
-   * Display & Shared IO Interface
-   * Low Level Communications Interfaces (CAN and Ethernet)
+   * Display Interface
    * Application Level Communications (Control Interfaces)
    * Computation blocks library
 
+The system utilizes the XMOS standard open source IP blocks for low level Ethernet and CAN interfaces.
 
-In contrast to a typical microcontroller, hardware interfaces are implemented on XMOS devices in software. This gives the developer the flexibility to implement or customise any interface they require. This gives designers wider options when selecting ADC's or PWM schemes.
+In contrast to a typical microcontroller, hardware interfaces are implemented on XMOS devices in software. This gives the developer the flexibility to implement or customise any interface they require. Designers have a greater number of options when selecting ADC's, PWM schemes or control and measurement interfaces.
 
-The modules listed above are implemented in one or more processor threads. The architecture of the threads is shown below for both the basic BLDC and FOC configurations.
+The modules listed above are implemented in one or more processor threads. The architecture of the threads is shown below for both the basic BLDC and FOC configurations. The red and green components show the optional control threads for ethernet and CAN.
 
    .. image:: images/bldc-thread.*
+      :width: 100%
 
    .. image:: images/foc-thread.*
+      :width: 100%
 
 
 

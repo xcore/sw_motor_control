@@ -1,7 +1,5 @@
-/**
+/*
  * Module:  module_dsc_comms
- * Version: 1v0alpha0
- * Build:   8234dc1c93e3702c697f99474a8ca1e7d28a61cc
  * File:    control_comms_eth.h
  *
  * The copyrights, all other intellectual and industrial 
@@ -16,7 +14,7 @@
  * below. The modifications to the code are still covered by the 
  * copyright notice above.
  *
- **/                                   
+ */                                   
 #ifndef _CONTROL_COMMS_ETH_H_
 #define _CONTROL_COMMS_ETH_H_
 #include <dsc_config.h>
@@ -26,8 +24,7 @@
  *
  * This control the motors based on commands from the ethernet/TCP stack
  *
- * \param c_commands_eth Command channel for motor 1
- * \param c_commands_eth2 Command channel for motor 2
+ * \param c_commands Array of command channels for motors
  * \param tcp_svr channel to the TCP/IP thread
  */
 void do_comms_eth( chanend c_commands[], chanend tcp_svr );

@@ -1,7 +1,5 @@
-/**
+/*
  * Module:  module_dsc_blocks
- * Version: 1v0alpha1
- * Build:   128bfdf87839aeec0e38320c3524102eb996ecd5
  * File:    park.h
  *
  * The copyrights, all other intellectual and industrial 
@@ -16,7 +14,7 @@
  * below. The modifications to the code are still covered by the 
  * copyright notice above.
  *
- **/                                   
+ */                                   
 #ifndef PARK_H_
 #define PARK_H_
 

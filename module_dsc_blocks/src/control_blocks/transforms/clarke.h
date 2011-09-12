@@ -1,7 +1,5 @@
-/**
+/*
  * Module:  module_dsc_blocks
- * Version: 1v0alpha1
- * Build:   128bfdf87839aeec0e38320c3524102eb996ecd5
  * File:    clarke.h
  *
  * The copyrights, all other intellectual and industrial 
@@ -16,7 +14,7 @@
  * below. The modifications to the code are still covered by the 
  * copyright notice above.
  *
- **/                                   
+ */                                   
 #ifndef CLARKE_H_
 #define CLARKE_H_
 

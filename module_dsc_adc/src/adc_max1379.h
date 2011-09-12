@@ -1,7 +1,5 @@
-/**
+/*
  * Module:  module_dsc_adc
- * Version: 0v9sd
- * Build:   d60ef6389ff4e99d65127601580f5fa2abbb09b2
  * File:    adc_max1379.h
  *
  * The copyrights, all other intellectual and industrial 
@@ -16,7 +14,7 @@
  * below. The modifications to the code are still covered by the 
  * copyright notice above.
  *
- **/                                   
+ */                                   
 #ifndef ADC_MAX1379_H_
 #define ADC_MAX1379_H_
 

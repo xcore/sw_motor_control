@@ -1,7 +1,5 @@
-/**
+/*
  * Module:  module_dsc_hall
- * Version: 1v0alpha2
- * Build:   60a90cca6296c0154ccc44e1375cc3966292f74e
  * File:    hall_client.h
  *
  * The copyrights, all other intellectual and industrial 
@@ -16,7 +14,7 @@
  * below. The modifications to the code are still covered by the 
  * copyright notice above.
  *
- **/                                   
+ */                                   
 #ifndef HALL_CLIENT_H_
 #define HALL_CLIENT_H_
 

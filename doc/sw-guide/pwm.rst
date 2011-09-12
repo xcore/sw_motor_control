@@ -214,6 +214,7 @@ It is worth discussing at this point why there are different loop modes and what
 To achieve the required output efficiently using the ports the buffers are used to create the extremely short or long pulses as shown in figure \ref{fig_PwmPortBuffering}. The green boxes indicate a buffer of data that is output from the port.
 
   .. image:: images/bufferedPWM.pdf
+     :width: 100%
 
 This method of output requires a combination of one or two buffer outputs depending on the length of these pulses. Rather than calculate these during runtime the client will ascertain the particular combination of outputs required and then will define the mode. The different buffering output modes are individually implemented to reduce branching overhead within the loop.
 

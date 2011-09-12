@@ -1,7 +1,5 @@
-/**
+/*
  * Module:  module_dsc_qei
- * Version: 1v0alpha0
- * Build:   d79b93986ed1ed28f052f045ae1a22d428a274d8
  * File:    qei_server.h
  *
  * The copyrights, all other intellectual and industrial 
@@ -16,7 +14,7 @@
  * below. The modifications to the code are still covered by the 
  * copyright notice above.
  *
- **/                                   
+ */                                   
 #ifndef __QEI_SERVER_H__
 #define __QEI_SERVER_H__
 #include <xs1.h>

@@ -1,7 +1,5 @@
-/**
+/*
  * Module:  module_dsc_comms
- * Version: 1v0alpha0
- * Build:   8234dc1c93e3702c697f99474a8ca1e7d28a61cc
  * File:    control_comms_can.h
  *
  * The copyrights, all other intellectual and industrial 
@@ -16,7 +14,7 @@
  * below. The modifications to the code are still covered by the 
  * copyright notice above.
  *
- **/
+ */
 
 #ifndef _CONTROL_COMMS_CAN_H_
 #define _CONTROL_COMMS_CAN_H_

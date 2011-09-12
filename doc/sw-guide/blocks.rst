@@ -14,6 +14,7 @@ PID Calculation Routines
 The processing blocks module provides the following PID calculation routines. The coefficients are signed 16 bit fixed point.
 
 ::
+
   #include "pid_regulator.h"
 
   void init_pid( int Kp, int Ki, int Kd, pid_data *d );
@@ -24,15 +25,21 @@ The processing blocks module provides the following PID calculation routines. Th
 
   int pid_regulator_delta_cust_error( int error, pid_data *d );
 
+  int pid_regulator_delta_cust_error_speed( int error, pid_data &d );
 
-``init_pid(...)`` is used to initialise the pid_data structure values with the coefficient values for $Kp$, $Ki$ and $Kd$.
+  int pid_regulator_delta_cust_error_Iq_control( int error, pid_data &iq );
 
-``pid_regulator(...)`` does a standard PID calculation using the set_point and actual values. It calculates the error and applies the PID coefficients and then returns the result. The returned error will be applied to the set_point value.
+  int pid_regulator_delta_cust_error_Id_control( int error, pid_data &id );
 
-``pid_regulator_delta(...)`` does a standard PID calculation using the set_point and actual values. It calculates the error and applies the PID coefficients and then returns the resulting error.
+``init_pid`` is used to initialise the pid_data structure values with the coefficient values for $Kp$, $Ki$ and $Kd$.
 
-``pid_regulator_delta_cust_error(...)`` does a standard PID calculation using a precalculated error value. It calculates the error and applies the PID coefficients and then returns the resulting error.
+``pid_regulator`` does a standard PID calculation using the set_point and actual values. It calculates the error and applies the PID coefficients and then returns the result. The returned error will be applied to the set_point value.
 
+``pid_regulator_delta`` does a standard PID calculation using the set_point and actual values. It calculates the error and applies the PID coefficients and then returns the resulting error.
+
+``pid_regulator_delta_cust_error`` does a standard PID calculation using a precalculated error value. It calculates the error and applies the PID coefficients and then returns the resulting error.
+
+``pid_regulator_delta_cust_error_speed``, ``pid_regulator_delta_cust_error_Iq_control`` and ``pid_regulator_delta_cust_error_Id_control`` are customized control PIDs, that limit the output to a specific range appropriate to the variable being controlled.
 
 Clarke & Park Transforms
 ++++++++++++++++++++++++
@@ -40,6 +47,7 @@ Clarke & Park Transforms
 The processing blocks module provides the following Clarke and park transforms. The internal coefficients are all fixed point values.
 
 ::
+
   #include "park.h"
   void park_transform( int *Id, int *Iq, int I_alpha, int I_beta, unsigned theta );
   void inverse_park_transform( int *I_alpha, int *I_beta, int Id, int Iq, unsigned theta );
@@ -49,7 +57,7 @@ The processing blocks module provides the following Clarke and park transforms. 
   void inverse_clarke_transform( int *Ia, int *Ib, int *Ic, int alpha, int beta );
 
 
-Each function has the calculation destinations passed as pointers (or references in XC) and the inputs to the calculations are passed as normal arguments.
+Each function has the calculation destinations passed as pointers (or references in XC) and the inputs to the calculations are passed as normal arguments. See a description of field oriented control for the purpose of each of these transformations. Briefly, the Park transform moves the rotating frame of reference of values relative to the stator (and the QEI and ADCs) into the frame of reference of the rotor.  The Clarke transform takes 3-vector values which are gathered by measurement of the three coils and transforms them into a 2-vector value.  This is possible because the 3-vectors have only 2 degrees of freedom, the current in one of the coils being the sum of the other two.
 
 
 Sine & Cosine lookup
@@ -60,6 +68,7 @@ The sine and cosine functions are largely provided for use in the Park transform
 The lookup functions provided are as follows.
 
 ::
+
   #include "sine_cosine.h"
 
   inline long long sine( unsigned deg );

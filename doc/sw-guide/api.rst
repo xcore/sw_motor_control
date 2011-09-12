@@ -60,7 +60,7 @@ code. This file can set the following defines:
     When the Ethernet controller is included, this is the TCP port that the server
     listens on, for receiving control information.
 
-**MIN_RPM*
+**MIN_RPM**
 
     The minimum RPM that the controllers can set.
 
@@ -131,16 +131,6 @@ Inverting and non-inverting centre aligned PWM
 
 Server functions
 ++++++++++++++++
-
-BLDC PWM mode
-~~~~~~~~~~~~~
-
-.. doxygenfunction:: do_pwm1
-
-.. doxygenfunction:: do_pwm2
-
-Inverting and non-inverting centre aligned PWM
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. doxygenfunction:: do_pwm
 
@@ -225,10 +215,6 @@ LCD
 .. doxygenfunction:: lcd_draw_image
 
 .. doxygenfunction:: lcd_draw_text_row
-
-.. doxygenfunction:: lcd_data_out
-
-.. doxygenfunction:: lcd_comm_out
 
 
 Display and reset server

@@ -27,14 +27,19 @@
 #define CHAR_BUF_SIZE	21*4
 
 #ifdef __XC__
-	/** \brief The control structure for the LCD ports
-	*/
+	/** \brief The control structure for the LCD ports.
+         *
+         *  The display uses an I2C interface with an extra control signal
+         *  to support selection between a data read/write and a control
+         *  read/write.  This extra signal is bit zero of the p_core1_shared
+         *  member - which contains no other signals despite the name.
+	 */
 	typedef struct lcd_interface_t
 	{
-		out port p_lcd_sclk; // buffered port:8
-		out port p_lcd_mosi; // buffered port:8
-		out port p_lcd_cs_n;
-		out port p_core1_shared;
+		out port p_lcd_sclk;      //!< i2c serial clock
+		out port p_lcd_mosi;      //!< i2c serial data
+		out port p_lcd_cs_n;      //!< i2c chip select
+		out port p_core1_shared;  //!< Display data/control select
 	} lcd_interface_t;
 #endif
 
