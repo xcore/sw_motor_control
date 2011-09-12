@@ -6,8 +6,6 @@ This module provides a details on the display interface and shared IO manager us
 The shared IO manager interfaces to the following components on the board:
 
    * A Newhaven Display NHD-C12832A1Z-FSW-FBW-3V3 128 x 32 pixel monochrome LCD display via a SPI like interface.
-   * Ethernet reset signal.
-   * CAN PHY control signals (TERM and RS).
    * The 4 push button surface mount switches (marked A-D).
 
 
@@ -17,12 +15,12 @@ Provision could also be made in this thread to drive the 4 surface mount LEDs ne
 Hardware Interface
 ++++++++++++++++++
 
-The interface is implemented using ports on XCore 1 - it uses 11 pins in total, including:
+The interface is implemented using 11 pins in total, including:
 
 
-   * 1 x 4 bit port shared between the Ethernet reset, CAN control and display address / data signals.
+   * 1 x 4 bit port to control the display address / data signal.
    * 3 x 1-bit ports for the display chip select, serial clock and data signals.
-   * 4 x 1-bit ports for the buttons A-D. 
+   * 1 x 4-bit ports for the buttons A-D. 
 
 
 
@@ -43,26 +41,21 @@ The function is called from main with parameters passing a structure containing 
 The server_thread prototype is:
 
 
-void display_shared_io_manager( chanend c_eth, chanend c_can, chanend c_control, REFERENCE_PARAM(lcd_interface_t, p), in port btns[] )
+void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface_t, p), in port btns, out port leds )
 
 
-The input channels are used for the following communications:
+The purpose of each argument is as follows:
 
-   * c_eth - receives Ethernet reset signals from the Ethernet MAC.
-   * c_can - receives changes for the CAN control signals from the CAN PHY.
-   * c_control - receives speed and current information from the main motor control thread and sets the speed requested.
+   * c_speed - an array of speed control channel for controlling the motors
+   * p - a reference to the control structure describing the LCD interface
+   * btns - a 4 bit input port attached to the buttons
+   * leds - a 4 bit output port attached to the leds
 
 The main shared IO manager is constructed from a select statement that sits inside a while(1) loop, so that it gets executed repeatedly.
 
 
-   * case t when timerafter(time + 10000000) :> time : - timer that executes at 10Hz. This gets the current speed, current Iq and speed setpoint from the outer motor speed control loop and updates the display with the new values. It also debounces the buttons.
-   * case c_eth :> eth_command : - receives Ethernet reset signals from the Ethernet MAC and sets/unsets the appropriate bit.
-   * case c_can :> can_command : - receives changes for the CAN control signals from the CAN PHY and sets/unsets the appropriate bits.
-   * case !btn_en[0] => btns[0] when pinseq(0) :> void : - execute commands if button A is pressed. Increases the desired speed by PWM\_INC\_DEC\_VAL and sends it to the outer motor speed control loop.
-   * case !btn_en[1] => btns[1] when pinseq(0) :> void : - execute commands if button B is pressed. Decreases the desired speed by PWM\_INC\_DEC\_VAL and sends it to the outer motor speed control loop.
-   * case !btn_en[2] => btns[2] when pinseq(0) :> void : - execute commands if button C is pressed. No actual command is executed.
-   * case !btn_en[3] => btns[3] when pinseq(0) :> void : - execute commands if button D is pressed. No actual command is executed.
-
+   * case t when timerafter(time + 10000000) :> time : - timer that executes at 10Hz. This gets the current speed, current Iq and speed setpoint from the motor control loops and updates the display with the new values. It also debounces the buttons.
+   * case !btn_en => btns when pinsneq(value) :> value: - execute commands if a button is pressed.
 
 The switches are debounced by incrementing the but\_en guard signal for that switch by 4 each time they are pressed.
 This prevents the code for this button being run until the guard has reached 0.
@@ -82,7 +75,7 @@ The protocol is unidirectional SPI with a separate command / data pin which spec
 The procedure for sending a byte to the display is:
 
    * Select the display using the CS_N signal.
-   * Set the address / data flag (this requires knowing the current port_val as it is on the shared port).
+   * Set the address / data flag.
    * Clock out the 8 bits of data MSB first by:
      - Setting the data pin to the bit value.
      - Setting clock high.
