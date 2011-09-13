@@ -33,7 +33,7 @@ The main motor control code for this application can be located in ``src/motor/r
 	port out p_pwm_lo[],
         chanend? c_wd );
 
-This is in essence an entirely open loop function that bases the commutation upon the current hall sensor state.
+The core of this function is a continuous loop that receives the position of the rotor as measured by the hall sensor, and selects which coil to energise based on that position.
 
 After initially pausing and starting the watchdog the main loop is entered. The main loop responds to two events. The first event is a change in hall sensor state. This will trigger an update to the low side of the inverters (p_pwm_lo) and also to the PWM side of the inverter based on the hall sensor state. The output states are defined by the lookup arrays declared at the start of the function.
 

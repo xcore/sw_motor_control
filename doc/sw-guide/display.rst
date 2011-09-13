@@ -40,8 +40,12 @@ The shared IO manager that interacts with the hardware is a single thread with t
 The function is called from main with parameters passing a structure containing the appropriate ports into it.
 The server_thread prototype is:
 
+::
 
-void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface_t, p), in port btns, out port leds )
+    void display_shared_io_manager( chanend c_speed[],
+                                    REFERENCE_PARAM(lcd_interface_t, p),
+                                    in port btns,
+                                    out port leds )
 
 
 The purpose of each argument is as follows:
@@ -54,10 +58,10 @@ The purpose of each argument is as follows:
 The main shared IO manager is constructed from a select statement that sits inside a while(1) loop, so that it gets executed repeatedly.
 
 
-   * case t when timerafter(time + 10000000) :> time : - timer that executes at 10Hz. This gets the current speed, current Iq and speed setpoint from the motor control loops and updates the display with the new values. It also debounces the buttons.
-   * case !btn_en => btns when pinsneq(value) :> value: - execute commands if a button is pressed.
+   * ``case t when timerafter(time + 10000000) :> time :`` - timer that executes at 10Hz. This gets the current speed, current Iq and speed setpoint from the motor control loops and updates the display with the new values. It also debounces the buttons.
+   * ``case !btn_en => btns when pinsneq(value) :> value:`` - execute commands if a button is pressed.
 
-The switches are debounced by incrementing the but\_en guard signal for that switch by 4 each time they are pressed.
+The switches are debounced by incrementing the ``but\_en`` guard signal for that switch by 4 each time they are pressed.
 This prevents the code for this button being run until the guard has reached 0.
 
 The 10Hz timer in the select statement decrements the value by one, if the value is not 0, on each iteration though it's loop.
@@ -83,20 +87,17 @@ The procedure for sending a byte to the display is:
    * Deselect the display using the CS\_N signal.
 
 
-The following functions are provided that use the lcd_byte_out(..) function to send data to the display:
+The following functions are provided that use the ``lcd_byte_out`` function to send data to the display:
 
-   * lcd_clear(..) - this wipes the display by writing blank characters into the displays output buffer.
-   * lcd_draw_image(..) - this takes an unsigned char array of size 512 bytes and writes it to the display. Hence, it can be used to display images on the display.
-   * lcd_draw_text_row(..) - writes a row of 21 characters to the display on the row specified by lcd_row (0-3).
+   * ``lcd_clear`` - this wipes the display by writing blank characters into the displays output buffer.
+   * ``lcd_draw_image`` - this takes an unsigned char array of size 512 bytes and writes it to the display. Hence, it can be used to display images on the display.
+   * ``lcd_draw_text_row`` - writes a row of 21 characters to the display on the row specified by lcd_row (0-3).
 
 
-The display is configured as 128 columns x 4 byte rows, as the byte writes the data to 8 pixel rows in one transfer.
-
+The display is configured as 128 columns x 4 byte rows, as the byte writes the data to 8 pixel rows in one transfer.  
 A 5x7 pixel font map is provided for the characters A-z, a-z, 0-9 and standard punctuation.
 
 The command set for the display is defined in the datasheet.
-When sending data to the display it is best to try to send the data as fast as possible.
-
-This is because the display has to be turned off, whilst the data is being written to it.
-
+When sending data to the display it is best to try to send the data as fast as possible.  
+This is because the display has to be turned off, whilst the data is being written to it.  
 Therefore, writing large amounts of data on a regular basis can cause the display to flicker.

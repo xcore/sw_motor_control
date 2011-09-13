@@ -49,12 +49,21 @@ The processing blocks module provides the following Clarke and park transforms. 
 ::
 
   #include "park.h"
-  void park_transform( int *Id, int *Iq, int I_alpha, int I_beta, unsigned theta );
-  void inverse_park_transform( int *I_alpha, int *I_beta, int Id, int Iq, unsigned theta );
+  void park_transform( int *Id, int *Iq,
+                       int I_alpha, int I_beta,
+                       unsigned theta );
+
+  void inverse_park_transform( int *I_alpha, int *I_beta,
+                               int Id, int Iq,
+                               unsigned theta );
+
 
   #include "clarke.h"
-  void clarke_transform( int *I_alpha, int *I_beta, int Ia, int Ib, int Ic );
-  void inverse_clarke_transform( int *Ia, int *Ib, int *Ic, int alpha, int beta );
+  void clarke_transform( int *I_alpha, int *I_beta,
+                         int Ia, int Ib, int Ic );
+
+  void inverse_clarke_transform( int *Ia, int *Ib, int *Ic,
+                                 int alpha, int beta );
 
 
 Each function has the calculation destinations passed as pointers (or references in XC) and the inputs to the calculations are passed as normal arguments. See a description of field oriented control for the purpose of each of these transformations. Briefly, the Park transform moves the rotating frame of reference of values relative to the stator (and the QEI and ADCs) into the frame of reference of the rotor.  The Clarke transform takes 3-vector values which are gathered by measurement of the three coils and transforms them into a 2-vector value.  This is possible because the 3-vectors have only 2 degrees of freedom, the current in one of the coils being the sum of the other two.
