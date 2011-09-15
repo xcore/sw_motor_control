@@ -16,17 +16,16 @@ The PWM module has three modes of operation defined, plus a number of other opti
 PWM Modes
 ~~~~~~~~~
 
-The PWM operation mode can be one of three of the following options:
+The PWM operation mode can be one of the following options:
 
-   * PWM_INV_MODE - This operates a three leg 180 degree inverter by ensuring that the HI and LO sides of the inverter are switched in a complementary manner
-   * PWM_NOINV_MODE - Simple three channel PWM that operates three channels as above without the inversion
-   * PWM_BLDC_MODE - Basic BLDC commutation mode operates a three leg inverter by switching the HI side and then applying PWM to the low side of the inverter to achieve simple commutation
+   * An inverted mode, whis operates a three leg 180 degree inverter by ensuring that the HI and LO sides of the inverter are switched in a complementary manner
+   * A simple mode, which operates a three leg inverter by switching the HI side and then applying PWM to the low side of the inverter to achieve simple commutation
 
 
 Dead Time
 ~~~~~~~~~
 
-The dead time for PWM_INV_MODE is defined using the PWM_DEAD_TIME configuration. This is in units of 10ns when using the default reference clock of 100MHz.  The dead time is the short period of time between the non-inverted and the inverted PWM lines changing.  During this time, neither side of the H-bridge is connected to the motor. The two signals are staggered by the dead time so that the two sides of the H-bridge are never ON at the same time, and do not change simultaneously.
+The dead time for the inverted mode is defined using the PWM_DEAD_TIME configuration. This is in units of 10ns when using the default reference clock of 100MHz.  The dead time is the short period of time between the non-inverted and the inverted PWM lines changing.  During this time, neither side of the H-bridge is connected to the motor. The two signals are staggered by the dead time so that the two sides of the H-bridge are never ON at the same time, and do not change simultaneously.
 
 PWM Resolution
 ~~~~~~~~~~~~~~
@@ -40,44 +39,36 @@ So with an example value of PWM_MAX_VALUE being 4096 (12 bit resolution), the PW
 Locking the ADC trigger to PWM
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In some implementations it is desirable to lock the ADC conversion trigger to the PWM. This allows the system to sample the ADC at a specific point in the PWM period (such as when the lower leg is guaranteed to be on). This is enabled using the LOCK_ADC_TO_PWM definition.  The PWM server thread functions change their arguments to include a channel which signals the ADC module, and a dummy port which is used as a timing source for the ADC trigger action.  This port is not actually driven, and a port which is not pinned out of the device can be used.
-
-Default PWM Configuration
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The default configuration for the demonstration application is as follows. 
-
-::
-
-  #define PWM_INV_MODE 1
-  #define PWM_DEAD_TIME 10
-  #define PWM_MAX_VALUE 4096
-  #define LOCK_ADC_TO_PWM 1
+In some implementations it is desirable to lock the ADC conversion trigger to the PWM. This allows the system to sample the ADC at a specific point in the PWM period (such as when the lower leg is guaranteed to be on). This is enabled using the LOCK_ADC_TO_PWM definition.  The PWM server thread function ``pwm_service_inv_triggered`` should be used, which has extra arguments to include a channel which signals the ADC module, and a dummy port which is used as a timing source for the ADC trigger action.  This port is not actually driven, and a port which is not pinned out of the device can be used.
 
 
 PWM Server Usage
 ++++++++++++++++
 
-The usage for each mode is described below. The PWM server needs to be instantiated on the same core as the PWM client. The following is required to be included.
+The usage for each mode is described below. The PWM server needs to be instantiated on the same core as the PWM client. One of the following is required to be included.
 
-
-``#include "pwm_service.h"``
+  * pwm_service_simple.h
+  * pwm_service_inv.h
 
 
 Inverter Mode
 ~~~~~~~~~~~~~
 
-To instantiate the PWM service the following function needs to be called with PWM_INV_MODE and LOCK_ADC_TO_PWM defined.
+To instantiate the PWM service, one of the following function needs to be called.  The first is used when ADC synchronization is required, for which ``LOCK_ADC_TO_PWM`` must be defined.
 
 ::
 
-  void do_pwm( chanend c_pwm,
+  void do_pwm_inv_triggered( chanend c_pwm,
         chanend c_adc_trig, 
-	in port dummy_port, 
-	buffered out port:32 p_pwm[],  
-	buffered out port:32 p_pwm_inv[], 
-	clock clk);
+	    in port dummy_port, 
+	    buffered out port:32 p_pwm[],  
+	    buffered out port:32 p_pwm_inv[], 
+	    clock clk);
 
+  void do_pwm_inv( chanend c_pwm,
+        buffered out port:32 p_pwm[],  
+        buffered out port:32 p_pwm_inv[], 
+        clock clk);
 
 ``chanend c_pwm`` is the channel used to communication with the client side.
 
@@ -89,28 +80,12 @@ To instantiate the PWM service the following function needs to be called with PW
 
 ``clock clk`` is the clock block that the PWM thread uses for timing output.
 
-If ``LOCK_ADC_TO_PWM`` is not defined then the following call is used.
-
-::
-
-  void do_pwm( chanend c_pwm,
-	buffered out port:32 p_pwm[],  
-	buffered out port:32 p_pwm_inv[], 
-	clock clk);
 
 
-The argument definitions are as above.
+Simple commutation mode
+~~~~~~~~~~~~~~~~~~~~~~~
 
-
-Simple three channel PWM mode
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This mode is currently only used for testing. It is similar in operation to the inverter mode, but does not have ADC locking functionality and operates only half of the inverter. 
-
-Basic BLDC commutation mode
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-This mode of operation is slightly different to the others as it is designed for simple commutation of a brushless DC motor. An example of the output of this mode is shown in the figure below.
+This mode is designed for simple commutation of a brushless DC motor. An example of the output of this mode is shown in the figure below.
 
   .. image:: images/bldcpwm.pdf
      :width: 100%
@@ -119,7 +94,7 @@ To instantiate the PWM service in this mode the following function needs to be c
 
 ::
 
-  void do_pwm( chanend c_pwm, 
+  void do_pwm_simple( chanend c_pwm, 
 	buffered out port:32 p_pwm[], 
 	clock clk);
 
@@ -133,10 +108,10 @@ To instantiate the PWM service in this mode the following function needs to be c
 PWM Client Usage
 ++++++++++++++++
 
-Because the client and server use shared memory to communicate, the PWM client functions must be operated on the same core as the server. The usage of the client functions in the various operational modes are described below. The following must be included to call the client functions.
+Because the client and server use shared memory to communicate, the PWM client functions must be operated on the same core as the server. The usage of the client functions in the various operational modes are described below. The following must be included to call the client functions, depending on the commutation mode chosen:
 
-
-``#include "pwm_cli.h"``
+  * ``pwm_cli_simple.h``
+  * ``pwm_cli_inv.h``
 
 
 Inverter Mode
@@ -144,14 +119,9 @@ Inverter Mode
 
 The only call required to update the PWM values that are currently being output is listed below. It takes only two arguments, the channel to the PWM server and an array of size three containing unsigned integers that must be between 0 and PWM_MAX_VALUE.
 
-``void update_pwm( chanend c, unsigned value[]);``
+``void update_pwm_inv( chanend c, unsigned value[]);``
 
 This function will process the values and pass them to the PWM service thread.
-
-Simple three channel PWM mode
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-See details above for the Inverter Mode.
 
 Basic BLDC commutation mode
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -162,7 +132,7 @@ Only a single output is active at any one time and this channel must be identifi
 
 ::
 
-  void update_pwm( chanend c, 
+  void update_pwm_simple( chanend c, 
 	unsigned value, 
 	unsigned pwm_chan );
 
@@ -266,7 +236,7 @@ The PWM client is required to do a number of functions to provide the correct da
    * Ascertain the loop mode required
    * Maintain the shared data set, including which buffer is in use and which one can be updated
 
-Taking the inverter mode as our working example (located in ``module_dsc_pwm/src/dsc_pwm_cli/pwm_cli_inv``) the function update_pwm(...) first saves the PWM values for later use and then initialises the channel ordering array to assume a sequential order of output. 
+Taking the inverter mode as our working example (located in ``module_dsc_pwm/src/dsc_pwm_cli/pwm_cli_inv``) the function update_pwm_inv(...) first saves the PWM values for later use and then initialises the channel ordering array to assume a sequential order of output. 
 
 Following this the calculation of the timings and output values are done for each of the channel. This is done by passing the relevant PWM value and data set references to the calculate_data_out_ref(...). This function also ascertains the type of output which can be one of three values SINGLE, DOUBLE and LONG_SINGLE.
 

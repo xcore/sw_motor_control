@@ -11,20 +11,6 @@ Configuration Defines
 The file dsc_config.h must be provided in the application source
 code. This file can set the following defines:
 
-**PWM_BLDC_MODE**
-
-    With this set, the motor is spun using basic BLDC commutation. The PWM is
-    single sided, with the high side of the half-bridge operated by the top level
-    application.
-
-**PWM_NOINV_MODE**
-
-    With this set, the PWM is a non-inverted centre symmetric set of channels.
-
-**PWM_INV_MODE**
-
-    With this set, the PWM is an sinverted centre symmetric set of channels.
-
 **PWM_DEAD_TIME**
 
     This is the period, in 10ns intervals, which is not counted towards the PWM
@@ -119,20 +105,24 @@ Client functions
 
 .. doxygenfunction:: pwm_share_control_buffer_address_with_server
 
-BLDC PWM mode
-~~~~~~~~~~~~~
+Simple PWM mode
+~~~~~~~~~~~~~~~
 
-.. doxygenfunction:: update_pwm
+.. doxygenfunction:: update_pwm_simple
 
-Inverting and non-inverting centre aligned PWM
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Inverting centre aligned PWM mode
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. doxygenfunction:: update_pwm
+.. doxygenfunction:: update_pwm_inv
 
 Server functions
 ++++++++++++++++
 
-.. doxygenfunction:: do_pwm
+.. doxygenfunction:: do_pwm_simple
+
+.. doxygenfunction:: do_pwm_inv
+
+.. doxygenfunction:: do_pwm_inv_triggered
 
 Hall sensors
 ------------
