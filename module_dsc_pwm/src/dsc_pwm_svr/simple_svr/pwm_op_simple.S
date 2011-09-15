@@ -75,7 +75,7 @@ pwm_op_simple:
 	mov r8, r2 // move channel to r8
 
 	//prep for reading ports
-	ldc r0, 4 // entry is 4 bytes long
+	ldc r0, 12 // entry is 4x3 bytes long
 	mul r0, r6, r0 // buf * length, to get to the right place in the array
 	add r1, r0, r3 // r1 = pointer to port id
 
@@ -86,13 +86,13 @@ pwm_op_simple:
 	// prep for reading data_out
 	ldc r4, OFFSET_OF_DATA_OUT
 	add r4, r3, r4
-	ldc r7, (SIZE_OF_T_DATA_OUT) // size of structure
+	ldc r7, (SIZE_OF_T_DATA_OUT*3) // size of structure
 	mul r7, r7, r6 // buf * struct size -> to get to the right place in the array
 	add r2, r7, r4 // add offset to pointer, now at top of correct array of structs
 
 	// read mode
-	ldc r5, OFFSET_OF_MODE_BUF
-	add r4, r3, r5
+	ldc r7, OFFSET_OF_MODE_BUF
+	add r4, r3, r7
 	ldaw r4, r4[r6]
 	ldw r4, r4[0]
 	
@@ -152,7 +152,7 @@ GO_UPDATE_M1:
 	ldw r7, sp[6]
 
     //prep for reading ports
-    ldc r0, 4 // entry is 4 bytes long
+    ldc r0, 12 // entry is 4x3 bytes long
     mul r0, r6, r0 // buf * length, to get to the right place in the array
     add r1, r0, r3 // r1 = pointer to port id
 
@@ -163,13 +163,13 @@ GO_UPDATE_M1:
     // prep for reading data_out
     ldc r4, OFFSET_OF_DATA_OUT
     add r4, r3, r4
-    ldc r7, (SIZE_OF_T_DATA_OUT) // size of structure
+    ldc r7, (SIZE_OF_T_DATA_OUT*3) // size of structure
     mul r7, r7, r6 // buf * struct size -> to get to the right place in the array
     add r2, r7, r4 // add offset to pointer, now at top of correct array of structs
 
     // read mode
-    ldc r5, OFFSET_OF_MODE_BUF
-    add r4, r3, r5
+    ldc r7, OFFSET_OF_MODE_BUF
+    add r4, r3, r7
     ldaw r4, r4[r6]
     ldw r4, r4[0]
 
