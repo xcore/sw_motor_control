@@ -1,10 +1,6 @@
-/**
+/*
  * Module:  module_dsc_pwm
- * Version: 1v1
- * Build:
  * File:    pwm_service_bldc.h
- * Author: 	Srikanth
- *
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -30,7 +26,6 @@
  *
  *  Implements the server thread for the PWM outputs
  *
- *  \param motor the index of the motor being controlled
  *  \param c_pwm control channel for setting PWM values
  *  \param p_pwm the buffered IO ports for the 3 PWM channels
  *  \param clk a clock for generating accurate PWM timing

@@ -1,7 +1,5 @@
-/**
+/*
  * Module:  module_dsc_pwm
- * Version: 0v9sd
- * Build:   e5396b80fb9aa55f9ac7b96a4d043e1e8662d624
  * File:    pwm_cli_inv.h
  *
  * The copyrights, all other intellectual and industrial 

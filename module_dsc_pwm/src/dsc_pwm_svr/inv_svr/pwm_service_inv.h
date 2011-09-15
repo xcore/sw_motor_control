@@ -1,7 +1,5 @@
-/**
+/*
  * Module:  module_dsc_pwm
- * Version: 1v0alpha1
- * Build:   f29fa5888a0d92c83949f37a31efe2ec19a95534
  * File:    pwm_service_inv.h
  *
  * The copyrights, all other intellectual and industrial 

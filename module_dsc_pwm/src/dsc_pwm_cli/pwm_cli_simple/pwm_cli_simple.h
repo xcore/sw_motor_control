@@ -1,10 +1,6 @@
-/**
+/*
  * Module:  module_dsc_pwm
- * Version: 1v1
- * Build:
  * File:    pwm_cli_bldc.h
- * Author: 	Srikanth
- *
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 

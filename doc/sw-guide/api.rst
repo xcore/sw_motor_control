@@ -207,8 +207,3 @@ LCD
 .. doxygenfunction:: lcd_draw_text_row
 
 
-Display and reset server
-++++++++++++++++++++++++
-
-.. doxygenfunction:: display_shared_io_motor
-
