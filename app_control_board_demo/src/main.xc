@@ -33,8 +33,8 @@
 #include "dsc_config.h"
 #include "hall_input.h"
 #include "pos_estimator.h"
-#include "pwm_cli.h"
-#include "pwm_service.h"
+#include "pwm_cli_inv.h"
+#include "pwm_service_inv.h"
 #include "shared_io.h"
 #include "qei_server.h"
 #include "qei_client.h"
@@ -556,8 +556,8 @@ void do_demo_motor(chanend commands, chanend c_pwm[], chanend c_qei[], chanend c
 	pwm[0] = 0;
 	pwm[1] = 0;
 	pwm[2] = 0;
-	update_pwm(pwm_ctrl1, c_pwm[0], pwm);
-	update_pwm(pwm_ctrl2, c_pwm[1], pwm);
+	update_pwm_inv(pwm_ctrl1, c_pwm[0], pwm);
+	update_pwm_inv(pwm_ctrl2, c_pwm[1], pwm);
 
 	while (1)
 	{
@@ -589,14 +589,14 @@ void do_demo_motor(chanend commands, chanend c_pwm[], chanend c_qei[], chanend c
 					commands :> pwm[0];
 					commands :> pwm[1];
 					commands :> pwm[2];
-					update_pwm(pwm_ctrl1, c_pwm[0], pwm);
+					update_pwm_inv(pwm_ctrl1, c_pwm[0], pwm);
 					break;
 
 				case CMD_PWM_2:
 					commands :> pwm[0];
 					commands :> pwm[1];
 					commands :> pwm[2];
-					update_pwm(pwm_ctrl2, c_pwm[1], pwm);
+					update_pwm_inv(pwm_ctrl2, c_pwm[1], pwm);
 					break;
 
 				case CMD_QEI:
@@ -627,9 +627,9 @@ int main ( void )
 		on stdcore[INTERFACE_CORE] : do_demo_interface(c_xtcp[0], c_demo_commands);
 		on stdcore[MOTOR_CORE] : do_demo_motor(c_demo_commands, c_pwm, c_qei, c_adc, p_hall1, p_hall2);
 
-		on stdcore[MOTOR_CORE] : do_pwm( c_pwm[0], c_adc_trig[0], ADC_SYNC_PORT1, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
+		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[0], c_adc_trig[0], ADC_SYNC_PORT1, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei[0], p_qei1 );
-		on stdcore[MOTOR_CORE] : do_pwm( c_pwm[1], c_adc_trig[1], ADC_SYNC_PORT2, p_pwm_hi2, p_pwm_lo2, pwm_clk2 );
+		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[1], c_adc_trig[1], ADC_SYNC_PORT2, p_pwm_hi2, p_pwm_lo2, pwm_clk2 );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei[1], p_qei2 );
 
 		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );

@@ -20,8 +20,10 @@
 
 /** \brief ADC calibration sequence
  *
- * This reads a set of ADC values and takes an average.  This is then
- * used as a baseline for further ADC readings.
+ * This switches the ADC server into calibration mode.  After a number (512) of samples
+ * the server reverts to non-calibration mode, and subsequent calls to the function
+ * get_adc_vals_calibrated_int16 will take the measured average of the calibration
+ * period as an offset
  *
  * \param c_adc the control channel to the ADC server
  */

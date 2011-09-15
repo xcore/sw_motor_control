@@ -3,8 +3,8 @@
 
 #include <print.h>
 
-#include "pwm_cli.h"
-#include "pwm_service.h"
+#include "pwm_cli_inv.h"
+#include "pwm_service_inv.h"
 
 /* WARNING: This test application is for use in simuation only.  It may damage a motor if applied
  * to a working system.
@@ -27,7 +27,7 @@ void do_test(chanend c_pwm)
 	value[0] = 15;
 	value[1] = 1000;
 	value[2] = 4080;
-	update_pwm(pwm_ctrl, c_pwm, value);
+	update_pwm_inv(pwm_ctrl, c_pwm, value);
 }
 
 int main ( void )
@@ -37,7 +37,7 @@ int main ( void )
 	par
 	{
 		/* L1 */
-		on stdcore[1]: do_pwm( c_pwm, p_pwm_hi1, p_pwm_lo1, pwm_clk);
+		on stdcore[1]: do_pwm_inv( c_pwm, p_pwm_hi1, p_pwm_lo1, pwm_clk);
 		on stdcore[1]: do_test( c_pwm );
 	}
 	return 0;

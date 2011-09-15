@@ -1,8 +1,5 @@
 /**
  * Module:  module_dsc_pwm
- * Version: 0v9sd
- * Build:   171b0edc1da8cc48077795eb92c73d0fb72d28b7
- * File:    pwm_op_bldc.S
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -28,9 +25,7 @@
 #include "dsc_pwm_common.h"
 #include "dsc_config.h"
 
-#ifdef PWM_BLDC_MODE
-
-.extern pwm_op_bldc
+.extern pwm_op_simple
 
 .section .text
 
@@ -38,24 +33,24 @@
 
 // Main PWM Service routine
 
-.globl pwm_op_bldc.nstackwords
-.globl pwm_op_bldc.maxthreads
-.globl pwm_op_bldc.maxtimers
-.globl pwm_op_bldc.maxchanends
+.globl pwm_op_simple.nstackwords
+.globl pwm_op_simple.maxthreads
+.globl pwm_op_simple.maxtimers
+.globl pwm_op_simple.maxchanends
 
-.linkset pwm_op_bldc.nstackwords, 7
-.linkset pwm_op_bldc.maxchanends, 1
-.linkset pwm_op_bldc.maxtimers, 0
-.linkset pwm_op_bldc.maxthreads, 0
+.linkset pwm_op_simple.nstackwords, 7
+.linkset pwm_op_simple.maxchanends, 1
+.linkset pwm_op_simple.maxtimers, 0
+.linkset pwm_op_simple.maxthreads, 0
 
-.cc_top pwm_op_bldc.func, pwm_op_bldc
-.globl pwm_op_bldc
+.cc_top pwm_op_simple.func, pwm_op_simple
+.globl pwm_op_simple
 
 // r0 - buffer index
 // r1 - p_pwm[],
 // r2 - channel
 // r3 - pointer to control structure
-pwm_op_bldc:
+pwm_op_simple:
 	entsp 7
 
 	// callee save
@@ -96,7 +91,8 @@ pwm_op_bldc:
 	add r2, r7, r4 // add offset to pointer, now at top of correct array of structs
 
 	// read mode
-	add r4, r3, OFFSET_OF_MODE_BUF
+	ldc r5, OFFSET_OF_MODE_BUF
+	add r4, r3, r5
 	ldaw r4, r4[r6]
 	ldw r4, r4[0]
 	
@@ -172,7 +168,8 @@ GO_UPDATE_M1:
     add r2, r7, r4 // add offset to pointer, now at top of correct array of structs
 
     // read mode
-    add r4, r3, OFFSET_OF_MODE_BUF
+    ldc r5, OFFSET_OF_MODE_BUF
+    add r4, r3, r5
     ldaw r4, r4[r6]
     ldw r4, r4[0]
 
@@ -217,6 +214,5 @@ PWM_MODE_2:
 	
 	bu PWM_MODE_2
 
-.cc_bottom pwm_op_bldc.func
+.cc_bottom pwm_op_simple.func
 	
-#endif

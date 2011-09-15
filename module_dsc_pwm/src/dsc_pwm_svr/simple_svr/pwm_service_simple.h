@@ -26,10 +26,16 @@
 #include "dsc_pwm_common.h"
 #include "dsc_pwm_common_types.h"
 
-/*
- * Basic BLDC pwm operation
+/** \brief Implementation of the BLDC PWM server
+ *
+ *  Implements the server thread for the PWM outputs
+ *
+ *  \param motor the index of the motor being controlled
+ *  \param c_pwm control channel for setting PWM values
+ *  \param p_pwm the buffered IO ports for the 3 PWM channels
+ *  \param clk a clock for generating accurate PWM timing
  */
-void do_pwm_bldc( chanend c_pwm, buffered out port:32 p_pwm[], clock clk);
+void do_pwm_simple( chanend c_pwm, buffered out port:32 p_pwm[], clock clk);
 
 
 #endif

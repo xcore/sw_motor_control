@@ -28,8 +28,6 @@
 #include "dsc_pwm_common.h"
 #include "dsc_config.h"
 
-#ifdef PWM_INV_MODE
-
 .extern pwm_op_inv
 .globl pwm_op_inv.nstackwords
 .globl pwm_op_inv.maxthreads
@@ -956,5 +954,4 @@ GO_UPDATE_M7:
 
 
 .cc_bottom pwm_op_inv.func
-	
-#endif
+

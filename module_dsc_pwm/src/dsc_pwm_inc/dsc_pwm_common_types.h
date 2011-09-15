@@ -51,17 +51,10 @@ typedef struct PWM_OUT_DATA
 
 // Shared memory structure for the client->server
 typedef struct {
-#ifdef PWM_BLDC_MODE
-	unsigned chan_id_buf[2];
-	unsigned mode_buf[2];
-	t_out_data pwm_out_data_buf[2];
-	unsigned pwm_cur_buf;
-#else
 	unsigned chan_id_buf[2][3];
 	unsigned mode_buf[2];
 	t_out_data pwm_out_data_buf[2][3];
 	unsigned pwm_cur_buf;
-#endif
 } t_pwm_control;
 
 

@@ -25,8 +25,8 @@
 #include <stdio.h>
 
 #include "hall_input.h"
-#include "pwm_cli.h"
-#include "pwm_service.h"
+#include "pwm_cli_simple.h"
+#include "pwm_service_simple.h"
 #include "run_motor.h"
 #include "watchdog.h"
 #include "shared_io.h"
@@ -206,9 +206,9 @@ int main ( void )
 		}
 
 		/* L1 */
-		on stdcore[MOTOR_CORE]: do_pwm(c_pwm[0], p_pwm_hi1, pwm_clk);
+		on stdcore[MOTOR_CORE]: do_pwm_simple(c_pwm[0], p_pwm_hi1, pwm_clk);
 		on stdcore[MOTOR_CORE]: run_motor(c_pwm[0], c_control[0], p_hall1, p_motor_lo1, c_wd );
-		on stdcore[MOTOR_CORE]: do_pwm(c_pwm[1], p_pwm_hi2, pwm_clk2);
+		on stdcore[MOTOR_CORE]: do_pwm_simple(c_pwm[1], p_pwm_hi2, pwm_clk2);
 		on stdcore[MOTOR_CORE]: run_motor(c_pwm[1], c_control[1], p_hall2, p_motor_lo2, null );
 
 

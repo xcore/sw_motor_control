@@ -21,12 +21,6 @@
 #ifndef _DSC_CONFIG__H_
 #define _DSC_CONFIG__H_
 
-// Define the PWM operation mode:
-// PWM_INV_MODE - output all 6 channels. 3 channels the inverse of the other 3 (A, A', B, B', C, C')
-// PWM_NOINV_MODE - output 3 channels (A, B, C)
-// PWM_BLDC_MODE - output only 2 enabled channels at a time
-#define PWM_INV_MODE 1
-
 // Define the number of motors
 #define NUMBER_OF_MOTORS 2
 

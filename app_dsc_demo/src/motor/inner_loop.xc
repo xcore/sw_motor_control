@@ -17,7 +17,7 @@
 #include <xs1.h>
 #include "inner_loop.h"
 #include "hall_input.h"
-#include "pwm_cli.h"
+#include "pwm_cli_inv.h"
 #include "clarke.h"
 #include "park.h"
 #include "pid_regulator.h"
@@ -43,7 +43,10 @@
 #define PWM_MAX_LIMIT 3800
 #define PWM_MIN_LIMIT 200
 #define OFFSET_14 16383
-#define ITERATION_LIMIT 500
+
+// Iteration limit must be longer than the ADC calibration period to make sure that the ADC calibrates during
+// the motor spin up period
+#define ITERATION_LIMIT 512
 
 const unsigned bldc_high_seq[6] = {2,0,0,1,1,2};
 const unsigned bldc_new_seq[3] = {0,1,2};
@@ -116,8 +119,9 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	{
 		timer t;
 		unsigned ts;
+		unsigned thread_id = get_thread_id();
 		t :> ts;
-		t when timerafter(ts+10*SEC) :> ts;
+		t when timerafter(ts+4*SEC+256*thread_id) :> ts;
 	}
 
 	/* Zero pwm */
@@ -129,7 +133,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	do_adc_calibration( c_adc );
 
 	/* Update PWM */
-	update_pwm( pwm_ctrl, c_pwm, pwm );
+	update_pwm_inv( pwm_ctrl, c_pwm, pwm );
 
 	/* allow the WD to get going */
 	if (!isnull(c_wd)) {
@@ -229,7 +233,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 					pwm[2] = pwm_val;
 				}
 
-				/* Open loop ends after 500 iterations and zero position of hall state detected */
+				/* Open loop ends after a fixed number of iterations and zero position of hall state detected */
 				if ((counter >= ITERATION_LIMIT) && (hall_state == 0))
 				{
 					bldc_hall_mode = 0;
@@ -237,7 +241,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 				counter++;
 
 				/* Update the PWM values */
-				update_pwm( pwm_ctrl, c_pwm, pwm );
+				update_pwm_inv( pwm_ctrl, c_pwm, pwm );
 
 			}
 			else
@@ -290,23 +294,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 				}
 
 				/* Update the PWM values */
-				update_pwm( pwm_ctrl, c_pwm, pwm );
-
-#ifdef USE_XSCOPE
-				{
-					static unsigned int counter=0;
-					if (++counter > 10) {
-						counter = 0;
-//						xscope_probe_data(0, theta);
-//						xscope_probe_data(1, speed);
-						xscope_probe_data(0, Ia_in);
-						xscope_probe_data(1, Ib_in);
-						xscope_probe_data(2, Ic_in);
-//						xscope_probe_data(5, set_speed);
-//						xscope_probe_data(6, pwm[0]);
-					}
-				}
-#endif
+				update_pwm_inv( pwm_ctrl, c_pwm, pwm );
 			}
 		break;
 		}

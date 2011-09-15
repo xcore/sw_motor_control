@@ -22,21 +22,11 @@
 #include "pwm_service_inv.h"
 #include "dsc_config.h"
 
-#ifdef PWM_INV_MODE
 
-/*
- * Assembly PWM operation loop
- */
 #if LOCK_ADC_TO_PWM
+
 extern unsigned pwm_op_inv( unsigned buf, buffered out port:32 p_pwm[], buffered out port:32 p_pwm_inv[], chanend c, unsigned control, chanend c_trig, in port dummy_port );
-#else
-extern unsigned pwm_op_inv( unsigned buf, buffered out port:32 p_pwm[], buffered out port:32 p_pwm_inv[], chanend c, unsigned control );
-#endif
 
-/*
- * Port configuration
- */
-#if LOCK_ADC_TO_PWM
 static void do_pwm_port_config_inv_adc_trig( in port dummy, buffered out port:32 p_pwm[], buffered out port:32 p_pwm_inv[], clock clk )
 {
 	unsigned i;
@@ -53,7 +43,31 @@ static void do_pwm_port_config_inv_adc_trig( in port dummy, buffered out port:32
 
 	start_clock(clk);
 }
+
+void do_pwm_inv_triggered( chanend c_pwm, chanend c_adc_trig, in port dummy_port, buffered out port:32 p_pwm[], buffered out port:32 p_pwm_inv[], clock clk)
+{
+
+	unsigned buf, control;
+
+	/* First read the shared memory buffer address from the client */
+	c_pwm :> control;
+
+	/* configure the ports */
+	do_pwm_port_config_inv_adc_trig( dummy_port, p_pwm, p_pwm_inv, clk );
+
+	/* wait for initial update */
+	c_pwm :> buf;
+
+	while (1)
+	{
+		buf = pwm_op_inv( buf, p_pwm, p_pwm_inv, c_pwm, control, c_adc_trig, dummy_port );
+	}
+
+}
 #else
+
+extern unsigned pwm_op_inv( unsigned buf, buffered out port:32 p_pwm[], buffered out port:32 p_pwm_inv[], chanend c, unsigned control );
+
 static void do_pwm_port_config_inv(  buffered out port:32 p_pwm[], buffered out port:32 p_pwm_inv[], clock clk )
 {
 	unsigned i;
@@ -67,16 +81,8 @@ static void do_pwm_port_config_inv(  buffered out port:32 p_pwm[], buffered out 
 
 	start_clock(clk);
 }
-#endif
 
-/*
- * PWM operation
- */
-#if LOCK_ADC_TO_PWM
-void do_pwm_inv( chanend c_pwm, chanend c_adc_trig, in port dummy_port, buffered out port:32 p_pwm[], buffered out port:32 p_pwm_inv[], clock clk)
-#else
 void do_pwm_inv( chanend c_pwm, buffered out port:32 p_pwm[],  buffered out port:32 p_pwm_inv[], clock clk)
-#endif
 {
 
 	unsigned buf, control;
@@ -85,23 +91,14 @@ void do_pwm_inv( chanend c_pwm, buffered out port:32 p_pwm[],  buffered out port
 	c_pwm :> control;
 
 	/* configure the ports */
-#if LOCK_ADC_TO_PWM
-	// has a dummy port for ADC config
-	do_pwm_port_config_inv_adc_trig( dummy_port, p_pwm, p_pwm_inv, clk );
-#else
 	do_pwm_port_config_inv( p_pwm, p_pwm_inv, clk);
-#endif
 
 	/* wait for initial update */
 	c_pwm :> buf;
 
 	while (1)
 	{
-#if LOCK_ADC_TO_PWM
-		buf = pwm_op_inv( buf, p_pwm, p_pwm_inv, c_pwm, control, c_adc_trig, dummy_port );
-#else
 		buf = pwm_op_inv( buf, p_pwm, p_pwm_inv, c_pwm, control );
-#endif
 	}
 
 }

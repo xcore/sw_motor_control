@@ -20,9 +20,7 @@
 #include "pwm_cli_inv.h"
 #include "dsc_config.h"
 
-#ifdef PWM_INV_MODE
-
-void update_pwm( t_pwm_control& ctrl, chanend c, unsigned value[])
+void update_pwm_inv( t_pwm_control& ctrl, chanend c, unsigned value[])
 {
 	unsigned pwm_val[PWM_CHAN_COUNT];
 
@@ -72,4 +70,4 @@ void update_pwm( t_pwm_control& ctrl, chanend c, unsigned value[])
 
 	c <: ctrl.pwm_cur_buf;
 }
-#endif
+

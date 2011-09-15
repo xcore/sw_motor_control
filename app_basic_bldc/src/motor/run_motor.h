@@ -22,9 +22,6 @@
 #define _RUN_MOTOR_H_
 
 #include <xs1.h>
-#include "watchdog.h"
-#include "hall_input.h"
-#include "pwm_cli.h"
 
 /* run the motor using pwm on the high side and normal switching on the low side */
 void run_motor(chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_lo[], chanend? c_wd);

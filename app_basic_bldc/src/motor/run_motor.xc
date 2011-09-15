@@ -19,7 +19,9 @@
  *
  **/
 
-
+#include "pwm_cli_simple.h"
+#include "hall_input.h"
+#include "watchdog.h"
 
 #include "run_motor.h"
 
@@ -167,7 +169,7 @@ void run_motor(chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_
 		}
 
 		/* updates pwm_val */
-		update_pwm( pwm_ctrl, c_pwm, pwm_val, high_chan );
+		update_pwm_simple( pwm_ctrl, c_pwm, pwm_val, high_chan );
 
 	}
 }

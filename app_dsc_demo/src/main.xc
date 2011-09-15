@@ -22,8 +22,8 @@
 #include "hall_input.h"
 #include "inner_loop.h"
 #include "pos_estimator.h"
-#include "pwm_cli.h"
-#include "pwm_service.h"
+#include "pwm_cli_inv.h"
+#include "pwm_service_inv.h"
 #include "shared_io.h"
 #include "watchdog.h"
 #include "qei_server.h"
@@ -214,12 +214,12 @@ int main ( void )
 			run_motor( c_pwm[0], c_qei[0], c_adc[0], c_speed[0], c_wd, p_hall1, c_commands[0]);
 		}
 
-		on stdcore[MOTOR_CORE] : do_pwm( c_pwm[0], c_adc_trig[0], ADC_SYNC_PORT1, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
+		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[0], c_adc_trig[0], ADC_SYNC_PORT1, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei[0], p_qei1 );
 
 #if NUMBER_OF_MOTORS > 1
 		on stdcore[MOTOR_CORE] : run_motor( c_pwm[1], c_qei[1], c_adc[1], c_speed[1], null, p_hall2, c_commands[1]);
-		on stdcore[MOTOR_CORE] : do_pwm( c_pwm[1], c_adc_trig[1], ADC_SYNC_PORT2, p_pwm_hi2, p_pwm_lo2, pwm_clk2 );
+		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[1], c_adc_trig[1], ADC_SYNC_PORT2, p_pwm_hi2, p_pwm_lo2, pwm_clk2 );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei[1], p_qei2 );
 #endif
 

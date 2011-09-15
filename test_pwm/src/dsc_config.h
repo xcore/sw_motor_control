@@ -1,4 +1,3 @@
-#define PWM_INV_MODE
 #define PWM_MAX_VALUE 4096
 #define PWM_DEAD_TIME 10
 

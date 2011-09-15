@@ -19,12 +19,10 @@
  *
  **/                                   
 #include <xs1.h>
-#include "pwm_cli_bldc.h"
-
-#ifdef PWM_BLDC_MODE
+#include "pwm_cli_simple.h"
 
 /* Note: This function will only look at 1 channel */
-static void order_pwm_bldc( unsigned &mode, unsigned &chan_id, t_out_data pwm_out_data)
+static void order_pwm_simple( unsigned &mode, t_out_data pwm_out_data)
 {
 	switch(pwm_out_data.cat)
 	{
@@ -40,7 +38,7 @@ static void order_pwm_bldc( unsigned &mode, unsigned &chan_id, t_out_data pwm_ou
 	}
 }
 
-void update_pwm( t_pwm_control& ctrl, chanend c, unsigned value, unsigned pwm_chan )
+void update_pwm_simple( t_pwm_control& ctrl, chanend c, unsigned value, unsigned pwm_chan )
 {
 	/* update the buffer we write to */
 	if (ctrl.pwm_cur_buf == 0)
@@ -48,16 +46,16 @@ void update_pwm( t_pwm_control& ctrl, chanend c, unsigned value, unsigned pwm_ch
 	else ctrl.pwm_cur_buf = 0;
 
 	/* get active channels and load into buffer */
-	ctrl.chan_id_buf[ctrl.pwm_cur_buf] = pwm_chan;
+	ctrl.chan_id_buf[ctrl.pwm_cur_buf][0] = pwm_chan;
 
 	/* calculate the required outputs */
-	calculate_data_out( value, ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf] );
+	calculate_data_out( value, ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][0] );
 
 	/* now order them and work out the mode */
-	order_pwm_bldc( ctrl.mode_buf[ctrl.pwm_cur_buf], ctrl.chan_id_buf[ctrl.pwm_cur_buf], ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf] );
+	order_pwm_simple( ctrl.mode_buf[ctrl.pwm_cur_buf], ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][0] );
 
 	/* trigger update */
 	c <: ctrl.pwm_cur_buf;
 }
 
-#endif
+

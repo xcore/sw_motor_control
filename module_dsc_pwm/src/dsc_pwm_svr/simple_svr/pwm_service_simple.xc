@@ -20,10 +20,8 @@
  **/                                   
 
 #include <xs1.h>
-#include "pwm_service_bldc.h"
+#include "pwm_service_simple.h"
 #include "dsc_config.h"
-
-#ifdef PWM_BLDC_MODE
 
 /******************************************************/
 /* Basic BLDC commutation just requires PWM on the    */
@@ -34,9 +32,9 @@
 /*
  * Operate PWM output - runs forever internally as updates are done using shared memory
  */
-extern unsigned pwm_op_bldc(unsigned buf, buffered out port:32 p_pwm[], chanend c, unsigned ctrl );
+extern unsigned pwm_op_simple(unsigned buf, buffered out port:32 p_pwm[], chanend c, unsigned ctrl );
 
-static void do_pwm_port_config_bldc(buffered out port:32 p_pwm[], clock clk )
+static void do_pwm_port_config_simple(buffered out port:32 p_pwm[], clock clk )
 {
 	unsigned i;
 
@@ -51,7 +49,7 @@ static void do_pwm_port_config_bldc(buffered out port:32 p_pwm[], clock clk )
 
 }
 
-void do_pwm_bldc( chanend c_pwm, buffered out port:32 p_pwm[], clock clk )
+void do_pwm_simple( chanend c_pwm, buffered out port:32 p_pwm[], clock clk )
 {
 	unsigned mode, control;
 
@@ -59,7 +57,7 @@ void do_pwm_bldc( chanend c_pwm, buffered out port:32 p_pwm[], clock clk )
 	c_pwm :> control;
 
 	// Configure the ports
-	do_pwm_port_config_bldc( p_pwm, clk);
+	do_pwm_port_config_simple( p_pwm, clk);
 
 	/* wait for initial update */
 	c_pwm :> mode;
@@ -67,9 +65,8 @@ void do_pwm_bldc( chanend c_pwm, buffered out port:32 p_pwm[], clock clk )
 	while (1)
 	{
 		/* we never actually come out of this, activity on channel triggers buffer change over */
-		mode = pwm_op_bldc( mode, p_pwm, c_pwm, control );
+		mode = pwm_op_simple( mode, p_pwm, c_pwm, control );
 	}
 
 }
-#endif
 
