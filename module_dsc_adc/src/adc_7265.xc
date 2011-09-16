@@ -24,10 +24,10 @@ static int trigger_channel_to_adc_mux[2] = { 0, 2 };
 static unsigned calibration[ADC_NUMBER_OF_TRIGGERS][2];
 
 // Mode to say if we are currently calibrating the ADC
-static int calibration_mode = -1;
+static int calibration_mode[ADC_NUMBER_OF_TRIGGERS];
 
 // Accumultor for the calibration average
-static int calibration_acc[2], calibration_count;
+static int calibration_acc[ADC_NUMBER_OF_TRIGGERS][2];
 
 static void configure_adc_ports_7265(clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, out port MUX)
 {
@@ -90,6 +90,10 @@ static void adc_get_data_7265( int adc_val[], unsigned channel, port CNVST, in b
 
 }
 
+// test counters
+unsigned test_counter=0, c1=0, c2=0;
+
+
 #pragma unsafe arrays
 void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
 {
@@ -107,40 +111,43 @@ void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, out port 
 		adc_val[c][1] = 0;
 	}
 
+
 	while (1)
 	{
 #pragma xta endpoint "adc_7265_main_loop"
+		test_counter++;
 #pragma ordered
 		select
 		{
+		case inct_byref(c_trig[0], ct) :
+			c1++;
+			break;
+
+		case inct_byref(c_trig[1], ct) :
+			c2++;
+			break;
 		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) inct_byref(c_trig[trig], ct):
 			if (ct == ADC_TRIG_TOKEN)
 			{
 				t :> ts;
 				t when timerafter(ts + 1740) :> ts;
 				adc_get_data_7265( adc_val[trig], trigger_channel_to_adc_mux[trig], CNVST, DATA_A, DATA_B, MUX );
-				if (calibration_mode == trig) {
-					calibration_acc[0] += adc_val[trig][0];
-					calibration_acc[1] += adc_val[trig][1];
-					calibration_count++;
-					if (calibration_count == 512) {
-						calibration[trig][0] = calibration_acc[0] / 512;
-						calibration[trig][1] = calibration_acc[1] / 512;
-						calibration_mode = -1;
+				if (calibration_mode[trig] > 0) {
+					calibration_mode[trig]--;
+					calibration_acc[trig][0] += adc_val[trig][0];
+					calibration_acc[trig][1] += adc_val[trig][1];
+					if (calibration_mode[trig] == 0) {
+						calibration[trig][0] = calibration_acc[trig][0] / 512;
+						calibration[trig][1] = calibration_acc[trig][1] / 512;
 					}
 				}
 			}
 			break;
 		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) c_adc[trig] :> cmd:
 			if (cmd == 1) {
-				if (calibration_mode != -1) {
-					calibration_mode = -1;
-				} else {
-					calibration_mode = trig;
-					calibration_count=0;
-					calibration_acc[0]=0;
-					calibration_acc[1]=0;
-				}
+				calibration_mode[trig] = 512;
+				calibration_acc[trig][0]=0;
+				calibration_acc[trig][1]=0;
 			} else {
 				master {
 					unsigned a = adc_val[trig][0] - calibration[trig][0];

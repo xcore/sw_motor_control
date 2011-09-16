@@ -236,7 +236,7 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 				/* Open loop ends after a fixed number of iterations and zero position of hall state detected */
 				if ((counter >= ITERATION_LIMIT) && (hall_state == 0))
 				{
-					bldc_hall_mode = 0;
+					//bldc_hall_mode = 0;
 				}
 				counter++;
 
