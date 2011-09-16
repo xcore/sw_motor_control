@@ -90,12 +90,9 @@ static void adc_get_data_7265( int adc_val[], unsigned channel, port CNVST, in b
 
 }
 
-// test counters
-unsigned test_counter=0, c1=0, c2=0;
-
 
 #pragma unsafe arrays
-void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
+void adc_7265_triggered( chanend c_adc[ADC_NUMBER_OF_TRIGGERS], chanend c_trig[ADC_NUMBER_OF_TRIGGERS], clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
 {
 	int adc_val[ADC_NUMBER_OF_TRIGGERS][2];
 	int cmd;
@@ -103,6 +100,8 @@ void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, out port 
 
 	timer t;
 	unsigned ts;
+
+	set_thread_fast_mode_on();
 
 	configure_adc_ports_7265( clk, SCLK, CNVST, DATA_A, DATA_B, MUX );
 
@@ -115,7 +114,6 @@ void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, out port 
 	while (1)
 	{
 #pragma xta endpoint "adc_7265_main_loop"
-		test_counter++;
 #pragma ordered
 		select
 		{

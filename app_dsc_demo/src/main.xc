@@ -164,7 +164,6 @@ void init_can_phy( chanend c_rxChan, chanend c_txChan, clock p_can_clk, buffered
 }
 #endif
 
-
 // Program Entry Point
 int main ( void )
 {
@@ -189,9 +188,9 @@ int main ( void )
 #endif
 
 #ifdef USE_ETH
-		on stdcore[MOTOR_CORE] : init_tcp_server( c_mac_rx[0], c_mac_tx[0], c_xtcp, c_connect_status );
-		on stdcore[INTERFACE_CORE] : do_comms_eth( c_commands, c_xtcp[0] );
+		on stdcore[INTERFACE_CORE] : init_tcp_server( c_mac_rx[0], c_mac_tx[0], c_xtcp, c_connect_status );
 		on stdcore[INTERFACE_CORE]: init_ethernet_server(otp_data, otp_addr, otp_ctrl, clk_smi, clk_mii_ref, smi, mii, c_mac_rx, c_mac_tx, c_connect_status, p_shared_rs);
+		on stdcore[MOTOR_CORE] : do_comms_eth( c_commands, c_xtcp[0] );
 #endif
 
 		on stdcore[INTERFACE_CORE] : do_wd( c_wd, i2c_wd );
@@ -223,7 +222,7 @@ int main ( void )
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei[1], p_qei2 );
 #endif
 
-		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );
+		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, /*c_adc[0], c_adc[1], c_adc_trig[0], c_adc_trig[1],*/ adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );
 	}
 
 	return 0;
