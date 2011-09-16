@@ -119,13 +119,6 @@ void adc_7265_triggered( chanend c_adc[], chanend c_trig[], clock clk, out port 
 #pragma ordered
 		select
 		{
-		case inct_byref(c_trig[0], ct) :
-			c1++;
-			break;
-
-		case inct_byref(c_trig[1], ct) :
-			c2++;
-			break;
 		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) inct_byref(c_trig[trig], ct):
 			if (ct == ADC_TRIG_TOKEN)
 			{
