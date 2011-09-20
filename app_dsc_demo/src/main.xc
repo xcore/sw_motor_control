@@ -169,7 +169,7 @@ int main ( void )
 {
 	chan c_wd, c_speed[NUMBER_OF_MOTORS], c_commands[NUMBER_OF_MOTORS];
 	chan c_qei[NUMBER_OF_MOTORS], c_pwm[NUMBER_OF_MOTORS];
-	chan c_adc[NUMBER_OF_MOTORS], c_adc_trig[NUMBER_OF_MOTORS];
+	chan c_adc[NUMBER_OF_MOTORS], c_adc_trig[NUMBER_OF_MOTORS], c_motor_comms;
 
 #ifdef USE_CAN
 	chan c_rxChan, c_txChan;
@@ -200,24 +200,24 @@ int main ( void )
 		// Xcore 1 - MOTOR_CORE
 		on stdcore[MOTOR_CORE] : {
 #ifdef USE_XSCOPE
-			xscope_register(3,
-					XSCOPE_CONTINUOUS, "Ia", XSCOPE_UINT , "n",
-					XSCOPE_CONTINUOUS, "Ib", XSCOPE_UINT , "n",
-					XSCOPE_CONTINUOUS, "Ic", XSCOPE_UINT , "n"
-//					XSCOPE_CONTINUOUS, "Speed", XSCOPE_UINT , "n",
+			xscope_register(1,
+//					XSCOPE_CONTINUOUS, "Ia", XSCOPE_UINT , "n",
+//					XSCOPE_CONTINUOUS, "Ib", XSCOPE_UINT , "n",
+//					XSCOPE_CONTINUOUS, "Ic", XSCOPE_UINT , "n"
+					XSCOPE_CONTINUOUS, "Speed", XSCOPE_UINT , "n"
 //					XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT , "n",
 //					XSCOPE_CONTINUOUS, "Theta", XSCOPE_UINT , "n"
 //					XSCOPE_CONTINUOUS, "PWM[0]", XSCOPE_UINT , "n"
 			);
 #endif
-			run_motor( c_pwm[0], c_qei[0], c_adc[0], c_speed[0], c_wd, p_hall1, c_commands[0]);
+			run_motor( null, c_motor_comms, c_pwm[0], c_qei[0], c_adc[0], c_speed[0], c_wd, p_hall1, c_commands[0]);
 		}
 
 		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[0], c_adc_trig[0], ADC_SYNC_PORT1, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei[0], p_qei1 );
 
 #if NUMBER_OF_MOTORS > 1
-		on stdcore[MOTOR_CORE] : run_motor( c_pwm[1], c_qei[1], c_adc[1], c_speed[1], null, p_hall2, c_commands[1]);
+		on stdcore[MOTOR_CORE] : run_motor( c_motor_comms, null, c_pwm[1], c_qei[1], c_adc[1], c_speed[1], null, p_hall2, c_commands[1]);
 		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[1], c_adc_trig[1], ADC_SYNC_PORT2, p_pwm_hi2, p_pwm_lo2, pwm_clk2 );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei[1], p_qei2 );
 #endif

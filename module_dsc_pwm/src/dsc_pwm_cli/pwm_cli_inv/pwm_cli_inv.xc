@@ -60,12 +60,12 @@ void update_pwm_inv( t_pwm_control& ctrl, chanend c, unsigned value[])
 				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].cat );
 	}
 
-	/* now order them and work out the mode */
-	order_pwm( ctrl.mode_buf[ctrl.pwm_cur_buf], ctrl.chan_id_buf[ctrl.pwm_cur_buf], ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf] );
+	if (value[0] == -1 && value[1] == -1 && value[2] == -1) {
+		ctrl.mode_buf[ctrl.pwm_cur_buf] = -1;
+	} else {
 
-	if (ctrl.mode_buf[ctrl.pwm_cur_buf] < 1 || ctrl.mode_buf[ctrl.pwm_cur_buf] > 7 ) {
-		unsigned e_check = 1;
-		asm("ecallt %0" : "=r"(e_check));
+		/* now order them and work out the mode */
+		order_pwm( ctrl.mode_buf[ctrl.pwm_cur_buf], ctrl.chan_id_buf[ctrl.pwm_cur_buf], ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf] );
 	}
 
 	c <: ctrl.pwm_cur_buf;

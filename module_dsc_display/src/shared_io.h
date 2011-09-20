@@ -33,6 +33,7 @@
 #define CMD_SET_SPEED	3
 #define CMD_DIR         4
 #define CMD_GET_VALS2	5
+#define CMD_GET_FAULT   6
 
 #define STEP_SPEED 		50
 #define _30_Msec		2000000
