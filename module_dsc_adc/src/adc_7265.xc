@@ -18,7 +18,7 @@
 #pragma xta command "set required - 40 us"
 
 // This array determines the mapping from trigger channel to which analogue input to select in the ADC mux
-static int trigger_channel_to_adc_mux[2] = { 0, 2 };
+static int trigger_channel_to_adc_mux[2] = { 2, 0 };
 
 // These are the calibration values
 static unsigned calibration[ADC_NUMBER_OF_TRIGGERS][2];

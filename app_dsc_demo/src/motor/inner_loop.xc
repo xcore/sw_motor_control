@@ -364,9 +364,13 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 					update_pwm_inv( pwm_ctrl, c_pwm, pwm );
 
 #ifdef USE_XSCOPE
-					if (cycle_count & 0xff == 0) {
+					if ((cycle_count & 0x1) == 0) {
 						if (isnull(c_in)) {
-							xscope_probe_data(0, speed);
+							xscope_probe_data(0, Ia_in);
+							xscope_probe_data(1, Ib_in);
+							xscope_probe_data(2, pwm[0]);
+							xscope_probe_data(3, pwm[1]);
+							xscope_probe_data(4, theta);
 						}
 					}
 #endif
