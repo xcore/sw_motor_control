@@ -4,6 +4,8 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
   <Type>Device</Type>
   <Name>XS1-L2A-QF124</Name>
+  <!-- Board Version 1V0 -->
+  <!-- File Version 1V0 -->
 
   <Declarations>
     <Declaration>core stdcore[2]</Declaration>
@@ -48,13 +50,14 @@ xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
 	<!--ETHERNET PHY CONFIG-->
 	<Port Location="XS1_PORT_4E" Name="PORT_ETH_MDC" />
 	<Port Location="XS1_PORT_1P" Name="PORT_ETH_MDIO" />
+	
    	<!--I2C-->
    	<Port Location="XS1_PORT_1I" Name="PORT_I2C_SDA" />
    	<Port Location="XS1_PORT_1J" Name="PORT_I2C_CLK" />
    	
    	<!--WATCHDOG-->
    	<Port Location="XS1_PORT_4D" Name="PORT_WATCHDOG" />
-   	
+   	   	
     	</Core>
     </Node>
    	<Node Id="1" Type="XS1-L1A" Oscillator="25Mhz" SystemFrequency="500MHz">
@@ -82,6 +85,13 @@ xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
 	<Port Location="XS1_PORT_1M" Name="PORT_M2_LO_C" />
 	<Port Location="XS1_PORT_4F" Name="PORT_M2_ENCODER" />
 	<Port Location="XS1_PORT_4B" Name="PORT_M2_HALLSENSOR" />
+	
+	<!-- ADC -->
+  	<Port Location="XS1_PORT_1J" Name="PORT_ADC_CLK"/>
+	<Port Location="XS1_PORT_1G" Name="PORT_ADC_CONV"/>
+	<Port Location="XS1_PORT_1H" Name="PORT_ADC_MISOA"/>
+	<Port Location="XS1_PORT_1I" Name="PORT_ADC_MISOB"/>
+	<Port Location="XS1_PORT_4C" Name="PORT_ADC_MUX"/>
 
     	</Core>
     </Node>
@@ -106,9 +116,9 @@ xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
 	     <LinkEndpoint NodeId="1" Link="4"/>
 	   </Link>
     
-    <!-- XSCOPE --
+    <!-- XSCOPE -->
     <Link Encoding="2wire" Delays="4,5" Flags="SOD">
-      <LinkEndpoint NodeId="1" Link="X1LB"/>
+      <LinkEndpoint NodeId="1" Link="X0LB"/>
       <LinkEndpoint RoutingId="0x8000" Chanend="1"/>
     </Link>
     <!-- --> 

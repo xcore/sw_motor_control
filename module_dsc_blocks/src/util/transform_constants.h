@@ -22,6 +22,8 @@
 #ifndef TRANSFORM_CONSTANTS_H_
 #define TRANSFORM_CONSTANTS_H_
 
+// Constants are fixed point with a 14 bit fractional component
+
 #define ROOT_THREE				28377				// root( 3 )
 #define ROOT_2_OVER_2 			11585				//root( 2 ) / 2
 #define ROOT_TWO_THIRDS     	13377				//root( 2/3 )

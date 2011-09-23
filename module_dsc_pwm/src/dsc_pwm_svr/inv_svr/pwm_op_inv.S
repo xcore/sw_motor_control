@@ -155,6 +155,12 @@ pwm_op_inv:
 	bt r8, PWM_MODE_7
 
 PWM_STOP:
+    in r0, res[r0]
+    in r0, res[r1]
+    in r0, res[r2]
+    in r0, res[r6]
+    in r0, res[r9]
+    in r0, res[r11]
 	bu	PWM_STOP
 
 PWM_MODE_1:

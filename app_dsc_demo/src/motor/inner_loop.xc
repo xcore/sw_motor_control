@@ -43,13 +43,10 @@
 #define PWM_MAX_LIMIT 3800
 #define PWM_MIN_LIMIT 200
 #define OFFSET_14 16383
+#define RAMP 50
+#define THETA_LIMIT 1024 									// 1024 is the counts around the QEI
+#define THETA_PHASE 85 //(THETA_LIMIT / NUMBER_OF_POLES / 3) 	// Phase offset of 120 degrees
 
-// Iteration limit must be longer than the ADC calibration period to make sure that the ADC calibrates during
-// the motor spin up period
-#define ITERATION_LIMIT 512
-
-const unsigned bldc_high_seq[6] = {2,0,0,1,1,2};
-const unsigned bldc_new_seq[3] = {0,1,2};
 
 #pragma xta command "analyze loop foc_loop"
 #pragma xta command "set required - 40 us"
@@ -65,7 +62,7 @@ const unsigned bldc_new_seq[3] = {0,1,2};
  **/
 
 #pragma unsafe arrays
-void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, chanend? c_wd, port in p_hall, chanend c_can_eth_shared )
+void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, chanend? c_wd, port in p_hall, chanend c_can_eth_shared )
 {
 	/* Currents from ADC */
 	int Ia_in = 0, Ib_in = 0, Ic_in = 0;
@@ -94,14 +91,23 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	/* Always zero for BLDC */
 	int id_set_point = 0;
 
-	/* Open loop variables running in Hall mode */
-	unsigned high_chan = 0, new_chan = 0, hall_state = 0, pin_state = 0, pwm_val = 500;
-	unsigned bldc_hall_mode = 1, counter=0;
+	/* General state management */
+	unsigned start_up = 1, counter = 0;
 
 	/* Position and Speed */
-	unsigned theta = 0, speed = 0, set_speed = 1000;
+	unsigned theta = 0, speed = 0, set_speed = 1000, theta_flag = 0, run = 0;
 	unsigned cmm_speed;
 	unsigned comm_shared;
+
+	/* Fault detection */
+	unsigned OC_fault_flag=0, UV_fault_flag=0, err_flag=0, count=0, oc_status=0b0000;
+
+	/* Timer and timestamp */
+	timer t;
+	unsigned ts;
+
+	/*  */
+	unsigned cycle_count=0;
 
 	/* Speed PID structure */
 	pid_data pid;
@@ -112,16 +118,18 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	/* Iq PID structure */
 	pid_data pid_q;
 	
+	if (!isnull(c_in)) {
+		while (1);
+	}
+
 	// First send my PWM server the shared memory structure address
 	pwm_share_control_buffer_address_with_server(c_pwm, pwm_ctrl);
 
 	// Pause to allow the rest of the system to settle
 	{
-		timer t;
-		unsigned ts;
 		unsigned thread_id = get_thread_id();
 		t :> ts;
-		t when timerafter(ts+4*SEC+256*thread_id) :> ts;
+		t when timerafter(ts+2*SEC+256*thread_id) :> ts;
 	}
 
 	/* Zero pwm */
@@ -138,6 +146,13 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 	/* allow the WD to get going */
 	if (!isnull(c_wd)) {
 		c_wd <: WD_CMD_START;
+	}
+
+	// Pause to allow the rest of the system to settle
+	{
+		unsigned thread_id = get_thread_id();
+		t :> ts;
+		t when timerafter(ts+1*SEC) :> ts;
 	}
 
 	/* PID control initialisation... */
@@ -162,9 +177,11 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 			{
 				c_speed :> set_speed;
 			}
-			else
+			else if(cmm_speed == CMD_GET_FAULT)
 			{
-				/* Ignore invalid command */
+				c_speed <: OC_fault_flag;
+				c_speed <: UV_fault_flag;
+
 			}
 
 			break;
@@ -189,9 +206,10 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 			{
 				c_can_eth_shared :> set_speed;
 			}
-			else
+			else if (comm_shared == CMD_GET_FAULT)
 			{
-				/* Ignore invalid command */
+				c_can_eth_shared <: OC_fault_flag;
+				c_can_eth_shared <: theta_flag;
 			}
 
 			break;
@@ -199,104 +217,174 @@ void run_motor ( chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, c
 		/* Initially the below case runs in open loop with the hall sensor responses and then reverts
 		 * back to main FOC algorithem */
 		default:
-			/* Initial startup code using HALL mode */
-			if (bldc_hall_mode==1)
+			if(err_flag==0)
 			{
-				/* Change in the hall sensor states detected */
-				do_hall( hall_state, pin_state, p_hall );
 
-				/* Handling hall states */
-				if (hall_state == HALL_INV)
-					hall_state = 0;
-
-				/* Do output and switch on the IGBT's */
-				high_chan = bldc_high_seq[hall_state];
-				new_chan =  bldc_new_seq[high_chan];
-
-				/* Updates pwm_val on Lower IGBT's based on Hall state */
-				if (new_chan == 0)
-				{
-					pwm[0] = pwm_val;
-					pwm[1] = 0 ;
-					pwm[2] = 0;
+				/* Get OC fault pin status */
+				p_hall :> oc_status;
+				if(oc_status & 0b1000) {
+					OC_fault_flag=0;
+				} else {
+					OC_fault_flag=1;
 				}
-				else if (new_chan == 1)
+
+				/* Initial startup code using HALL mode */
+				if (start_up==0)
 				{
-					pwm[0] = 0;
-					pwm[1] = pwm_val ;
-					pwm[2] = 0;
+					while (speed < 2000) {
+						/* Get ADC readings */
+						{Ia_in, Ib_in, Ic_in} = get_adc_vals_calibrated_int16( c_adc );
+
+						/* Get the position from encoder module */
+						theta = get_qei_position ( c_qei );
+
+						/* Actual speed calculated using encoder module */
+						speed = get_qei_speed ( c_qei );
+
+						/* To calculate alpha and beta currents */
+						clarke_transform(alpha_in, beta_in, Ia_in, Ib_in, Ic_in);
+
+						/* Id and Iq outputs derived from park transform */
+						park_transform( Id_in, Iq_in, alpha_in, beta_in, theta  );
+
+						/* Applying Speed PID */
+						iq_set_point = pid_regulator_delta_cust_error_speed((int)(set_speed - speed), pid );
+
+						/* Apply PID control to Iq and Id */
+						Iq_err = iq_set_point - Iq_in;
+						Id_err = id_set_point - Id_in;
+
+						iq_out = pid_regulator_delta_cust_error_Iq_control( Iq_err, pid_q );
+
+						id_out = pid_regulator_delta_cust_error_Id_control( Id_err, pid_d );
+
+						/* Inverse park  [d,q] to [alpha, beta] */
+						inverse_park_transform( alpha_out, beta_out, id_out, iq_out, theta  );
+
+						/* Final voltages applied */
+						inverse_clarke_transform( Va, Vb, Vc, alpha_out, beta_out );
+
+						/* Scale to 12bit unsigned for PWM output */
+						pwm[0] = (Va + OFFSET_14) >> 3;
+						pwm[1] = (Vb + OFFSET_14) >> 3;
+						pwm[2] = (Vc + OFFSET_14) >> 3;
+
+						/* Clamp to avoid switching issues */
+						for (int j = 0; j < 3; j++)
+						{
+							if (pwm[j] > PWM_MAX_LIMIT)
+								pwm[j] = PWM_MAX_LIMIT;
+							if (pwm[j] < PWM_MIN_LIMIT )
+								pwm[j] = PWM_MIN_LIMIT;
+						}
+
+						/* Update the PWM values */
+						update_pwm_inv( pwm_ctrl, c_pwm, pwm );
+
+						/* Ramp the set_speed up */
+						t when timerafter(ts+ 5* MSec ) :> ts;
+						set_speed = set_speed + RAMP;
+					}
+					start_up = 1;
 				}
 				else
 				{
-					pwm[0] = 0;
-					pwm[1] = 0;
-					pwm[2] = pwm_val;
+					cycle_count++;
+
+					/* Hunt for correct phase difference */
+					if(run == 0) {
+						counter++;
+						if(counter >= 4000) {
+							if((set_speed == 2000) && (speed < 1500)) {
+							theta_flag = 1;
+							}
+							run = 1;
+						}
+					}
+
+					/* ---	FOC ALGORITHM	--- */
+					/* Get ADC readings */
+					{Ia_in, Ib_in, Ic_in} = get_adc_vals_calibrated_int16( c_adc );
+
+					/* Get the position from encoder module */
+					theta = get_qei_position ( c_qei );
+
+//					if(theta_flag)
+//					{
+						theta = theta + THETA_PHASE;
+						if (theta >= THETA_LIMIT) theta = theta - THETA_LIMIT;
+//					}
+
+					/* Actual speed calculated using encoder module */
+					speed = get_qei_speed ( c_qei );
+
+					/* To calculate alpha and beta currents */
+					clarke_transform(alpha_in, beta_in, Ia_in, Ib_in, Ic_in);
+
+					/* Id and Iq outputs derived from park transform */
+					park_transform( Id_in, Iq_in, alpha_in, beta_in, theta  );
+
+					/* Applying Speed PID */
+					iq_set_point = pid_regulator_delta_cust_error_speed((int)(set_speed - speed), pid );
+
+//					Iq_in = 1;
+//					Id_in = 0;
+
+					/* Apply PID control to Iq and Id */
+					Iq_err = iq_set_point - Iq_in;
+					Id_err = id_set_point - Id_in;
+
+					iq_out = pid_regulator_delta_cust_error_Iq_control( Iq_err, pid_q );
+
+					id_out = pid_regulator_delta_cust_error_Id_control( Id_err, pid_d );
+
+					/* Inverse park  [d,q] to [alpha, beta] */
+					inverse_park_transform( alpha_out, beta_out, id_out, iq_out, theta  );
+
+					/* Final voltages applied */
+					inverse_clarke_transform( Va, Vb, Vc, alpha_out, beta_out );
+
+					/* Scale to 12bit unsigned for PWM output */
+					pwm[0] = (Va + OFFSET_14) >> 3;
+					pwm[1] = (Vb + OFFSET_14) >> 3;
+					pwm[2] = (Vc + OFFSET_14) >> 3;
+
+					/* Clamp to avoid switching issues */
+					for (int j = 0; j < 3; j++)
+					{
+						if (pwm[j] > PWM_MAX_LIMIT)
+							pwm[j] = PWM_MAX_LIMIT;
+						if (pwm[j] < PWM_MIN_LIMIT )
+							pwm[j] = PWM_MIN_LIMIT;
+					}
+
+					if((OC_fault_flag==1)||(UV_fault_flag==1)) {
+						count++;
+						if(count==10)
+						{
+						  pwm[0]=-1;
+						  pwm[1]=-1;
+						  pwm[2]=-1;
+						  err_flag=1;
+						}
+					}
+					/* Update the PWM values */
+					update_pwm_inv( pwm_ctrl, c_pwm, pwm );
+
+#ifdef USE_XSCOPE
+					if ((cycle_count & 0x1) == 0) {
+						if (isnull(c_in)) {
+//							xscope_probe_data(0, Ia_in);
+//							xscope_probe_data(1, Ib_in);
+							xscope_probe_data(2, pwm[0]);
+							xscope_probe_data(3, pwm[2]);
+							xscope_probe_data(4, iq_out);
+						}
+					}
+#endif
 				}
-
-				/* Open loop ends after a fixed number of iterations and zero position of hall state detected */
-				if ((counter >= ITERATION_LIMIT) && (hall_state == 0))
-				{
-					bldc_hall_mode = 0;
-				}
-				counter++;
-
-				/* Update the PWM values */
-				update_pwm_inv( pwm_ctrl, c_pwm, pwm );
-
 			}
-			else
-			{
-				/* ---	FOC ALGORITHM	--- */
-				/* Get ADC readings */
-				{Ia_in, Ib_in, Ic_in} = get_adc_vals_calibrated_int16( c_adc );
-
-				/* Get the position from encoder module */
-				theta = get_qei_position ( c_qei );
-
-				/* Actual speed calculated using encoder module */
-				speed = get_qei_speed ( c_qei );
-
-				/* To calculate alpha and beta currents */
-				clarke_transform(alpha_in, beta_in, Ia_in, Ib_in, Ic_in);
-
-				/* Id and Iq outputs derived from park transform */
-				park_transform( Id_in, Iq_in, alpha_in, beta_in, theta  );
-
-				/* Applying Speed PID */
-				iq_set_point = pid_regulator_delta_cust_error_speed((int)(set_speed - speed), pid );
-
-				/* Apply PID control to Iq and Id */
-				Iq_err = iq_set_point - Iq_in;
-				Id_err = id_set_point - Id_in;
-
-				iq_out = pid_regulator_delta_cust_error_Iq_control( Iq_err, pid_q );
-
-				id_out = pid_regulator_delta_cust_error_Id_control( Id_err, pid_d );
-
-				/* Inverse park  [d,q] to [alpha, beta] */
-				inverse_park_transform( alpha_out, beta_out, id_out, iq_out, theta  );
-
-				/* Final voltages applied */
-				inverse_clarke_transform( Va, Vb, Vc, alpha_out, beta_out );
-
-				/* Scale to 12bit unsigned for PWM output */
-				pwm[0] = (Va + OFFSET_14) >> 3;
-				pwm[1] = (Vb + OFFSET_14) >> 3;
-				pwm[2] = (Vc + OFFSET_14) >> 3;
-
-				/* Clamp to avoid switching issues */
-				for (int j = 0; j < 3; j++)
-				{
-					if (pwm[j] > PWM_MAX_LIMIT)
-						pwm[j] = PWM_MAX_LIMIT;
-					if (pwm[j] < PWM_MIN_LIMIT )
-						pwm[j] = PWM_MIN_LIMIT;
-				}
-
-				/* Update the PWM values */
-				update_pwm_inv( pwm_ctrl, c_pwm, pwm );
-			}
-		break;
+			break;
 		}
 	}
 }

@@ -69,13 +69,17 @@ void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface
 		/* Timer event at 10Hz */
 			case timer_1 when timerafter(time + 10000000) :> time:
 			{
-				unsigned new_speed[2], new_set_speed;
+				unsigned new_speed[2], new_set_speed, oc_fault[2], uv_fault[2];
 
 				/* Get the motor 1 speed and motor 2 speed */
 				for (int m=0; m<NUMBER_OF_MOTORS; m++) {
 					c_speed[m] <: CMD_GET_IQ;
 					c_speed[m] :> new_speed[m];
 					c_speed[m] :> new_set_speed;
+
+					c_speed[m] <: CMD_GET_FAULT;
+					c_speed[m] :> oc_fault[m];
+					c_speed[m] :> uv_fault[m];
 				}
 
 				if (new_speed[0] != speed[0] || new_speed[1] != speed[1] || new_set_speed != set_speed) {
@@ -94,10 +98,18 @@ void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface
 					sprintf(my_string, "  Set Speed: %04d RPM\n", set_speed );
 					lcd_draw_text_row( my_string, 1, p );
 
-					sprintf(my_string, "  Speed1 : 	 %04d RPM\n", speed[0] );
+					if (oc_fault[0]) {
+						sprintf(my_string, "  Motor 1: FAULT" );
+					} else {
+						sprintf(my_string, "  Speed1: %04d RPM%c\n", speed[0], (uv_fault[0]?'*':' ') );
+					}
 					lcd_draw_text_row( my_string, 2, p );
 
-					sprintf(my_string, "  Speed2 : 	 %04d RPM\n", speed[1] );
+					if (oc_fault[1]) {
+						sprintf(my_string, "  Motor 2: FAULT" );
+					} else {
+						sprintf(my_string, "  Speed2: %04d RPM%c\n", speed[1], (uv_fault[1]?'*':' ') );
+					}
 					lcd_draw_text_row( my_string, 3, p );
 				}
 
