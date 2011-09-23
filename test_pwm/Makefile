@@ -23,7 +23,7 @@ XCC_FLAGS = -O3 -g
 
 # The USED_MODULES variable lists other module used by the application. 
 
-USED_MODULES = module_dsc_pwm
+USED_MODULES = module_dsc_pwm module_dsc_adc
 
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure

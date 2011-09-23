@@ -224,7 +224,7 @@ int main ( void )
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei[1], p_qei2 );
 #endif
 
-		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, /*c_adc[0], c_adc[1], c_adc_trig[0], c_adc_trig[1],*/ adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );
+		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );
 	}
 
 	return 0;

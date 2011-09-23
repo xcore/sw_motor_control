@@ -23,7 +23,7 @@
 #include "pid_regulator.h"
 #include <xs1.h>
 
-#define INTEGRAL_LIMIT 2000000
+#define INTEGRAL_LIMIT 8192
 #define Q_LIMIT 12000
 #define Q_LIMIT_L -12000
 #define D_LIMIT 6000
@@ -113,12 +113,15 @@ int pid_regulator_delta_cust_error_speed( int error, pid_data *d )
 	int derivative = (error - d->previous_error);
 	d->previous_error = error;
 
-	result = ((((d->Kp * error) >> PID_RESOLUTION) + frac_mul( d->Ki, d->integral ) + ((d->Kd * derivative)  >> PID_RESOLUTION)));
+	result = ((((d->Kp * error) >> PID_RESOLUTION) + frac_mul( d->Ki, d->integral) + ((d->Kd * derivative)  >> PID_RESOLUTION)));
 
+#ifdef BLDC_FOC
 	if (result > SPEED_LIMIT)
-		result = SPEED_LIMIT;
+		result = result >> 2;
 	if (result < -SPEED_LIMIT)
-		result = -SPEED_LIMIT;
+		result = -(result >> 2);
+#endif
+
 
 	return result;
 }
@@ -131,10 +134,11 @@ int pid_regulator_delta_cust_error_Iq_control( int error, pid_data *iq )
 	int result=0;
 
 	iq->integral = iq->integral + error;
+
 	if (iq->integral > INTEGRAL_LIMIT)
-		iq->integral = 0;
+		iq->integral = INTEGRAL_LIMIT;
 	if (iq->integral < -INTEGRAL_LIMIT)
-		iq->integral = 0;
+		iq->integral = -INTEGRAL_LIMIT;
 
 	int derivative = (error - iq->previous_error);
 	iq->previous_error = error;
@@ -193,10 +197,11 @@ int pid_regulator_delta_cust_error_Id_control( int error, pid_data *id )
 	int result=0;
 
 	id->integral = id->integral + error;
+
 	if (id->integral > INTEGRAL_LIMIT)
-		id->integral = 0;
+		id->integral = INTEGRAL_LIMIT;
 	if (id->integral < -INTEGRAL_LIMIT)
-		id->integral = 0;
+		id->integral = -INTEGRAL_LIMIT;
 
 	int derivative = (error - id->previous_error);
 	id->previous_error = error;
@@ -244,8 +249,6 @@ int pid_regulator_delta_cust_error_Id_control( int error, pid_data *id )
 
 	return result;
 }
-
-
 
 
 

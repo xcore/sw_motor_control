@@ -44,15 +44,9 @@
 #define PWM_MIN_LIMIT 200
 #define OFFSET_14 16383
 #define RAMP 50
-#define THETA_PHASE 85
-#define THETA_LIMIT 255
+#define THETA_LIMIT 1024 									// 1024 is the counts around the QEI
+#define THETA_PHASE 85 //(THETA_LIMIT / NUMBER_OF_POLES / 3) 	// Phase offset of 120 degrees
 
-// Iteration limit must be longer than the ADC calibration period to make sure that the ADC calibrates during
-// the motor spin up period
-#define ITERATION_LIMIT 512
-
-const unsigned bldc_high_seq[6] = {2,0,0,1,1,2};
-const unsigned bldc_new_seq[3] = {0,1,2};
 
 #pragma xta command "analyze loop foc_loop"
 #pragma xta command "set required - 40 us"
@@ -124,6 +118,10 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 	/* Iq PID structure */
 	pid_data pid_q;
 	
+	if (!isnull(c_in)) {
+		while (1);
+	}
+
 	// First send my PWM server the shared memory structure address
 	pwm_share_control_buffer_address_with_server(c_pwm, pwm_ctrl);
 
@@ -131,7 +129,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 	{
 		unsigned thread_id = get_thread_id();
 		t :> ts;
-		t when timerafter(ts+4*SEC+256*thread_id) :> ts;
+		t when timerafter(ts+2*SEC+256*thread_id) :> ts;
 	}
 
 	/* Zero pwm */
@@ -148,6 +146,13 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 	/* allow the WD to get going */
 	if (!isnull(c_wd)) {
 		c_wd <: WD_CMD_START;
+	}
+
+	// Pause to allow the rest of the system to settle
+	{
+		unsigned thread_id = get_thread_id();
+		t :> ts;
+		t when timerafter(ts+1*SEC) :> ts;
 	}
 
 	/* PID control initialisation... */
@@ -304,11 +309,11 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 					/* Get the position from encoder module */
 					theta = get_qei_position ( c_qei );
 
-					if(theta_flag)
-					{
+//					if(theta_flag)
+//					{
 						theta = theta + THETA_PHASE;
-						if (theta > THETA_LIMIT) theta = theta - THETA_LIMIT;
-					}
+						if (theta >= THETA_LIMIT) theta = theta - THETA_LIMIT;
+//					}
 
 					/* Actual speed calculated using encoder module */
 					speed = get_qei_speed ( c_qei );
@@ -321,6 +326,9 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 
 					/* Applying Speed PID */
 					iq_set_point = pid_regulator_delta_cust_error_speed((int)(set_speed - speed), pid );
+
+//					Iq_in = 1;
+//					Id_in = 0;
 
 					/* Apply PID control to Iq and Id */
 					Iq_err = iq_set_point - Iq_in;
@@ -366,11 +374,11 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 #ifdef USE_XSCOPE
 					if ((cycle_count & 0x1) == 0) {
 						if (isnull(c_in)) {
-							xscope_probe_data(0, Ia_in);
-							xscope_probe_data(1, Ib_in);
+//							xscope_probe_data(0, Ia_in);
+//							xscope_probe_data(1, Ib_in);
 							xscope_probe_data(2, pwm[0]);
-							xscope_probe_data(3, pwm[1]);
-							xscope_probe_data(4, theta);
+							xscope_probe_data(3, pwm[2]);
+							xscope_probe_data(4, iq_out);
 						}
 					}
 #endif

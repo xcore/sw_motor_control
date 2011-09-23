@@ -11,14 +11,29 @@
 #include <adc_common.h>
 #include <adc_7265.h>
 
+#ifdef USE_XSCOPE
+#include <xscope.h>
+#endif
+
+
 #define ADC_FILTER_7265
 
+// This parameter needs to be tuned to move the ADC trigger point into the centre of the 'OFF' period.
+// The 'test_pwm' application can be run in the simulator to tune the parameter.  Use the following
+// command line:
+//    xsim --vcd-tracing "-core stdcore[1] -ports" bin\Release\test_pwm.xe > trace.vcd
+//
+// Then open the 'Signals' and 'Waves' panes in the XDE, load the VCD file and look at the traces
+// named 'PORT_M1_LO_A', 'PORT_M1_LO_B', 'PORT_M1_LO_C', and 'PORT_ADC_CONV'.  The ADC conversion
+// trigger should go high in the centre of the low periods of all of the motor control ports. This
+// occurs periodically, but an example can be found at around 94.8us into the simulaton.
+#define ADC_TRIGGER_DELAY 2020
 
 #pragma xta command "analyze loop adc_7265_main_loop"
 #pragma xta command "set required - 40 us"
 
 // This array determines the mapping from trigger channel to which analogue input to select in the ADC mux
-static int trigger_channel_to_adc_mux[2] = { 2, 0 };
+static int trigger_channel_to_adc_mux[2] = { 0, 2 };
 
 // These are the calibration values
 static unsigned calibration[ADC_NUMBER_OF_TRIGGERS][2];
@@ -29,10 +44,12 @@ static int calibration_mode[ADC_NUMBER_OF_TRIGGERS];
 // Accumultor for the calibration average
 static int calibration_acc[ADC_NUMBER_OF_TRIGGERS][2];
 
+
 static void configure_adc_ports_7265(clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, out port MUX)
 {
 	// configure the clock to be 16MHz
-    configure_clock_rate_at_least(clk, 16, 1);
+    //configure_clock_rate_at_least(clk, 16, 1);
+    configure_clock_rate_at_most(clk, 16, 1);
     configure_port_clock_output(SCLK, clk);
 
     // ports require postive strobes, but the ADC needs a negative strobe. use the port pin invert function
@@ -74,11 +91,16 @@ static void adc_get_data_7265( int adc_val[], unsigned channel, port CNVST, in b
 	val1 = bitrev(val1);
 	val3 = bitrev(val3);
 
-	val1 = val1 >> 2;
-	val3 = val3 >> 2;
+	val1 = val1 >> 4;
+	val3 = val3 >> 4;
 
 	val1 = 0x00000FFF & val1;
 	val3 = 0x00000FFF & val3;
+
+#ifdef USE_XSCOPE
+	xscope_probe_data(0, val1);
+	xscope_probe_data(1, val3);
+#endif
 
 #ifdef ADC_FILTER_7265
 	adc_val[0] = (adc_val[0] >> 1) + (val1 >> 1);
@@ -89,7 +111,6 @@ static void adc_get_data_7265( int adc_val[], unsigned channel, port CNVST, in b
 #endif
 
 }
-
 
 #pragma unsafe arrays
 void adc_7265_triggered( chanend c_adc[ADC_NUMBER_OF_TRIGGERS], chanend c_trig[ADC_NUMBER_OF_TRIGGERS], clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
@@ -121,7 +142,7 @@ void adc_7265_triggered( chanend c_adc[ADC_NUMBER_OF_TRIGGERS], chanend c_trig[A
 			if (ct == ADC_TRIG_TOKEN)
 			{
 				t :> ts;
-				t when timerafter(ts + 1740) :> ts;
+				t when timerafter(ts + ADC_TRIGGER_DELAY) :> ts;
 				adc_get_data_7265( adc_val[trig], trigger_channel_to_adc_mux[trig], CNVST, DATA_A, DATA_B, MUX );
 				if (calibration_mode[trig] > 0) {
 					calibration_mode[trig]--;
