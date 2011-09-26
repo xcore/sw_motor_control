@@ -11,7 +11,7 @@ The current release package ships with two example applications.
 Basic BLDC Speed Control Application ``app_basic_bldc``
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-This applications makes use of the following functionality.
+This application makes use of the following functionality.
 
    * PWM
    * Hall Input
@@ -69,10 +69,10 @@ The second and third events are a request from the LCD and buttons thread or the
 FOC Application ``app_dsc_demo``
 ++++++++++++++++++++++++++++++++
 
-This applications makes use of the following functionality. The FOC application is given as an example only. It is not currently functional with the motor that is provided.
+This application makes use of the following functionality.
 
    * PWM
-   * Hall Input
+   * QEI
    * ADC
    * Display
    * Ethernet & Communications
@@ -95,9 +95,9 @@ The control loop can be found in ``src/motor/inner_loop.xc``. The thread is laun
 	chanend c_can_eth_shared )
 
 
-The control loop takes input from the encoder or hall sensors, a set speed from the control modules and applies it via PWM. This utilises the feedback from the ADC and calculations done using the Park and Clarke transforms and application of PID regulation of *I_d* and *I_q*.  The resulting values of *V_a*, *V_b* and *V_c* are output to the PWM.
+The control loop takes input from the encoder, a set speed from the control modules and applies it via PWM. It utilises the feedback from the ADC and calculations done using the Park and Clarke transforms and application of PID regulation of *I_d* and *I_q*.  The resulting values of *V_a*, *V_b* and *V_c* are output to the PWM.
 
-This loop is a simple of how a control loop may be implemented and the function calls that would be used to achieve this.  There is also a simple open loop commutation during the motor startup period, to get the rotor spinning and allow the QEI and ADC components to start genereating valid data.
+This loop is a simple example of how a control loop may be implemented and the function calls that would be used to achieve this.
 
 
 

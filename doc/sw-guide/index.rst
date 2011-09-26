@@ -1,7 +1,6 @@
 Motor Control Platform Software Guide
 =====================================
 
-
 Introduction
 ++++++++++++
 
@@ -38,6 +37,7 @@ The modules listed above are implemented in one or more processor threads. The a
 
 
 .. toctree::
+   :maxdepth: 2
 
    apps
    blocks
@@ -48,4 +48,5 @@ The modules listed above are implemented in one or more processor threads. The a
    hsi
    qei
    api
+
 
