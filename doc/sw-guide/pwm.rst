@@ -42,7 +42,7 @@ PWM Resolution
 
 PWM resolution is defined using PWM_MAX_VALUE. The value defined here sets the frequency of the PWM. The relationship between PWM_MAX_VALUE,
 XS1_TIMER_HZ and PWM frequency ($PWM_FREQ$) is defined in the equation below. XS1_TIMER_HZ is defined at compile time by the ReferenceFrequency
- identifier in the project XN file. By default this reference frequency is 100MHz so XS1_TIMER_HZ would have a value of 100,000,000.
+identifier in the project XN file. By default this reference frequency is 100MHz so XS1_TIMER_HZ would have a value of 100,000,000.
 
 ``PWM_FREQ = XS1_TIMER_HZ / (PWM_MAX_VAL * 2)``
 
