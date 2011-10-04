@@ -56,6 +56,17 @@ Building the firmware
 
   Alternatively, the project can be imported into the XDE tool. Once it is imported, the sw_motor_control project can
   be selected, and the options for building and running each application can be selected.
+  To install the software, open the XDE (XMOS Development Tools) and
+  follow these steps:
+
+  - Choose *File* > *Import*.
+  - Choose *General* > *Existing Projects into Workspace* and click *Next*.
+  - Click *Browse* next to *Select archive file* and select the file firmware ZIP file.
+  - Make sure the projects you want to import are ticked in the *Projects* list. Import
+    all the components and whichever applications you are interested in. 
+  - Click *Finish*.
+
+  To build, select the appropraite project in the Project Explorer and click the *Build* icon.
 
 Running the firmware
 --------------------
@@ -64,11 +75,21 @@ Running the firmware
 
     *xrun app_dsc_demo/bin/Release/dsc_basic_bldc.xe*
 
+  Alternatively, using the 11.2.0 development tools or later and AVB version 5v0.1 or later, from within the XDE:
+
+    - Right click on the binary within the project.
+    - Choose *Run As* > *Run Configurations*
+    - Choose *hardware* and select the relevant XTAG-2 adapter
+    - Select the *Run UART server* check box.
+    - Click on *Apply* if configuration has changed
+    - Click on *Run*
+
   LCD feedback
     The LCD shows the current speed of each motor, and the demand speed.  Both motors have the same demand speed.
 
   Controlling the motor speed
     Button A increases the demand speed in steps of 100 RPM.  Button B decreases the motor speed in steps of 100 RPM.
+
 
 
 The watchdog timer hardware override

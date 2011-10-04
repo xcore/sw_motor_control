@@ -279,6 +279,12 @@ further output is required before receiving the update from the client.
 +----------------+------------------------------------+
 | 7              | 2 short + 1 very long              |
 +----------------+------------------------------------+
+| unused         | 1 standard + 2 very long           |
++----------------+------------------------------------+
+| unused         | 1 short + 2 very long              |
++----------------+------------------------------------+
+| unused         | 3 very long                        |
++----------------+------------------------------------+
 
 To drive the ports, the PWM uses the 32 bit buffered ports. The *short* pulse, which is known as a *SINGLE* internally, is one where the duration of the
 pulse is shorter than 32 reference clock cycles, and the buffer is silled with an appropriate bit pattern to generate the pulse.  The *very long* pulses,
