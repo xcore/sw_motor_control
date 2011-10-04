@@ -45,8 +45,16 @@ Configuring the firmware
 
 Building the firmware
 ---------------------
-  Version 11.2 and later of the XMOS tools must be used to build and run the system. To use the XSCOPE feature to view
-  data logged by a unit under test, an XTAG-2 interface must be used.  This is supplied with the development kit.
+
+  The XTAG-2 debug adapter supplied with the kit can be connected to the board to provide a JTAG interface from
+  your development system that you can use to load and debug software. You need to install a set of drivers for
+  the XTAG-2 debug adapter and download a set of free Development Tools (11.2 or later) from the XMOS website:
+
+    http://www.xmos.com/tools
+
+  Instructions on installing and using the XMOS Tools can be found in the XMOS Tools
+  User Guide http://www.xmos.com/published/xtools_en.
+
 
   Once the software is configured as required, the system can be built by executing the following make command in an XMOS
   Tools Prompt.  The command should be executed in the root directory, or the **app_dsc_demo** directory.
