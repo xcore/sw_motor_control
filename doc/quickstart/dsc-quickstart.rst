@@ -19,23 +19,23 @@ Setting up the hardware
 
       - Connect a 24V power supply to the power section of the BLDC board.
       
-      - By default, the power board will provide power to the control board. Jumper J2 can be set to the alternative
-        position to allow a separate 5V power supply to be provided to the control board.
+   By default, the power board will provide power to the control board. Jumper J2 can be set to the alternative
+   position to allow a separate 5V power supply to be provided to the control board.
         
-      - The default application will spin the motors using a field oriented control algorithm.  The display will show
-        the speed of each motor, and the demand speed of both.  Buttons A and B will alter the demand speed for the system.
+   The default application will spin the motors using a field oriented control algorithm.  The display will show
+   the speed of each motor, and the demand speed of both.  Buttons A and B will alter the demand speed for the system.
 
 Configuring the firmware
 ------------------------
 
   The default firmware comes from the application directory called **app_dsc_demo**.  This is the dual axis FOC control
   algorithm.  An alternative application, **app_basic_bldc**, is provided, which controls the motors using simple
-  hall sector based commuation.
+  hall sector based commutation.
 
   Selecting Ethernet or CAN control
     By default the software is set up to be controlled by the buttons around the LCD, and also by the ethernet interface.
     If CAN is a preferred choice of control, then the **app_dsc_demo\src\dsc_config.h** can be modified.  The preprocessor
-    macros **USE_ETH** and **USE_CAN** can be commented out as approriate to enable ethernet, CAN, or neither.
+    macros **USE_ETH** and **USE_CAN** can be commented out as appropriate to enable ethernet, CAN, or neither.
 
   Changing the TCP/IP address
     By default the ethernet and TCP/IP interface has a statically allocated IP address of 169.254.0.1 (a link local IP address),
@@ -45,6 +45,9 @@ Configuring the firmware
 
 Building the firmware
 ---------------------
+  Version 11.2 and later of the XMOS tools must be used to build and run the system. To use the XSCOPE feature to view
+  data logged by a unit under test, an XTAG-2 interface must be used.  This is supplied with the development kit.
+
   Once the software is configured as required, the system can be built by executing the following make command in an XMOS
   Tools Prompt.  The command should be executed in the root directory, or the **app_dsc_demo** directory.
 
@@ -75,7 +78,7 @@ Running the firmware
 
     *xrun app_dsc_demo/bin/Release/dsc_basic_bldc.xe*
 
-  Alternatively, using the 11.2.0 development tools or later and AVB version 5v0.1 or later, from within the XDE:
+  Alternatively, from within the XDE:
 
     - Right click on the binary within the project.
     - Choose *Run As* > *Run Configurations*
@@ -104,6 +107,11 @@ watchdog circuit on the power board.  This configuration is useful when testing 
 hold the button down for normal operation, but if an error occurs and there is a risk of damage to the motors or
 the power board, the button can be quickly released to prevent the FETs from being energized further.
 
+
+Further reading
+---------------
+
+Visit *http://www.xmos.com/applications/motor-control* for further information and updates.
 
 
 
