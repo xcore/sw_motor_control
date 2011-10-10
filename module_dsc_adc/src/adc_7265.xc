@@ -78,14 +78,19 @@ static void adc_get_data_7265( int adc_val[], unsigned channel, port CNVST, in b
 
 	MUX <: channel;
 
+    clearbuf(DATA_A);
+    clearbuf(DATA_B);
+
 	CNVST <: 1 @ts;
 	ts += 16;
 	CNVST @ts <: 0;
 
-	endin(DATA_A);
-	endin(DATA_B);
+	sync(CNVST);
 
+	endin(DATA_A);
 	DATA_A :> val1;
+
+	endin(DATA_B);
 	DATA_B :> val3;
 
 	val1 = bitrev(val1);

@@ -118,10 +118,6 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 	/* Iq PID structure */
 	pid_data pid_q;
 	
-	if (!isnull(c_in)) {
-		while (1);
-	}
-
 	// First send my PWM server the shared memory structure address
 	pwm_share_control_buffer_address_with_server(c_pwm, pwm_ctrl);
 

@@ -26,13 +26,14 @@
 
 #define INVALID_STATE 0xFFFF
 
-static unsigned update_pos( unsigned cur_pos, int delta );
-static unsigned calc_state ( unsigned A, unsigned B, unsigned I);
 static select do_state_0( in port pQEI, unsigned &pos, unsigned &pos_valid, unsigned &state, unsigned &CW, unsigned &next_state, unsigned &tmp, unsigned &A, unsigned &B, unsigned &I, timer t, unsigned &ts1, unsigned &ts2 );
 static select do_state_1( in port pQEI, unsigned &pos, unsigned &pos_valid, unsigned &state, unsigned &CW, unsigned &next_state, unsigned &tmp, unsigned &A, unsigned &B, unsigned &I, timer t, unsigned &ts1, unsigned &ts2 );
 static select do_state_2( in port pQEI, unsigned &pos, unsigned &pos_valid, unsigned &state, unsigned &CW, unsigned &next_state, unsigned &tmp, unsigned &A, unsigned &B, unsigned &I, timer t, unsigned &ts1, unsigned &ts2 );
 static select do_state_3( in port pQEI, unsigned &pos, unsigned &pos_valid, unsigned &state, unsigned &CW, unsigned &next_state, unsigned &tmp, unsigned &A, unsigned &B, unsigned &I, timer t, unsigned &ts1, unsigned &ts2 );
 static select do_state_4( in port pQEI, unsigned &pos, unsigned &pos_valid, unsigned &state, unsigned &CW, unsigned &next_state, unsigned &tmp, unsigned &A, unsigned &B, unsigned &I, timer t, unsigned &ts1, unsigned &ts2 );
+
+unsigned update_pos( unsigned cur_pos, int delta );
+unsigned calc_state ( unsigned A, unsigned B, unsigned I);
 {unsigned, unsigned, unsigned} calc_pin_vals( unsigned val );
 {unsigned, unsigned, unsigned} get_pin_vals( port in pQEI );
 
@@ -114,7 +115,7 @@ void do_qei ( chanend c_qei, port in pQEI )
 	}
 }
 
-static unsigned calc_state ( unsigned A, unsigned B, unsigned I)
+unsigned calc_state ( unsigned A, unsigned B, unsigned I)
 {
 	if (A == 0)
 	{
@@ -154,7 +155,7 @@ static unsigned calc_state ( unsigned A, unsigned B, unsigned I)
 	return INVALID_STATE;
 }
 
-static unsigned update_pos( unsigned cur_pos, int delta )
+unsigned update_pos( unsigned cur_pos, int delta )
 {
 #ifdef FAULHABER_MOTOR
 	#define QEI_COUNT_MAX (1024 * 4)
@@ -166,10 +167,7 @@ static unsigned update_pos( unsigned cur_pos, int delta )
 	pos = cur_pos;
 	pos += delta;
 
-	if (pos < 0)
-		pos += QEI_COUNT_MAX;
-	if (pos > QEI_COUNT_MAX)
-		pos -= QEI_COUNT_MAX;
+	pos &= (QEI_COUNT_MAX-1);
 
 	return (unsigned)pos;
 }
