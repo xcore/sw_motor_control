@@ -30,7 +30,7 @@ on stdcore[0]: lcd_interface_t lcd_ports = { PORT_SPI_CLK, PORT_SPI_MOSI, PORT_S
 on stdcore[1]: port in p_qei1 = PORT_M1_ENCODER;
 on stdcore[1]: port in p_qei2 = PORT_M2_ENCODER;
 
-void display(chanend c1, chanend c2)
+void display(streaming chanend c1, streaming chanend c2)
 {
 	char my_string[50];
 
@@ -49,10 +49,20 @@ void display(chanend c1, chanend c2)
 		{
 			case tmr when timerafter(t) :> void :
 			{
-				unsigned pos1 = get_qei_position(c1);
-				unsigned spd1 = get_qei_speed(c1);
-				unsigned pos2 = get_qei_position(c2);
-				unsigned spd2 = get_qei_speed(c2);
+				unsigned pos1, spd1, ts1, lpo1, lts1;
+				unsigned pos2, spd2, ts2, lpo2, lts2;
+
+				{ts1, pos1} = get_qei_data( c1 );
+				{ts2, pos2} = get_qei_data( c2 );
+
+				// Calculate speed
+				spd1 = get_speed(ts1, lts1, pos1, lpo1);
+				lts1 = ts1;
+				lpo1 = pos1;
+				spd2 = get_speed(ts2, lts2, pos2, lpo2);
+				lts2 = ts2;
+				lpo2 = pos2;
+
 
 				sprintf(my_string, " Position1 %d\n", pos1 );
 				lcd_draw_text_row( my_string, 0, lcd_ports );
@@ -74,7 +84,7 @@ void display(chanend c1, chanend c2)
 // Program Entry Point
 int main ( void )
 {
-	chan c_qei1, c_qei2;
+	streaming chan c_qei1, c_qei2;
 
 	par
 	{

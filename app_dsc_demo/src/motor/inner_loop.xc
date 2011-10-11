@@ -62,7 +62,7 @@
  **/
 
 #pragma unsafe arrays
-void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, chanend? c_wd, port in p_hall, chanend c_can_eth_shared )
+void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend c_qei, chanend c_adc, chanend c_speed, chanend? c_wd, port in p_hall, chanend c_can_eth_shared )
 {
 	/* Currents from ADC */
 	int Ia_in = 0, Ib_in = 0, Ic_in = 0;
@@ -95,7 +95,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 	unsigned start_up = 1, counter = 0;
 
 	/* Position and Speed */
-	unsigned theta = 0, speed = 0, set_speed = 1000, theta_flag = 0, run = 0;
+	unsigned theta = 0, last_theta, speed = 0, set_speed = 1000, theta_flag = 0, run = 0;
 	unsigned cmm_speed;
 	unsigned comm_shared;
 
@@ -104,7 +104,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 
 	/* Timer and timestamp */
 	timer t;
-	unsigned ts;
+	unsigned ts, last_ts;
 
 	/*  */
 	unsigned cycle_count=0;
@@ -227,15 +227,17 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 				/* Initial startup code using HALL mode */
 				if (start_up==0)
 				{
-					while (speed < 2000) {
+					while (set_speed < 2000) {
 						/* Get ADC readings */
 						{Ia_in, Ib_in, Ic_in} = get_adc_vals_calibrated_int16( c_adc );
 
 						/* Get the position from encoder module */
-						theta = get_qei_position ( c_qei );
+						{ts, theta} = get_qei_data( c_qei );
 
-						/* Actual speed calculated using encoder module */
-						speed = get_qei_speed ( c_qei );
+						// Calculate speed
+						speed = get_speed(ts, last_ts, theta, last_theta);
+						last_ts = ts;
+						last_theta = theta;
 
 						/* To calculate alpha and beta currents */
 						clarke_transform(alpha_in, beta_in, Ia_in, Ib_in, Ic_in);
@@ -303,16 +305,18 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 					{Ia_in, Ib_in, Ic_in} = get_adc_vals_calibrated_int16( c_adc );
 
 					/* Get the position from encoder module */
-					theta = get_qei_position ( c_qei );
+					{ts, theta} = get_qei_data( c_qei );
+
+					// Calculate speed
+					speed = get_speed(ts, last_ts, theta, last_theta);
+					last_ts = ts;
+					last_theta = theta;
 
 //					if(theta_flag)
 //					{
 						theta = theta + THETA_PHASE;
 						if (theta >= THETA_LIMIT) theta = theta - THETA_LIMIT;
 //					}
-
-					/* Actual speed calculated using encoder module */
-					speed = get_qei_speed ( c_qei );
 
 					/* To calculate alpha and beta currents */
 					clarke_transform(alpha_in, beta_in, Ia_in, Ib_in, Ic_in);

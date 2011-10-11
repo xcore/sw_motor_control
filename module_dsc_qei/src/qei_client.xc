@@ -21,55 +21,47 @@
  **/                                   
 #include <xs1.h>
 #include "qei_commands.h"
+#include "qei_client.h"
 
-unsigned get_qei_position ( chanend c_qei )
+#ifdef FAULHABER_MOTOR
+#define QEI_COUNT_MAX (1024 * 4)
+#else
+#define QEI_COUNT_MAX (256 * 4)
+#endif
+
+{unsigned, unsigned} get_qei_data( streaming chanend c_qei )
 {
-	unsigned r;
+	unsigned p, t;
 
 	c_qei <: QEI_CMD_POS_REQ;
-	c_qei :> r;
+	c_qei :> p;
+	c_qei :> t;
 
-	return r;
+	p &= (QEI_COUNT_MAX-1);
+
+	return {t, p};
 }
 
-int get_qei_speed ( chanend c_qei )
+unsigned get_speed(unsigned ts, unsigned last_ts, unsigned pos, unsigned last_pos)
 {
-	unsigned t1, t2;
-	int r;
-
-	c_qei <: QEI_CMD_SPEED_REQ;
-	c_qei :> t1;
-	c_qei :> t2;
-
-	if (t2-t1 == 0)
-		r = 0;
+	unsigned speed;
+	if (ts == last_ts)
+		return 0;
 	else
 	{
-#ifdef FAULHABER_MOTOR
-		r = 3000000000 / ((t2 - t1) * (1024 * 4));
-#else
-		r = 3000000000 / ((t2 - t1) * (256 * 4));
-#endif
-		r <<= 1; // double to get RPM
+		int delta = pos - last_pos;
+		if (delta < 0) delta = -delta;
+
+		// 24kHz main loop gives one measurement every 41.6usec
+		// 4000RPM is 66.6 revs/sec
+		// 66.6 revs/sec = 66.6*QEI_COUNT (=68266.6 counts/sec)
+		// = approx 2.8 counts per sample - this is what we expect delta to be
+
+		// 5859375 * 1024 = multiplier from revs per 10ns to RPM
+		// QEI_COUNT_MAX = multiplier from QEI angle to full revolutions
+		speed = 5859375 * delta / (QEI_COUNT_MAX / 1024);
+		speed /= (ts - last_ts);
 	}
-
-	return r;
+	return speed;
 }
 
-int qei_pos_known ( chanend c_qei )
-{
-	int r;
-	c_qei <: QEI_CMD_POS_KNOWN_REQ;
-	c_qei :> r;
-
-	return r;
-}
-
-int qei_cw ( chanend c_qei )
-{
-	int r;
-	c_qei <: QEI_CMD_CW_REQ;
-	c_qei :> r;
-
-	return r;
-}
