@@ -26,12 +26,11 @@
 #pragma unsafe arrays
 void do_qei ( streaming chanend c_qei, port in pQEI )
 {
-	unsigned pos = 0, v, ts;
-	timer t;
+	unsigned pos = 0, v;
 
 	// Order is 00 -> 10 -> 11 -> 01
 	unsigned char lookup[16][4] = {
-			{ 5, 4, 5, 6 }, // 00 00
+			{ 5, 4, 6, 5 }, // 00 00
 			{ 6, 5, 5, 4 }, // 00 01
 			{ 4, 5, 5, 6 }, // 00 10
 			{ 5, 6, 4, 5 }, // 00 11
@@ -40,7 +39,7 @@ void do_qei ( streaming chanend c_qei, port in pQEI )
 			{ 0, 0, 0, 0 }, // 01 xx
 			{ 0, 0, 0, 0 }, // 01 xx
 
-			{ 5, 4, 5, 6 }, // 10 00
+			{ 5, 4, 6, 5 }, // 10 00
 			{ 6, 5, 5, 4 }, // 10 01
 			{ 4, 5, 5, 6 }, // 10 10
 			{ 5, 6, 4, 5 }, // 10 11
@@ -58,7 +57,6 @@ void do_qei ( streaming chanend c_qei, port in pQEI )
 		select {
 			case pQEI when pinsneq(new_pins) :> new_pins :
 			{
-				t :> ts;
 				v = lookup[new_pins][old_pins];
 				if (!v) {
 					pos = 0;
@@ -71,7 +69,6 @@ void do_qei ( streaming chanend c_qei, port in pQEI )
 			case c_qei :> int :
 			{
 				c_qei <: pos;
-				c_qei <: ts;
 			}
 			break;
 		}

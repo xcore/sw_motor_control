@@ -18,21 +18,18 @@
 #ifndef __QEI_CLIENT_H__
 #define __QEI_CLIENT_H__
 
+#ifdef FAULHABER_MOTOR
+#define QEI_COUNT_MAX (1024 * 4)
+#else
+#define QEI_COUNT_MAX (256 * 4)
+#endif
+
 /** \brief Get the position from the QEI server
  *
  *  \param c_qei The control channel for the QEI server
- *  \return the position and timestamp of that position as a QEI pulse count and counts per second
+ *  \return the position
  */
-{unsigned, unsigned} get_qei_data( streaming chanend c_qei );
+unsigned get_qei_data( streaming chanend c_qei );
 
-/** \brief Utility function for calculating the speed
- *
- * \param ts the current timestamp
- * \param last_ts the last timestamp
- * \param pos the current position
- * \param last_pos the last position
- * \returns the speed in rpm
- */
-unsigned get_speed(unsigned ts, unsigned last_ts, unsigned pos, unsigned last_pos);
 
 #endif /* __QEI_CLIENT_H__ */

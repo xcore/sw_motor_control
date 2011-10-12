@@ -92,7 +92,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 	int id_set_point = 0;
 
 	/* General state management */
-	unsigned start_up = 1, counter = 0;
+	unsigned start_up = 1024, counter = 0;
 
 	/* Position and Speed */
 	unsigned theta = 0, last_theta, speed = 0, set_speed = 1000, theta_flag = 0, run = 0;
@@ -104,7 +104,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 
 	/* Timer and timestamp */
 	timer t;
-	unsigned ts, last_ts;
+	unsigned ts1, ts2;
 
 	/*  */
 	unsigned cycle_count=0;
@@ -124,8 +124,8 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 	// Pause to allow the rest of the system to settle
 	{
 		unsigned thread_id = get_thread_id();
-		t :> ts;
-		t when timerafter(ts+2*SEC+256*thread_id) :> ts;
+		t :> ts1;
+		t when timerafter(ts1+2*SEC+256*thread_id) :> void;
 	}
 
 	/* Zero pwm */
@@ -147,8 +147,8 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 	// Pause to allow the rest of the system to settle
 	{
 		unsigned thread_id = get_thread_id();
-		t :> ts;
-		t when timerafter(ts+1*SEC) :> ts;
+		t :> ts1;
+		t when timerafter(ts1+1*SEC) :> void;
 	}
 
 	/* PID control initialisation... */
@@ -225,98 +225,86 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 				}
 
 				/* Initial startup code using HALL mode */
-				if (start_up==0)
+				if (start_up < 4096)
 				{
-					while (set_speed < 2000) {
-						/* Get ADC readings */
-						{Ia_in, Ib_in, Ic_in} = get_adc_vals_calibrated_int16( c_adc );
+					t :> ts1;
 
-						/* Get the position from encoder module */
-						{ts, theta} = get_qei_data( c_qei );
+					/* Spin the magnetic field around regardless of the encoder */
+					theta = start_up & 1023;
 
-						// Calculate speed
-						speed = get_speed(ts, last_ts, theta, last_theta);
-						last_ts = ts;
-						last_theta = theta;
+					last_theta = get_qei_data( c_qei );
 
-						/* To calculate alpha and beta currents */
-						clarke_transform(alpha_in, beta_in, Ia_in, Ib_in, Ic_in);
+					iq_out = 1;
+					id_out = 0;
 
-						/* Id and Iq outputs derived from park transform */
-						park_transform( Id_in, Iq_in, alpha_in, beta_in, theta  );
+					/* Inverse park  [d,q] to [alpha, beta] */
+					inverse_park_transform( alpha_out, beta_out, id_out, iq_out, theta  );
 
-						/* Applying Speed PID */
-						iq_set_point = pid_regulator_delta_cust_error_speed((int)(set_speed - speed), pid );
+					/* Final voltages applied */
+					inverse_clarke_transform( Va, Vb, Vc, alpha_out, beta_out );
 
-						/* Apply PID control to Iq and Id */
-						Iq_err = iq_set_point - Iq_in;
-						Id_err = id_set_point - Id_in;
+					/* Scale to 12bit unsigned for PWM output */
+					pwm[0] = (Va + OFFSET_14) >> 3;
+					pwm[1] = (Vb + OFFSET_14) >> 3;
+					pwm[2] = (Vc + OFFSET_14) >> 3;
 
-						iq_out = pid_regulator_delta_cust_error_Iq_control( Iq_err, pid_q );
-
-						id_out = pid_regulator_delta_cust_error_Id_control( Id_err, pid_d );
-
-						/* Inverse park  [d,q] to [alpha, beta] */
-						inverse_park_transform( alpha_out, beta_out, id_out, iq_out, theta  );
-
-						/* Final voltages applied */
-						inverse_clarke_transform( Va, Vb, Vc, alpha_out, beta_out );
-
-						/* Scale to 12bit unsigned for PWM output */
-						pwm[0] = (Va + OFFSET_14) >> 3;
-						pwm[1] = (Vb + OFFSET_14) >> 3;
-						pwm[2] = (Vc + OFFSET_14) >> 3;
-
-						/* Clamp to avoid switching issues */
-						for (int j = 0; j < 3; j++)
-						{
-							if (pwm[j] > PWM_MAX_LIMIT)
-								pwm[j] = PWM_MAX_LIMIT;
-							if (pwm[j] < PWM_MIN_LIMIT )
-								pwm[j] = PWM_MIN_LIMIT;
-						}
-
-						/* Update the PWM values */
-						update_pwm_inv( pwm_ctrl, c_pwm, pwm );
-
-						/* Ramp the set_speed up */
-						t when timerafter(ts+ 5* MSec ) :> ts;
-						set_speed = set_speed + RAMP;
+					/* Clamp to avoid switching issues */
+					for (int j = 0; j < 3; j++)
+					{
+						if (pwm[j] > PWM_MAX_LIMIT)
+							pwm[j] = PWM_MAX_LIMIT;
+						if (pwm[j] < PWM_MIN_LIMIT )
+							pwm[j] = PWM_MIN_LIMIT;
 					}
-					start_up = 1;
+
+					/* Update the PWM values */
+					update_pwm_inv( pwm_ctrl, c_pwm, pwm );
+
+					start_up++;
 				}
 				else
 				{
 					cycle_count++;
-
-					/* Hunt for correct phase difference */
-					if(run == 0) {
-						counter++;
-						if(counter >= 4000) {
-							if((set_speed == 2000) && (speed < 1500)) {
-							theta_flag = 1;
-							}
-							run = 1;
-						}
-					}
 
 					/* ---	FOC ALGORITHM	--- */
 					/* Get ADC readings */
 					{Ia_in, Ib_in, Ic_in} = get_adc_vals_calibrated_int16( c_adc );
 
 					/* Get the position from encoder module */
-					{ts, theta} = get_qei_data( c_qei );
+					theta = get_qei_data( c_qei );
 
-					// Calculate speed
-					speed = get_speed(ts, last_ts, theta, last_theta);
-					last_ts = ts;
-					last_theta = theta;
+					// Bring theta into the correct phase (adjustment between QEI and motor windings
+					theta = theta + THETA_PHASE;
+					if (theta >= THETA_LIMIT) theta = theta - THETA_LIMIT;
 
-//					if(theta_flag)
-//					{
-						theta = theta + THETA_PHASE;
-						if (theta >= THETA_LIMIT) theta = theta - THETA_LIMIT;
-//					}
+					// Calculate the speed
+					t :> ts1;
+
+					if (ts1 - ts2 > 100000)
+					{
+						unsigned fraction_of_revolution_in_16_16;
+						unsigned delta_time_in_10ns;
+
+						int angle_diff = theta - last_theta;
+						if (angle_diff < (QEI_COUNT_MAX/2)) angle_diff += QEI_COUNT_MAX;
+						if (angle_diff > (QEI_COUNT_MAX/2)) angle_diff -= QEI_COUNT_MAX;
+
+						fraction_of_revolution_in_16_16 = (angle_diff << 16) / QEI_COUNT_MAX;
+						delta_time_in_10ns = (ts1 - ts2);
+
+						// 91552 = 6000000000>>16
+						speed = (fraction_of_revolution_in_16_16 * 91552 / delta_time_in_10ns);
+
+						if (isnull(c_in)) {
+							xscope_probe_data(0, angle_diff);
+							xscope_probe_data(1, fraction_of_revolution_in_16_16);
+							xscope_probe_data(2, delta_time_in_10ns);
+							xscope_probe_data(3, speed);
+						}
+
+						ts2 = ts1;
+						last_theta = theta;
+					}
 
 					/* To calculate alpha and beta currents */
 					clarke_transform(alpha_in, beta_in, Ia_in, Ib_in, Ic_in);
@@ -326,9 +314,6 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 
 					/* Applying Speed PID */
 					iq_set_point = pid_regulator_delta_cust_error_speed((int)(set_speed - speed), pid );
-
-//					Iq_in = 1;
-//					Id_in = 0;
 
 					/* Apply PID control to Iq and Id */
 					Iq_err = iq_set_point - Iq_in;
@@ -376,9 +361,9 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 						if (isnull(c_in)) {
 //							xscope_probe_data(0, Ia_in);
 //							xscope_probe_data(1, Ib_in);
-							xscope_probe_data(2, pwm[0]);
-							xscope_probe_data(3, pwm[2]);
-							xscope_probe_data(4, iq_out);
+//							xscope_probe_data(2, pwm[0]);
+//							xscope_probe_data(3, pwm[2]);
+//							xscope_probe_data(4, iq_out);
 						}
 					}
 #endif

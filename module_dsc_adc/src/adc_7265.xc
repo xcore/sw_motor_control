@@ -11,11 +11,6 @@
 #include <adc_common.h>
 #include <adc_7265.h>
 
-#ifdef USE_XSCOPE
-#include <xscope.h>
-#endif
-
-
 #define ADC_FILTER_7265
 
 // This parameter needs to be tuned to move the ADC trigger point into the centre of the 'OFF' period.
@@ -101,11 +96,6 @@ static void adc_get_data_7265( int adc_val[], unsigned channel, port CNVST, in b
 
 	val1 = 0x00000FFF & val1;
 	val3 = 0x00000FFF & val3;
-
-#ifdef USE_XSCOPE
-	xscope_probe_data(0, val1);
-	xscope_probe_data(1, val3);
-#endif
 
 #ifdef ADC_FILTER_7265
 	adc_val[0] = (adc_val[0] >> 1) + (val1 >> 1);
