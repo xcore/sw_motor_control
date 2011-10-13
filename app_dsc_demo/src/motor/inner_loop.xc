@@ -290,13 +290,14 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 
 					/* Applying Speed PID */
 					iq_set_point = pid_regulator_delta_cust_error_speed((int)(set_speed - speed), pid );
+					if (iq_set_point <0) iq_set_point = 0;
 
 					/* Apply PID control to Iq and Id */
-					Iq_err = iq_set_point - Iq_in;
-					Id_err = id_set_point - Id_in;
+					Iq_err = Iq_in - iq_set_point;
+					Id_err = Id_in - id_set_point;
 
 					iq_out = pid_regulator_delta_cust_error_Iq_control( Iq_err, pid_q );
-					id_out = 0;//pid_regulator_delta_cust_error_Id_control( Id_err, pid_d );
+					id_out = pid_regulator_delta_cust_error_Id_control( Id_err, pid_d );
 
 					/* Inverse park  [d,q] to [alpha, beta] */
 					inverse_park_transform( alpha_out, beta_out, id_out, iq_out, theta  );
