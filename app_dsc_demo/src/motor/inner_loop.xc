@@ -92,10 +92,13 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 	int id_set_point = 0;
 
 	/* General state management */
-	unsigned start_up = 1024, counter = 0;
+	unsigned start_up = 1024;
 
 	/* Position and Speed */
-	unsigned theta = 0, last_theta, speed = 0, set_speed = 1000, theta_flag = 0, run = 0;
+	unsigned theta = 0, theta_flag = 0;
+	int speed = 1000, set_speed = 1000;
+
+	// Channel comms
 	unsigned cmm_speed;
 	unsigned comm_shared;
 
@@ -104,7 +107,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 
 	/* Timer and timestamp */
 	timer t;
-	unsigned ts1, ts2;
+	unsigned ts1;
 
 	/*  */
 	unsigned cycle_count=0;
@@ -155,6 +158,9 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 	init_pid( MOTOR_P, MOTOR_I, MOTOR_D, pid_d);
 	init_pid( MOTOR_P, MOTOR_I, MOTOR_D, pid_q);
 	init_pid( Kp, Ki, Kd, pid );
+
+	// Initially - pretend that the speed and the set speed are the same
+	speed = set_speed;
 
 	/* Main loop */
 	while (1)
@@ -225,16 +231,15 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 				}
 
 				/* Initial startup code using HALL mode */
-				if (start_up < 4096)
+				if (start_up < QEI_COUNT_MAX<<4)
 				{
-					t :> ts1;
+
+					{speed, theta} = get_qei_data( c_qei );
 
 					/* Spin the magnetic field around regardless of the encoder */
-					theta = start_up & 1023;
+					theta = (start_up >> 2) & (QEI_COUNT_MAX-1);
 
-					last_theta = get_qei_data( c_qei );
-
-					iq_out = 1;
+					iq_out = 2000;
 					id_out = 0;
 
 					/* Inverse park  [d,q] to [alpha, beta] */
@@ -271,40 +276,11 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					{Ia_in, Ib_in, Ic_in} = get_adc_vals_calibrated_int16( c_adc );
 
 					/* Get the position from encoder module */
-					theta = get_qei_data( c_qei );
+					{speed, theta } = get_qei_data( c_qei );
 
 					// Bring theta into the correct phase (adjustment between QEI and motor windings
 					theta = theta + THETA_PHASE;
 					if (theta >= THETA_LIMIT) theta = theta - THETA_LIMIT;
-
-					// Calculate the speed
-					t :> ts1;
-
-					if (ts1 - ts2 > 100000)
-					{
-						unsigned fraction_of_revolution_in_16_16;
-						unsigned delta_time_in_10ns;
-
-						int angle_diff = theta - last_theta;
-						if (angle_diff < (QEI_COUNT_MAX/2)) angle_diff += QEI_COUNT_MAX;
-						if (angle_diff > (QEI_COUNT_MAX/2)) angle_diff -= QEI_COUNT_MAX;
-
-						fraction_of_revolution_in_16_16 = (angle_diff << 16) / QEI_COUNT_MAX;
-						delta_time_in_10ns = (ts1 - ts2);
-
-						// 91552 = 6000000000>>16
-						speed = (fraction_of_revolution_in_16_16 * 91552 / delta_time_in_10ns);
-
-						if (isnull(c_in)) {
-							xscope_probe_data(0, angle_diff);
-							xscope_probe_data(1, fraction_of_revolution_in_16_16);
-							xscope_probe_data(2, delta_time_in_10ns);
-							xscope_probe_data(3, speed);
-						}
-
-						ts2 = ts1;
-						last_theta = theta;
-					}
 
 					/* To calculate alpha and beta currents */
 					clarke_transform(alpha_in, beta_in, Ia_in, Ib_in, Ic_in);
@@ -320,8 +296,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					Id_err = id_set_point - Id_in;
 
 					iq_out = pid_regulator_delta_cust_error_Iq_control( Iq_err, pid_q );
-
-					id_out = pid_regulator_delta_cust_error_Id_control( Id_err, pid_d );
+					id_out = 0;//pid_regulator_delta_cust_error_Id_control( Id_err, pid_d );
 
 					/* Inverse park  [d,q] to [alpha, beta] */
 					inverse_park_transform( alpha_out, beta_out, id_out, iq_out, theta  );
@@ -356,17 +331,14 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					/* Update the PWM values */
 					update_pwm_inv( pwm_ctrl, c_pwm, pwm );
 
-#ifdef USE_XSCOPE
 					if ((cycle_count & 0x1) == 0) {
-						if (isnull(c_in)) {
-//							xscope_probe_data(0, Ia_in);
-//							xscope_probe_data(1, Ib_in);
-//							xscope_probe_data(2, pwm[0]);
-//							xscope_probe_data(3, pwm[2]);
-//							xscope_probe_data(4, iq_out);
-						}
+					        if (isnull(c_in)) {
+					        	//xscope_probe_data(0, speed);
+					        	//xscope_probe_data(1, iq_set_point);
+					        	//xscope_probe_data(2, Iq_err);
+					        	//xscope_probe_data(3, iq_out);
+					        }
 					}
-#endif
 				}
 			}
 			break;

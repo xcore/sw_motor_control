@@ -18,13 +18,25 @@
 #include "qei_commands.h"
 #include "qei_client.h"
 
-unsigned get_qei_data( streaming chanend c_qei )
+{unsigned, unsigned} get_qei_data( streaming chanend c_qei )
 {
-	unsigned p;
+	unsigned p, s, ts1, ts2;
 
 	c_qei <: QEI_CMD_POS_REQ;
 	c_qei :> p;
+	c_qei :> ts1;
+	c_qei :> ts2;
 
 	p &= (QEI_COUNT_MAX-1);
-	return p;
+
+	// Calculate the speed
+	if (ts1 == ts2)
+		s = 0;
+	else {
+		// 6000000000 = 10ns -> 1min
+		s = 3000000000 / ((ts1 - ts2) * QEI_COUNT_MAX);
+		s <<= 1;
+	}
+
+	return {s, p};
 }

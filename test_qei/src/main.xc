@@ -49,11 +49,11 @@ void display(streaming chanend c1, streaming chanend c2)
 		{
 			case tmr when timerafter(t) :> void :
 			{
-				unsigned pos1;
-				unsigned pos2;
+				unsigned pos1, spd1;
+				unsigned pos2, spd2;
 
-				pos1 = get_qei_data( c1 );
-				pos2 = get_qei_data( c2 );
+				{ spd1, pos1 } = get_qei_data( c1 );
+				{ spd2, pos2 } = get_qei_data( c2 );
 
 				sprintf(my_string, " Position1 %d\n", pos1 );
 				lcd_draw_text_row( my_string, 0, lcd_ports );

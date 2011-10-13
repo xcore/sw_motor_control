@@ -28,7 +28,7 @@
 #define Q_LIMIT_L -12000
 #define D_LIMIT 6000
 #define LOWLIMIT -4000
-#define SPEED_LIMIT 40000
+#define SPEED_LIMIT 80000
 
 extern int frac_mul( int a, int b );
 

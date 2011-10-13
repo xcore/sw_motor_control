@@ -20,13 +20,15 @@
 #include "dsc_config.h"
 #include <stdio.h>
 
+// This is the loop time for 4000RPM on a 1024 count QEI
 #pragma xta command "analyze loop qei_main_loop"
-#pragma xta command "set required - 244 ns"
+#pragma xta command "set required - 14.64 us"
 
 #pragma unsafe arrays
 void do_qei ( streaming chanend c_qei, port in pQEI )
 {
-	unsigned pos = 0, v;
+	unsigned pos = 0, v, ts1, ts2;
+	timer t;
 
 	// Order is 00 -> 10 -> 11 -> 01
 	unsigned char lookup[16][4] = {
@@ -52,11 +54,18 @@ void do_qei ( streaming chanend c_qei, port in pQEI )
 	unsigned old_pins=0, new_pins;
 	pQEI :> new_pins;
 
+	t :> ts1;
+
+
 	while (1) {
 #pragma xta endpoint "qei_main_loop"
 		select {
 			case pQEI when pinsneq(new_pins) :> new_pins :
 			{
+				if ((new_pins & 0x3) != old_pins) {
+					ts2 = ts1;
+					t :> ts1;
+				}
 				v = lookup[new_pins][old_pins];
 				if (!v) {
 					pos = 0;
@@ -69,6 +78,8 @@ void do_qei ( streaming chanend c_qei, port in pQEI )
 			case c_qei :> int :
 			{
 				c_qei <: pos;
+				c_qei <: ts1;
+				c_qei <: ts2;
 			}
 			break;
 		}
