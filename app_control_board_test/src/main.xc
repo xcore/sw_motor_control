@@ -100,7 +100,7 @@ int test_buttons_and_leds()
 
 	printstr("Press any button if all LEDs are lit\n");
 	leds <: 0xF0;
-	btns when pinseq(0x7) :> void;
+	btns when pinsneq(0xF) :> void;
 	btns when pinseq(0xF) :> void;
 	waitfor(10);
 
