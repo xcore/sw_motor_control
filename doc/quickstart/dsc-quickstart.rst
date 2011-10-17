@@ -19,7 +19,10 @@ Setting up the hardware
 
       - Connect a 24V power supply to the power section of the BLDC board.
       
-   By default, the power board will provide power to the control board. Jumper J2 can be set to the alternative
+   **WARNING** : Do *NOT* put the 24V power supply into the control board. The control board takes a 5V power
+   supply and will be damaged by 24V. 
+      
+   By default, the power board will provide power to the control board. Jumper J2 can be set to the alternative (East)
    position to allow a separate 5V power supply to be provided to the control board.
         
    The default application will spin the motors using a field oriented control algorithm.  The display will show
@@ -36,7 +39,7 @@ Configuring the firmware
     By default the software is set up to be controlled by the buttons around the LCD, and also by the ethernet interface.
     If CAN is a preferred choice of control, then the **app_dsc_demo\src\dsc_config.h** can be modified.  The preprocessor
     macros **USE_ETH** and **USE_CAN** can be commented out as appropriate to enable ethernet, CAN, or neither.
-
+    
   Changing the TCP/IP address
     By default the ethernet and TCP/IP interface has a statically allocated IP address of 169.254.0.1 (a link local IP address),
     and a net mask of 255.255.0.0.  To change this, edit the file **app_basic_bldc/src/main.xc** or **app_dsc_demo/src/main.xc**.
@@ -63,7 +66,7 @@ Building the firmware
 
   The command will build the software and produce an executable file:
   
-    *app_dsc_demo/bin/Release/dsc_basic_bldc.xe*
+    *app_dsc_demo/bin/Release/app_dsc_demo.xe*
 
   Alternatively, the project can be imported into the XDE tool. Once it is imported, the sw_motor_control project can
   be selected, and the options for building and running each application can be selected.
@@ -84,7 +87,7 @@ Running the firmware
 
   The main FOC application can be run on the hardware by executing the following command within an XMOS command line:
 
-    *xrun app_dsc_demo/bin/Release/dsc_basic_bldc.xe*
+    *xrun app_dsc_demo/bin/Release/app_dsc_demo.xe*
 
   Alternatively, from within the XDE:
 
@@ -101,7 +104,18 @@ Running the firmware
   Controlling the motor speed
     Button A increases the demand speed in steps of 100 RPM.  Button B decreases the motor speed in steps of 100 RPM.
 
+Using the GUI interface
+-----------------------
 
+The GUI application is available from XMOS on request. It is based on the LabView suite, and so requires the LabView
+8.1 runtime environment to be installed on the user's PC.  This is available from the LabView website, at 
+*http://joule.ni.com/nidu/cds/view/p/id/861/lang/en*.
+
+For interfacing to the board using CAN, LabView supports the Kvaser Leaf Light HS USB to CAN dongle.
+
+When the application is run (Motor Control.exe), the interface will appear, and a dialog will pop up asking to have
+the user select CAN or Ethernet.  If Ethernet is selected then the IP address of the board will be required. The
+firmware flashed onto the board by default will have the IP address 169.254.0.1 (a link local IP address).
 
 The watchdog timer hardware override
 ------------------------------------
