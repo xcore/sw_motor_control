@@ -51,7 +51,6 @@ void do_comms_can( chanend c_commands[], chanend rxChan, chanend txChan)
 		// Increment the count
 		count = (count + 1) & COUNTER_MASK;
 
-		printhex(p.ID);
 		// Check that the packet is for us (Address = 0x1)
 		if (p.ID == 0x1 )
 	      {
