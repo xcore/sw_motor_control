@@ -20,6 +20,7 @@
 #include "pwm_cli_inv.h"
 #include "dsc_config.h"
 
+#pragma unsafe arrays
 void update_pwm_inv( t_pwm_control& ctrl, chanend c, unsigned value[])
 {
 	unsigned pwm_val[PWM_CHAN_COUNT];
@@ -46,6 +47,10 @@ void update_pwm_inv( t_pwm_control& ctrl, chanend c, unsigned value[])
 		if (pwm_val[i] > (PWM_MAX_VALUE - (32+PWM_DEAD_TIME))) {
 			pwm_val[i] = (PWM_MAX_VALUE - (32+PWM_DEAD_TIME));
 		}
+
+#ifdef PWM_CLIPPED_RANGE
+		calculate_data_out_quick(pwm_val[i], ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i]);
+#else
 		calculate_data_out_ref( pwm_val[i],
 				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].ts0,
 				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].out0,
@@ -58,6 +63,7 @@ void update_pwm_inv( t_pwm_control& ctrl, chanend c, unsigned value[])
 				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].inv_ts1,
 				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].inv_out1,
 				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].cat );
+#endif
 	}
 
 	if (value[0] == -1 && value[1] == -1 && value[2] == -1) {

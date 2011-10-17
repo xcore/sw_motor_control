@@ -35,6 +35,21 @@ void init_pwm_vals( );
 void calculate_data_out( unsigned value, REFERENCE_PARAM(t_out_data,pwm_out_data) );
 void calculate_data_out_ref( unsigned value, REFERENCE_PARAM(unsigned,ts0), REFERENCE_PARAM(unsigned,out0), REFERENCE_PARAM(unsigned,ts1), REFERENCE_PARAM(unsigned,out1), REFERENCE_PARAM(e_pwm_cat,cat));
 
+#ifdef __XC__
+inline void calculate_data_out_quick( unsigned value, REFERENCE_PARAM(t_out_data,pwm_out_data) )
+{
+	pwm_out_data.cat = DOUBLE;
+	pwm_out_data.out0 = 0xFFFFFFFF;
+	pwm_out_data.out1 = 0x7FFFFFFF;
+	pwm_out_data.inv_out0 = 0xFFFFFFFF;
+	pwm_out_data.inv_out1 = 0x7FFFFFFF;
+	pwm_out_data.ts0 = (value >> 1);
+	pwm_out_data.ts1 = (value >> 1)-31;
+	pwm_out_data.inv_ts0 = ((value+PWM_DEAD_TIME) >> 1);
+	pwm_out_data.inv_ts1 = ((value+PWM_DEAD_TIME) >> 1) - 31;
+}
+#endif
+
 // Calculate required ordering of operation
 void order_pwm( REFERENCE_PARAM(unsigned,mode), unsigned chan_id[], t_out_data pwm_out_data[]);
 

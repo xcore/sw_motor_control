@@ -47,7 +47,7 @@
 #define THETA_LIMIT 1024 									// 1024 is the counts around the QEI
 #define THETA_PHASE 85 //(THETA_LIMIT / NUMBER_OF_POLES / 3) 	// Phase offset of 120 degrees
 
-
+#pragma xta command "add exclusion foc_loop_motor_fault"
 #pragma xta command "add exclusion foc_loop_speed_comms"
 #pragma xta command "add exclusion foc_loop_shared_comms"
 #pragma xta command "add exclusion foc_loop_startup"
@@ -134,16 +134,8 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 		t when timerafter(ts1+2*SEC+256*thread_id) :> void;
 	}
 
-	/* Zero pwm */
-	pwm[0] = 0;
-	pwm[1] = 0;
-	pwm[2] = 0;
-
 	/* ADC centrepoint calibration before we start the PWM */
 	do_adc_calibration( c_adc );
-
-	/* Update PWM */
-	update_pwm_inv( pwm_ctrl, c_pwm, pwm );
 
 	/* allow the WD to get going */
 	if (!isnull(c_wd)) {
@@ -281,7 +273,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 				{
 					cycle_count++;
 
-#pragma xta endpoint "foc_loop_read_hardware"
+#pragma xta label "foc_loop_read_hardware"
 
 					/* ---	FOC ALGORITHM	--- */
 					/* Get ADC readings */
@@ -294,17 +286,17 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					theta = theta + THETA_PHASE;
 					if (theta >= THETA_LIMIT) theta = theta - THETA_LIMIT;
 
-#pragma xta endpoint "foc_loop_clarke"
+#pragma xta label "foc_loop_clarke"
 
 					/* To calculate alpha and beta currents */
 					clarke_transform(alpha_in, beta_in, Ia_in, Ib_in, Ic_in);
 
-#pragma xta endpoint "foc_loop_park"
+#pragma xta label "foc_loop_park"
 
 					/* Id and Iq outputs derived from park transform */
 					park_transform( Id_in, Iq_in, alpha_in, beta_in, theta  );
 
-#pragma xta endpoint "foc_loop_speed_pid"
+#pragma xta label "foc_loop_speed_pid"
 
 					/* Applying Speed PID */
 					iq_set_point = pid_regulator_delta_cust_error_speed((int)(set_speed - speed), pid );
@@ -314,38 +306,37 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					Iq_err = Iq_in - iq_set_point;
 					Id_err = Id_in - id_set_point;
 
-#pragma xta endpoint "foc_loop_id_iq_pid"
+#pragma xta label "foc_loop_id_iq_pid"
 
 					iq_out = pid_regulator_delta_cust_error_Iq_control( Iq_err, pid_q );
 					id_out = pid_regulator_delta_cust_error_Id_control( Id_err, pid_d );
 
-#pragma xta endpoint "foc_loop_inverse_park"
+#pragma xta label "foc_loop_inverse_park"
 
 					/* Inverse park  [d,q] to [alpha, beta] */
 					inverse_park_transform( alpha_out, beta_out, id_out, iq_out, theta  );
 
-#pragma xta endpoint "foc_loop_inverse_clarke"
+#pragma xta label "foc_loop_inverse_clarke"
 
 					/* Final voltages applied */
 					inverse_clarke_transform( Va, Vb, Vc, alpha_out, beta_out );
 
-#pragma xta endpoint "foc_loop_update_pwm"
+#pragma xta label "foc_loop_update_pwm"
 
 					/* Scale to 12bit unsigned for PWM output */
 					pwm[0] = (Va + OFFSET_14) >> 3;
+					if (pwm[0] > PWM_MAX_LIMIT) pwm[0] = PWM_MAX_LIMIT;
+					if (pwm[0] < PWM_MIN_LIMIT) pwm[0] = PWM_MIN_LIMIT;
 					pwm[1] = (Vb + OFFSET_14) >> 3;
+					if (pwm[1] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
+					if (pwm[1] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
 					pwm[2] = (Vc + OFFSET_14) >> 3;
+					if (pwm[2] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
+					if (pwm[2] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
 
-					/* Clamp to avoid switching issues */
-					for (int j = 0; j < 3; j++)
-					{
-						if (pwm[j] > PWM_MAX_LIMIT)
-							pwm[j] = PWM_MAX_LIMIT;
-						if (pwm[j] < PWM_MIN_LIMIT )
-							pwm[j] = PWM_MIN_LIMIT;
-					}
 
 					if((OC_fault_flag==1)||(UV_fault_flag==1)) {
+#pragma xta label "foc_loop_motor_fault"
 						count++;
 						if(count==10)
 						{

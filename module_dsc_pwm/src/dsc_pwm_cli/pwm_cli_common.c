@@ -38,6 +38,7 @@ void pwm_share_control_buffer_address_with_server(chanend c, t_pwm_control* ctrl
 void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 {
 	unsigned chan_id_tmp;
+#ifndef PWM_CLIPPED_RANGE
 	unsigned sngle = 0, long_single = 0, dble = 0;
 	int e_check = 0;
 
@@ -128,6 +129,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 	}
 
 	else if (dble == 3) {
+#endif
 		*mode = 4;
 
 		/* now order by length*/
@@ -146,6 +148,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 			chan_id[max_index] = chan_id_tmp;
 		}
 		return;
+#ifndef PWM_CLIPPED_RANGE
 	}
 
 	else if (long_single == 1 && dble == 1 && sngle == 1) {
@@ -209,6 +212,7 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 
 		return;
 	}
+#endif
 }
 
 
@@ -294,6 +298,7 @@ void calculate_data_out( unsigned value, t_out_data *pwm_out_data )
 
 }
 
+
 void calculate_data_out_ref( unsigned value, unsigned *ts0, unsigned *out0, unsigned *ts1, unsigned *out1, e_pwm_cat *cat )
 {
 	*out1 = 0;
@@ -368,7 +373,6 @@ void calculate_data_out_ref( unsigned value, unsigned *ts0, unsigned *out0, unsi
 		*ts1 = 0;
 		return;
 	}
-
 	// midrange
 	*cat = DOUBLE;
 	*out0 = 0xFFFFFFFF;
@@ -378,4 +382,8 @@ void calculate_data_out_ref( unsigned value, unsigned *ts0, unsigned *out0, unsi
 	*ts1 = (value >> 1)-31;
 
 }
+
+
+
+
 

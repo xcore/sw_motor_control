@@ -28,6 +28,8 @@
 #include "adc_common.h"
 #endif
 
+#define PWM_CLIPPED_RANGE
+
 #define PWM_CHAN_COUNT 3
 
 #define BLDC_SEQUENCE_0	{4,2,2,0,0,4}
