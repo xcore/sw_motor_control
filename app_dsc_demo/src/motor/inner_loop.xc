@@ -243,7 +243,11 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					{speed, theta} = get_qei_data( c_qei );
 
 					/* Spin the magnetic field around regardless of the encoder */
+#if PLATFORM_REFERENCE_MHZ == 100
 					theta = (start_up >> 2) & (QEI_COUNT_MAX-1);
+#else
+					theta = (start_up >> 4) & (QEI_COUNT_MAX-1);
+#endif
 
 					iq_out = 2000;
 					id_out = 0;

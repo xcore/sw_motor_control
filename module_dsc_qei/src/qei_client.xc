@@ -33,9 +33,15 @@
 	if (ts1 == ts2)
 		s = 0;
 	else {
-		// 6000000000 = 10ns -> 1min
+#if PLATFORM_REFERENCE_MHZ == 100
+		// 6000000000 = 10ns -> 1min (100 MHz ports)
 		s = 3000000000 / ((ts1 - ts2) * QEI_COUNT_MAX);
 		s <<= 1;
+#else
+		// 15000000000 = 4ns -> 1min (250 MHz ports)
+		s = 1875000000 / ((ts1 - ts2) * QEI_COUNT_MAX);
+		s <<= 3;
+#endif
 	}
 
 	return {s, p};
