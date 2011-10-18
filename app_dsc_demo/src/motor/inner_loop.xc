@@ -44,8 +44,13 @@
 #define PWM_MIN_LIMIT 200
 #define OFFSET_14 16383
 #define RAMP 50
-#define THETA_LIMIT 1024 									// 1024 is the counts around the QEI
-#define THETA_PHASE 85 //(THETA_LIMIT / NUMBER_OF_POLES / 3) 	// Phase offset of 120 degrees
+
+// This constant adjusts for the phase between the theta=0 coil (the A coil) and the actual
+// orientation of the coils in the motor-type (1 coil rotation = 360/3 = 120 degrees)
+#define THETA_PHASE 85 //(120 degrees * QEI_COUNT_MAX / 360 degrees / NUMBER_OF_POLES) // Phase offset of 120 degrees
+
+// This is half of the coil sector angle (6 sectors = 60 degrees per sector, 30 degrees per half sector)
+#define THETA_HALF_PHASE 21 // (30 degrees * QEI_COUNT_MAX / 360 degrees / NUMBER_OF_POLES)
 
 #pragma xta command "add exclusion foc_loop_motor_fault"
 #pragma xta command "add exclusion foc_loop_speed_comms"
@@ -55,13 +60,19 @@
 #pragma xta command "set required - 40 us"
 
 /*
- *run_motor() function Initially runs in open loop uses hall sensor outputs and finds hall_state.
- *Based on the hall state it identifies the rotor position and give the commutation sequence to
- *Upper and Lower IGBT's. After rotating for some number of iterations it finds zero hall state
- *and executes field oriented control algorithem.It get actual speed and position of rotor using
- *encoder module and phase currents using ADC then it updates PWM based on this values. This
- *funcntion uses five channels c_wd for watchdog timer, c_qei to get the update speed and position,
- *c_speed for display and c_adc for currents.
+ * run_motor() function Initially runs in open loop uses hall sensor outputs and finds hall_state.
+ * Based on the hall state it identifies the rotor position and give the commutation sequence to
+ * Upper and Lower IGBT's. After rotating for some number of iterations it finds zero hall state
+ * and executes field oriented control algorithem.It get actual speed and position of rotor using
+ * encoder module and phase currents using ADC then it updates PWM based on this values. This
+ * funcntion uses five channels c_wd for watchdog timer, c_qei to get the update speed and position,
+ * c_speed for display and c_adc for currents.
+ *
+ * Notes:
+ *
+ *   when theta=0, the Iq component (the major magnetic vector) transforms to the Ia current.
+ *   therefore we want to have theta=0 aligned with the centre of the '110' state of hall effect
+ *   detector.
  **/
 
 #pragma unsafe arrays
@@ -95,10 +106,10 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 	int id_set_point = 0;
 
 	/* General state management */
-	unsigned start_up = 1024;
+	unsigned start_up = 0;
 
 	/* Position and Speed */
-	unsigned theta = 0, valid = 0;
+	unsigned theta = 0, theta_offset = -1, valid = 0;
 	int speed = 1000, set_speed = 1000;
 
 	// Channel comms
@@ -234,20 +245,24 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 				}
 
 				/* Initial startup code using HALL mode */
-				if (start_up < QEI_COUNT_MAX<<4 || valid==0)
+				if (valid==0 || theta_offset==-1 )
 				{
 #pragma xta label "foc_loop_startup"
 
 					{speed, theta, valid } = get_qei_data( c_qei );
 
-					/* Check we are spinning in the right direction */
-					if ((last_hall&0x7)==0b011 && (hall&0x7)==0b010) {
-						// Turning the wrong direction
-						  pwm[0]=-1;
-						  pwm[1]=-1;
-						  pwm[2]=-1;
-						  err_flag=1;
+					if (valid && (last_hall&0x7)==0b011 && (hall&0x7)==0b010) {
+						// We are spinning in the wrong direction
+						pwm[0]=-1;
+						pwm[1]=-1;
+						pwm[2]=-1;
+						err_flag=1;
 					} else {
+						// Find the offset between the rotor and the QEI
+						if (valid && (last_hall&0x7)==0b100 && (hall&0x7)==0b110 && theta_offset==-1) {
+							theta_offset = theta - THETA_HALF_PHASE + THETA_PHASE;
+							theta_offset &= (QEI_COUNT_MAX-1);
+						}
 
 						/* Spin the magnetic field around regardless of the encoder */
 #if PLATFORM_REFERENCE_MHZ == 100
@@ -298,9 +313,9 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					/* Get the position from encoder module */
 					{speed, theta, valid } = get_qei_data( c_qei );
 
-					// Bring theta into the correct phase (adjustment between QEI and motor windings
-					theta = theta + THETA_PHASE;
-					if (theta >= THETA_LIMIT) theta = theta - THETA_LIMIT;
+					// Bring theta into the correct phase (adjustment between QEI and motor windings)
+					theta = theta + theta_offset;
+					theta &= (QEI_COUNT_MAX-1);
 
 #pragma xta label "foc_loop_clarke"
 
