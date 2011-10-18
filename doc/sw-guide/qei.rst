@@ -45,20 +45,14 @@ To access the information provided by the quadrature encoder the functions liste
 
   #include "qei_client.h"
 
-  int get_qei_position( chanend c_qei );
-
-  int get_qei_speed( chanend c_qei );
-
-  int qei_pos_known( chanend c_qei );
-
-  int qei_cw( chanend c_qei );
+  { unsigned, unsigned, unsigned } get_qei_data( chanend c_qei );
 
 
-Position value is returned in tenths of a degree and speed is returned in revolutions per minute (RPM). 
+The three values are the speed, position and valid state. The position value is returned as a count
+from the index zero position and speed is returned in revolutions per minute (RPM). 
 
-The third function provides the ability to request whether the QEI interface has received an index signal and is therefore confident that an accurate position can be calculated. Until this function returns 1 then only speed information will be valid.
-
-The fourth function will provide a result of 1 if the direction of rotation of the encoder is clockwise.
+The third value indicates whether the QEI interface has received an index signal and therefore that the position is
+valid.
 
 QEI Service Implementation
 ++++++++++++++++++++++++++
@@ -80,19 +74,6 @@ can be queried from the service.
 To enable the calculation of both speed and position the time between transitions is recorded and
 the direction is recorded (as shown for clockwise rotation in the state diagram in the figure.
 
-Communication of the required information is done by the client first requesting the information.
-This can be requested using the following command values.
-
-::
-
-  QEI_CMD_POS_REQ
-  QEI_CMD_SPEED_REQ
-  QEI_CMD_POS_KNOWN_REQ
-  QEI_CMD_CW_REQ
-
-
-These are utilised by the client library functions discussed below.
-
 QEI Client Implementation
 +++++++++++++++++++++++++
 
@@ -106,13 +87,5 @@ This means that to calculate the speed of rotation equation is utilised on the c
 ::
 
   SPEED =  60000000 / (t_2 - t_1) * 1024
-
-Calculation of position in tenths of a degree is also performed on the client side and is shown in equation
-
-::
-
-  POS = (QEI_RAW_POS * 3600) >> 10
-
-Direction and whether an index signal has been received are direct values presented as requested from the QEI service.
 
 

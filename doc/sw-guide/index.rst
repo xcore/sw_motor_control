@@ -51,5 +51,6 @@ methods, or with neither of them.
    hsi
    qei
    api
+   resources
 
 

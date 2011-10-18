@@ -75,21 +75,13 @@ Server functions
 
 .. doxygenfunction:: run_adc_max1379
 
-.. doxygenfunction:: do_lp_filter
-
 QEI
 ---
 
 Client functions
 ++++++++++++++++
 
-.. doxygenfunction:: get_qei_position
-
-.. doxygenfunction:: get_qei_speed
-
-.. doxygenfunction:: qei_pos_known
-
-.. doxygenfunction:: qei_cw
+.. doxygenfunction:: get_qei_data
 
 Server functions
 ++++++++++++++++

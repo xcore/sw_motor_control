@@ -86,19 +86,25 @@ The control loop can be found in ``src/motor/inner_loop.xc``. The thread is laun
 ::
 
   void run_motor (
-	chanend c_pwm,
-	chanend c_qei,
-	chanend c_adc,
-	chanend c_speed,
-	chanend? c_wd,
-	port in p_hall,
-	chanend c_can_eth_shared )
+    chanend? c_in,
+    chanend? c_out,
+    chanend c_pwm,
+    streaming chanend c_qei,
+    chanend c_adc,
+    chanend c_speed,
+    chanend? c_wd,
+    port in p_hall,
+    chanend c_can_eth_shared)
 
+The control loop takes input from the encoder, a set speed from the control modules and applies it via
+PWM. It utilises the feedback from the ADC and calculations done using the Park and Clarke transforms and
+application of PID regulation of *I_d* and *I_q*.  The resulting values of *V_a*, *V_b* and *V_c* are
+output to the PWM.
 
-The control loop takes input from the encoder, a set speed from the control modules and applies it via PWM. It utilises the feedback from the ADC and calculations done using the Park and Clarke transforms and application of PID regulation of *I_d* and *I_q*.  The resulting values of *V_a*, *V_b* and *V_c* are output to the PWM.
+This loop is a simple example of how a control loop may be implemented and the function calls that would be
+used to achieve this.
 
-This loop is a simple example of how a control loop may be implemented and the function calls that would be used to achieve this.
-
-
+The first two arguments, *c_in* and *c_out* are used to synchronize the PWMs for multiple motors so that they
+do not have their ADC dead time in exactly the same time.
 
 
