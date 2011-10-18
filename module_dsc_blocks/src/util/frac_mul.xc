@@ -1,15 +1,10 @@
 /**
- * Module:  module_dsc_blocks
- * Version: 1v0alpha1
- * Build:   7b7eef1756b9212fbbec0f46dcf20389c3e60ffd
- * File:    frac_mul.xc
- *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
  * Terms and conditions covering the use of this code can
  * be found in the Xmos End User License Agreement.
  *
- * Copyright XMOS Ltd 2010
+ * Copyright XMOS Ltd 2011
  *
  * In the case where this code is a modification of existing code
  * under a separate license, the separate license terms are shown

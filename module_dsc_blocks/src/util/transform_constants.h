@@ -1,17 +1,10 @@
 /**
- * Module:  module_dsc_blocks
- * Version: 1v0alpha0
- * Build:   566a9c92ff1894b27c224fb8ed9c01d7af40a119
- * File:    transform_constants.h
- * Modified by : Srikanth
- * Last Modified on : 26-May-2011
- *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
  * Terms and conditions covering the use of this code can
  * be found in the Xmos End User License Agreement.
  *
- * Copyright XMOS Ltd 2010
+ * Copyright XMOS Ltd 2011
  *
  * In the case where this code is a modification of existing code
  * under a separate license, the separate license terms are shown

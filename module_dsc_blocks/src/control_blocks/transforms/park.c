@@ -24,14 +24,16 @@
 #include "sine_lookup.h"
 
 // Do a park transform
-void park_transform( int *Id, int *Iq, int I_alpha, int I_beta, unsigned theta )
+void park_transform( int *Id, int *Iq, int I_a, int I_b, unsigned theta )
 {
 	int tmp;
+	int s = sine( theta );
+	int c = cosine( theta );
 
-	tmp = (((I_alpha * cosine( theta )) >> 14) + ((I_beta * sine( theta )) >> 14));
+	tmp = (((I_a * c ) >> 14) + ((I_b * s ) >> 14));
 	*Id = tmp ;
 
-	tmp = (((I_beta * cosine( theta )) >> 14) - ((I_alpha * sine( theta ))>> 14));
+	tmp = (((I_b * c ) >> 14) - ((I_a * s ) >> 14));
 	*Iq = tmp ;
 
 }
@@ -41,11 +43,13 @@ void park_transform( int *Id, int *Iq, int I_alpha, int I_beta, unsigned theta )
 void inverse_park_transform( int *I_alpha, int *I_beta, int Id, int Iq, unsigned theta )
 {
 	int tmp;
+	int s = sine( theta );
+	int c = cosine( theta );
 
-	tmp = (((Id * cosine( theta ))/16384) - ((Iq *  sine( theta )) /16384));
+	tmp = ((( Id * c ) >> 14) - ((Iq * s ) >> 14));
 	*I_alpha = tmp;
 
-	tmp = ((( Id *   sine( theta ))/16384)+ ((Iq * cosine( theta ))/16384));
+	tmp = ((( Id * s ) >> 14) + ((Iq * c ) >> 14));
 	*I_beta = tmp;
 
 }
