@@ -55,3 +55,12 @@ constant that is calibrated to align with the appropriate measurement point.
 
 ADC values can be requested from the server at any point.
 
+The screenshot shows three PWM ports and the ADC conversion trigger port. It shows that the ADC trigger rising edge,
+where the sample hold is made, is directly centred in the PWM channel inter-cycle period.
+
+  .. image:: images/pwm-adc-sync.png
+     :width: 100%
+     
+ 
+
+

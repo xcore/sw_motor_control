@@ -16,10 +16,10 @@
 // This parameter needs to be tuned to move the ADC trigger point into the centre of the 'OFF' period.
 // The 'test_pwm' application can be run in the simulator to tune the parameter.  Use the following
 // command line:
-//    xsim --vcd-tracing "-core stdcore[1] -ports" bin\Release\test_pwm.xe > trace.vcd
+//    xsim --vcd-tracing "-core stdcore[1] -ports" bin\test_pwm.xe > trace.vcd
 //
-// Then open the 'Signals' and 'Waves' panes in the XDE, load the VCD file and look at the traces
-// named 'PORT_M1_LO_A', 'PORT_M1_LO_B', 'PORT_M1_LO_C', and 'PORT_ADC_CONV'.  The ADC conversion
+// Then open the 'Waveforms' perspective in the XDE, click the 'load VCD file' icon and look at the
+// traces named 'PORT_M1_LO_A', 'PORT_M1_LO_B', 'PORT_M1_LO_C', and 'PORT_ADC_CONV'.  The ADC conversion
 // trigger should go high in the centre of the low periods of all of the motor control ports. This
 // occurs periodically, but an example can be found at around 94.8us into the simulaton.
 #define ADC_TRIGGER_DELAY 1980
