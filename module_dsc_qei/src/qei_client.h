@@ -27,9 +27,9 @@
 /** \brief Get the position from the QEI server
  *
  *  \param c_qei The control channel for the QEI server
- *  \return the speed and position
+ *  \return the speed, position and valid state
  */
-{ unsigned, unsigned } get_qei_data( streaming chanend c_qei );
+{ unsigned, unsigned, unsigned } get_qei_data( streaming chanend c_qei );
 
 
 #endif /* __QEI_CLIENT_H__ */

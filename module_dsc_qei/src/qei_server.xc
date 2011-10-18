@@ -27,7 +27,7 @@
 #pragma unsafe arrays
 void do_qei ( streaming chanend c_qei, port in pQEI )
 {
-	unsigned pos = 0, v, ts1, ts2;
+	unsigned pos = 0, v, ts1, ts2, ok=0;
 	timer t;
 
 	// Order is 00 -> 10 -> 11 -> 01
@@ -69,6 +69,7 @@ void do_qei ( streaming chanend c_qei, port in pQEI )
 				v = lookup[new_pins][old_pins];
 				if (!v) {
 					pos = 0;
+					ok = 1;
 				} else {
 					{ v, pos } = lmul(1, pos, v, -5);
 				}
@@ -80,6 +81,7 @@ void do_qei ( streaming chanend c_qei, port in pQEI )
 				c_qei <: pos;
 				c_qei <: ts1;
 				c_qei <: ts2;
+				c_qei <: ok;
 			}
 			break;
 		}

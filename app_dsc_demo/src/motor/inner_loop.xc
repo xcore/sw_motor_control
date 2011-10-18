@@ -98,15 +98,18 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 	unsigned start_up = 1024;
 
 	/* Position and Speed */
-	unsigned theta = 0, theta_flag = 0;
+	unsigned theta = 0, valid = 0;
 	int speed = 1000, set_speed = 1000;
 
 	// Channel comms
 	unsigned cmm_speed;
 	unsigned comm_shared;
 
+	/* Hall state */
+	unsigned hall, last_hall=0;
+
 	/* Fault detection */
-	unsigned OC_fault_flag=0, UV_fault_flag=0, err_flag=0, count=0, oc_status=0b0000;
+	unsigned OC_fault_flag=0, UV_fault_flag=0, err_flag=0, count=0;
 
 	/* Timer and timestamp */
 	timer t;
@@ -208,7 +211,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 			else if (comm_shared == CMD_GET_FAULT)
 			{
 				c_can_eth_shared <: OC_fault_flag;
-				c_can_eth_shared <: theta_flag;
+				c_can_eth_shared <: valid;
 			}
 
 			break;
@@ -219,49 +222,62 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 			if(err_flag==0)
 			{
 
-				/* Get OC fault pin status */
-				p_hall :> oc_status;
-				if(oc_status & 0b1000) {
+				/* Get hall state */
+				last_hall = hall;
+				p_hall :> hall;
+
+				/* Check error status */
+				if(hall & 0b1000) {
 					OC_fault_flag=0;
 				} else {
 					OC_fault_flag=1;
 				}
 
 				/* Initial startup code using HALL mode */
-				if (start_up < QEI_COUNT_MAX<<4)
+				if (start_up < QEI_COUNT_MAX<<4 || valid==0)
 				{
 #pragma xta label "foc_loop_startup"
 
-					{speed, theta} = get_qei_data( c_qei );
+					{speed, theta, valid } = get_qei_data( c_qei );
 
-					/* Spin the magnetic field around regardless of the encoder */
+					/* Check we are spinning in the right direction */
+					if ((last_hall&0x7)==0b011 && (hall&0x7)==0b010) {
+						// Turning the wrong direction
+						  pwm[0]=-1;
+						  pwm[1]=-1;
+						  pwm[2]=-1;
+						  err_flag=1;
+					} else {
+
+						/* Spin the magnetic field around regardless of the encoder */
 #if PLATFORM_REFERENCE_MHZ == 100
-					theta = (start_up >> 2) & (QEI_COUNT_MAX-1);
+						theta = (start_up >> 2) & (QEI_COUNT_MAX-1);
 #else
-					theta = (start_up >> 4) & (QEI_COUNT_MAX-1);
+						theta = (start_up >> 4) & (QEI_COUNT_MAX-1);
 #endif
 
-					iq_out = 2000;
-					id_out = 0;
+						iq_out = 2000;
+						id_out = 0;
 
-					/* Inverse park  [d,q] to [alpha, beta] */
-					inverse_park_transform( alpha_out, beta_out, id_out, iq_out, theta  );
+						/* Inverse park  [d,q] to [alpha, beta] */
+						inverse_park_transform( alpha_out, beta_out, id_out, iq_out, theta  );
 
-					/* Final voltages applied */
-					inverse_clarke_transform( Va, Vb, Vc, alpha_out, beta_out );
+						/* Final voltages applied */
+						inverse_clarke_transform( Va, Vb, Vc, alpha_out, beta_out );
 
-					/* Scale to 12bit unsigned for PWM output */
-					pwm[0] = (Va + OFFSET_14) >> 3;
-					pwm[1] = (Vb + OFFSET_14) >> 3;
-					pwm[2] = (Vc + OFFSET_14) >> 3;
+						/* Scale to 12bit unsigned for PWM output */
+						pwm[0] = (Va + OFFSET_14) >> 3;
+						pwm[1] = (Vb + OFFSET_14) >> 3;
+						pwm[2] = (Vc + OFFSET_14) >> 3;
 
-					/* Clamp to avoid switching issues */
-					for (int j = 0; j < 3; j++)
-					{
-						if (pwm[j] > PWM_MAX_LIMIT)
-							pwm[j] = PWM_MAX_LIMIT;
-						if (pwm[j] < PWM_MIN_LIMIT )
-							pwm[j] = PWM_MIN_LIMIT;
+						/* Clamp to avoid switching issues */
+						for (int j = 0; j < 3; j++)
+						{
+							if (pwm[j] > PWM_MAX_LIMIT)
+								pwm[j] = PWM_MAX_LIMIT;
+							if (pwm[j] < PWM_MIN_LIMIT )
+								pwm[j] = PWM_MIN_LIMIT;
+						}
 					}
 
 					/* Update the PWM values */
@@ -280,7 +296,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					{Ia_in, Ib_in, Ic_in} = get_adc_vals_calibrated_int16( c_adc );
 
 					/* Get the position from encoder module */
-					{speed, theta } = get_qei_data( c_qei );
+					{speed, theta, valid } = get_qei_data( c_qei );
 
 					// Bring theta into the correct phase (adjustment between QEI and motor windings
 					theta = theta + THETA_PHASE;

@@ -18,14 +18,15 @@
 #include "qei_commands.h"
 #include "qei_client.h"
 
-{unsigned, unsigned} get_qei_data( streaming chanend c_qei )
+{unsigned, unsigned, unsigned } get_qei_data( streaming chanend c_qei )
 {
-	unsigned p, s, ts1, ts2;
+	unsigned p, s, ts1, ts2, v;
 
 	c_qei <: QEI_CMD_POS_REQ;
 	c_qei :> p;
 	c_qei :> ts1;
 	c_qei :> ts2;
+	c_qei :> v;
 
 	p &= (QEI_COUNT_MAX-1);
 
@@ -44,5 +45,5 @@
 #endif
 	}
 
-	return {s, p};
+	return {s, p, v};
 }

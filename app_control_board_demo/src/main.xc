@@ -544,7 +544,7 @@ void do_demo_interface(chanend c_xtcp, chanend commands)
 void do_demo_motor(chanend commands, chanend c_pwm[], streaming chanend c_qei[], chanend c_adc[], in port p_hall1, in port p_hall2)
 {
 	unsigned cmd;
-	unsigned r1, r2, r3, s1;
+	unsigned r1, r2, r3, s1, v1;
 	unsigned pwm[3];
 
 	t_pwm_control pwm_ctrl1;
@@ -600,9 +600,9 @@ void do_demo_motor(chanend commands, chanend c_pwm[], streaming chanend c_qei[],
 					break;
 
 				case CMD_QEI:
-					{ s1, r1 } = get_qei_data(c_qei[0]);
+					{ s1, r1, v1 } = get_qei_data(c_qei[0]);
 					commands <: r1;
-					{ s1, r1 } = get_qei_data(c_qei[1]);
+					{ s1, r1, v1 } = get_qei_data(c_qei[1]);
 					commands <: r1;
 					break;
 				}
