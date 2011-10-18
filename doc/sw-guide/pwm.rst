@@ -44,13 +44,22 @@ PWM resolution is defined using PWM_MAX_VALUE. The value defined here sets the f
 XS1_TIMER_HZ and PWM frequency ($PWM_FREQ$) is defined in the equation below. XS1_TIMER_HZ is defined at compile time by the ReferenceFrequency
 identifier in the project XN file. By default this reference frequency is 100MHz so XS1_TIMER_HZ would have a value of 100,000,000.
 
-``PWM_FREQ = XS1_TIMER_HZ / (PWM_MAX_VAL * 2)``
+``PWM_FREQ = XS1_TIMER_HZ / (PWM_MAX_VAL)``
 
-So with an example value of PWM_MAX_VALUE being 4096 (12 bit resolution), the PWM_FREQ will be 24,414Hz.  Likewise, for a PWM frequency
+So with an example value of PWM_MAX_VALUE being 4096, the PWM_FREQ will be 24,414Hz.  Likewise, for a PWM frequency
 of 25Hz, the PWM_MAX_VAL would be 100000000 / 25 = 4000000.  The maximum value for the PWM_MAX_VAL is 0x3FFFFFFF-PWM_DEAD_TIME, because
 the timestamps used to calculate the triggering of the PWM need to be no more than half of a 32 bit word into the future.  This gives
 a minimum PWM period of around 0.1Hz.
 
+In the FOC example, the ReferenceFrequency is set to 250MHz.  This changes the calculation and gives the following:
+
+``PWM_FREQ = 250000000 / 4096 = 61.035 kHz``
+
+The PWM_MAX_VALUE is the total length of time which each PWM cycle occupies.  Because the PWM is symmetrical, there are only
+PWM_MAX_VALUE / 2 steps that are available for positioning the rising PWM edge, and likewise for the falling PWM edge.  Thus the
+number of bits available for a PWM_MAX_VALUE of 4096 is actually 11 bits.  Note however that the update_pwm client function will
+shift the input value down by one bit, so that the client function should still provide a duty cycle value in the range of
+0 to PWM_MAX_VALUE-1.
 
 
 Locking the ADC trigger to PWM
@@ -235,7 +244,12 @@ it by the client.
 Loop modes
 ~~~~~~~~~~
 
-To achieve the required output, the port buffers are used to create the extremely short or long pulses as shown in
+By default, the PWM is configured to be unable to do the top and bottom 0.5% of the duty cycle range.  This prevents
+the system having to deal with the unusual cases where the output is a very short or very long pulse.  If the constant
+*PWM_CLIPPED_RANGE* is removed from the *dsc_pwm_common.h* file, then the PWM will be able to cope with the full
+duty cycle range.
+ 
+In this case, to achieve the required output, the port buffers are used to create the extremely short or long pulses as shown in
 the figure. The green boxes indicate a buffer of data that is output from the port.
 
   .. image:: images/bufferedPWM.pdf
@@ -309,15 +323,18 @@ to the ports. The PWM client must:
    * Ascertain the loop mode required
    * Maintain the shared data set, including which buffer is in use and which one can be updated
 
-Taking the inverter mode as our working example (located in ``module_dsc_pwm/src/dsc_pwm_cli/pwm_cli_inv``) the function update_pwm_inv(...) first
-saves the PWM values for later use and then initialises the channel ordering array to assume a sequential order of output. 
+Taking the inverter mode as our working example (located in ``module_dsc_pwm/src/dsc_pwm_cli/pwm_cli_inv``) the
+function update_pwm_inv(...) first
+saves the PWM values for later use and then initialises the channel ordering array to assume a sequential order
+of output. 
 
-Following this the calculation of the timings and output values are done for each of the channel. This is done by passing the relevant PWM value
-and data set references to the calculate_data_out_ref(...). This function also ascertains the type of output which can be one of three values
-SINGLE, DOUBLE and LONG_SINGLE.
+If the non-clipped PWM range is being used, then following this the calculation of the timings and output values
+are done for each of the channel. This is done by passing the relevant PWM value
+and data set references to the calculate_data_out_ref(...). This function also ascertains the type of output which
+can be one of three values SINGLE, DOUBLE and LONG_SINGLE.
 
-Once the calculations for each of the PWM channels is completed they can be ordered. This is done using the order_pwm(...) function. This orders
-the values in the channel ID buffer and also works out the loop mode that is required.
+Once the calculations for each of the PWM channels is completed they can be ordered. This is done using the
+order_pwm(...) function. This orders the values in the channel ID buffer and also works out the loop mode that is required.
 
 When the values have been ordered and the loop mode calculated the buffer number is passed to the PWM service to indicate an update.
 
