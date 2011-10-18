@@ -260,7 +260,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					} else {
 						// Find the offset between the rotor and the QEI
 						if (valid && (last_hall&0x7)==0b100 && (hall&0x7)==0b110 && theta_offset==-1) {
-							theta_offset = theta - THETA_HALF_PHASE + THETA_PHASE;
+							theta_offset = (theta - THETA_HALF_PHASE) + THETA_PHASE;
 							theta_offset &= (QEI_COUNT_MAX-1);
 						}
 
