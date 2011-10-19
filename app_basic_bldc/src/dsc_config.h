@@ -38,7 +38,7 @@
 #define TCP_CONTROL_PORT 9595
 
 // Define the number of poles the motor has
-#define NUMBER_OF_POLES	8
+#define NUMBER_OF_POLES	4
 
 // Define this to enable the CAN interface
 //#define USE_CAN

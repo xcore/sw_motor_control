@@ -36,21 +36,19 @@
 #define MOTOR_I 6
 #define MOTOR_D 0
 #define SEC 100000000
-#define MSec 100000
 #define Kp 5000
 #define Ki 100
 #define Kd 40
 #define PWM_MAX_LIMIT 3800
 #define PWM_MIN_LIMIT 200
 #define OFFSET_14 16383
-#define RAMP 50
 
 // This constant adjusts for the phase between the theta=0 coil (the A coil) and the actual
 // orientation of the coils in the motor-type (1 coil rotation = 360/3 = 120 degrees)
-#define THETA_PHASE 85 //(120 degrees * QEI_COUNT_MAX / 360 degrees / NUMBER_OF_POLES) // Phase offset of 120 degrees
+#define THETA_PHASE (QEI_COUNT_MAX * 120 / 360 / NUMBER_OF_POLES) // Phase offset of 120 degrees
 
 // This is half of the coil sector angle (6 sectors = 60 degrees per sector, 30 degrees per half sector)
-#define THETA_HALF_PHASE 21 // (30 degrees * QEI_COUNT_MAX / 360 degrees / NUMBER_OF_POLES)
+#define THETA_HALF_PHASE (QEI_COUNT_MAX * 30 / 360 / NUMBER_OF_POLES)
 
 #pragma xta command "add exclusion foc_loop_motor_fault"
 #pragma xta command "add exclusion foc_loop_speed_comms"
@@ -259,9 +257,8 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 						err_flag=1;
 					} else {
 						// Find the offset between the rotor and the QEI
-						if (valid && (last_hall&0x7)==0b100 && (hall&0x7)==0b110 && theta_offset==-1) {
-							theta_offset = (theta - THETA_HALF_PHASE) + THETA_PHASE;
-							theta_offset &= (QEI_COUNT_MAX-1);
+						if (valid && (last_hall&0x7)==0b011 && (hall&0x7)==0b001 && theta_offset==-1 && theta < (QEI_COUNT_MAX/NUMBER_OF_POLES)) {
+							theta_offset = (THETA_HALF_PHASE + theta);
 						}
 
 						/* Spin the magnetic field around regardless of the encoder */
@@ -314,7 +311,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					{speed, theta, valid } = get_qei_data( c_qei );
 
 					// Bring theta into the correct phase (adjustment between QEI and motor windings)
-					theta = theta + theta_offset;
+					theta = theta - theta_offset;
 					theta &= (QEI_COUNT_MAX-1);
 
 #pragma xta label "foc_loop_clarke"

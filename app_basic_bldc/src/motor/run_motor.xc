@@ -25,9 +25,6 @@
 
 #include "run_motor.h"
 
-/* number of pole pairs are TWO so we are defining that below*/
-#define MOTOR_POLE_PAIRS (NUMBER_OF_POLES>>1)
-
 #define SEC 100000000
 #define SPEED_COUNT 1500000000
 #define STATE_LIMIT 250

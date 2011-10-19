@@ -29,7 +29,9 @@ code. This file can set the following defines:
 **NUMBER_OF_POLES**
 
     This is the number of poles in the motor.  It is therefore ratio of the number of
-    electrical rotations to each physical rotation.
+    electrical rotations to each physical rotation. If a motor has a single winding per
+    coil, then it is called a 2 pole motor. Two sets of windings per coil makes a
+    four pole motor, and so on.
 
 **USE_CAN**
 

@@ -28,7 +28,7 @@
 #define PWM_DEAD_TIME 10
 
 // Define the number of poles the motor has
-#define NUMBER_OF_POLES	8
+#define NUMBER_OF_POLES	4
 
 // Define the resolution of PWM (affects operational freq. as tied to ref clock)
 #define PWM_MAX_VALUE 4096
