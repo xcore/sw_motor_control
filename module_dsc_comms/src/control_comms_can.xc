@@ -42,8 +42,8 @@ void do_comms_can( chanend c_commands[], chanend rxChan, chanend txChan)
 	unsigned int Ia[2],Ib[2],Ic[2],Iq_set_point[2],Id_out[2],Iq_out[2]; // motor1 parameters
 
 	// Loop forever processing packets
-	while( 1 )
-	{
+	while( 1 ) {
+
 		// Wait for a command
 		value = inuint(rxChan);
 	    receivePacket(rxChan, p);
@@ -52,39 +52,37 @@ void do_comms_can( chanend c_commands[], chanend rxChan, chanend txChan)
 		count = (count + 1) & COUNTER_MASK;
 
 		// Check that the packet is for us (Address = 0x1)
-		if (p.ID == 0x1 )
-	      {
+		if (p.ID == 0x1 ) {
+
 			// Check that it is the correct length (8 bytes)
-			if ( p.DLC == 8 )
-			{
+			if ( p.DLC == 8 ) {
 				// The first 2 bytes of the packet are the sender address
 				sender_address = (p.DATA[0] << 8) + p.DATA[1];
 				// Fields which are fixed
-					p.SOF = 0;
-					p.RB0 = 0;
-					p.CRC_DEL = 1;
-					p.ACK_DEL = 1;
-					p._EOF = 0x7F;
-					p.DLC = 8;
-					p.CRC = 0; // CRC is calculated by transmitter
+				p.SOF = 0;
+				p.RB0 = 0;
+				p.CRC_DEL = 1;
+				p.ACK_DEL = 1;
+				p._EOF = 0x7F;
+				p.DLC = 8;
+				p.CRC = 0; // CRC is calculated by transmitter
 
-					// Create a normal packet
-					p.SRR = 0;
-					p.IEB = 0;
-					p.EID = 0;
-					p.RTR = 0;
-					p.RB1 = 0;
+				// Create a normal packet
+				p.SRR = 0;
+				p.IEB = 0;
+				p.EID = 0;
+				p.RTR = 0;
+				p.RB1 = 0;
 
-					// Write the sender address, making sure that it is less than 127
-					p.ID  = sender_address & 0x7F;
+				// Write the sender address, making sure that it is less than 127
+				p.ID  = sender_address & 0x7F;
 
-			//Select what to do based on the command send
-			       switch ( p.DATA[2] )
-				{
+				//Select what to do based on the command send
+				switch ( p.DATA[2] ) {
+
 					case 1 : //Send CAN frame 1
 
 						// Get the speed ,Ia,Ib of motor1
-
 						for (unsigned int m=0; m<NUMBER_OF_MOTORS; m++) {
 							c_commands[m] <: CMD_GET_VALS;
 							c_commands[m] :> speed[m];
@@ -142,90 +140,92 @@ void do_comms_can( chanend c_commands[], chanend rxChan, chanend txChan)
 						}
 
 
-					// Put Ic and Iq_set_point into the packet
+						// Put Ic and Iq_set_point into the packet
 						p.DATA[0] = ( ( Ic[0]           >> 8) & 0xFF);
 						p.DATA[1] = ( ( Ic[0]           >> 0 ) & 0xFF);
 						p.DATA[2] = ( ( Iq_set_point[0] >> 8 ) & 0xFF);
 						p.DATA[3] = ( ( Iq_set_point[0] >> 0 ) & 0xFF);
 
-					// Put Id_out and Iq_out into the packet
+						// Put Id_out and Iq_out into the packet
 						p.DATA[4] = ( ( Id_out[0] >> 8 ) & 0xFF);
 						p.DATA[5] = ( ( Id_out[0] >> 0 ) & 0xFF);
 						p.DATA[6] = ( ( Iq_out[0] >> 8) & 0xFF);
 						p.DATA[7] = ( ( Iq_out[0] >> 0 ) & 0xFF);
 
-					// Finally, send the packet
+						// Finally, send the packet
 						outuint(txChan, count);
 						sendPacket(txChan, p);
 
-					// Increment the packet count
+						// Increment the packet count
 						count = (count + 1) & COUNTER_MASK;
-					break;
+						break;
 
 			    case 4: //send CAN packet 3
 			    	//sends motor 2 data
+					for (unsigned int m=0; m<NUMBER_OF_MOTORS; m++) {
+						c_commands[m] <: CMD_GET_VALS;
+						c_commands[m] :> speed[m];
+						c_commands[m] :> Ia[m];
+						c_commands[m] :> Ib[m];
 
-				// Put Ia2 and Ib2 into the packet
+						c_commands[m] <: CMD_GET_VALS2;
+						c_commands[m] :> Ic[m];
+						c_commands[m] :> Iq_set_point[m];
+						c_commands[m] :> Id_out[m];
+						c_commands[m] :> Iq_out[m];
+
+						c_commands[m] <: CMD_GET_FAULT;
+						c_commands[m] :> fault_flag[m];
+					}
+
+					// Put Ia2 and Ib2 into the packet
 					p.DATA[0] = ( ( Ia[1] >> 8) & 0xFF);
 					p.DATA[1] = ( ( Ia[1] >> 0 ) & 0xFF);
 					p.DATA[2] = ( ( Ib[1] >> 8 ) & 0xFF);
 				    p.DATA[3] = ( ( Ib[1] >> 0 ) & 0xFF);
 
-			// Put Ic2 and Iq_set_point into the packet
+				    	// Put Ic2 and Iq_set_point into the packet
 			        p.DATA[4] = ( ( Ic[1]           >> 8 ) & 0xFF);
 			        p.DATA[5] = ( ( Ic[1]           >> 0 ) & 0xFF);
 			        p.DATA[6] = ( ( Iq_set_point[1] >> 8) & 0xFF);
 			        p.DATA[7] = ( ( Iq_set_point[1] >> 0 ) & 0xFF);
 
-			// Finally, send the packet
-				outuint(txChan, count);
-				sendPacket(txChan, p);
+			        // Finally, send the packet
+			        outuint(txChan, count);
+			        sendPacket(txChan, p);
 
-			// Increment the packet count
-				count = (count + 1) & COUNTER_MASK;
+			        // Increment the packet count
+			        count = (count + 1) & COUNTER_MASK;
+			        break;
 
+			    case 5:  //send CAN packet 4
+			    	//sends motor 2 data and fault
 
-		     	break;
-			 case 5:  //send CAN packet 4
-                  //sends motor 2 data and fault
-
-				// Put Id_out and Iq_out into the packet
+			    	// Put Id_out and Iq_out into the packet
 					p.DATA[0] = ( ( Id_out[1] >> 8) & 0xFF);
 					p.DATA[1] = ( ( Id_out[1] >> 0 ) & 0xFF);
 					p.DATA[2] = ( ( Iq_out[1] >> 8 ) & 0xFF);
 					p.DATA[3] = ( ( Iq_out[1] >> 0 ) & 0xFF);
 
-				// Put error flags of motor1 and 2 into the packet(last 2 bytes vacant i.e.,6 and 7)
+					// Put error flags of motor1 and 2 into the packet(last 2 bytes vacant i.e.,6 and 7)
 					p.DATA[4] = ( ( error_flag[0] >> 0 ) & 0xFF);
 					p.DATA[5] = ( ( error_flag[1] >> 0 ) & 0xFF);
 					p.DATA[6] = ( ( Iq_out[1]     >> 8) & 0xFF);
 					p.DATA[7] = ( ( Iq_out[1]     >> 0 ) & 0xFF);
 
-				// Finally, send the packet
+					// Finally, send the packet
 					outuint(txChan, count);
 					sendPacket(txChan, p);
 
-				// Increment the packet count
+					// Increment the packet count
 					count = (count + 1) & COUNTER_MASK;
-				break;
-		 default :// Unknown command - ignore it.
-						//printstr("Unknown\n");
+					break;
 
-				break;
-
+			    default :// Unknown command - ignore it.
+			    	break;
 			   }
 			}
-			else
-		   {
-				// Packet too short - ignore it.
-			}
 		}
-		else
-		{
-			// Erronous packet received - ignore it.
-		}
-
-
 	}
 }
 

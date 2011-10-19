@@ -151,6 +151,9 @@ void do_comms_eth( chanend c_commands[], chanend tcp_svr )
                     		c_commands[m] :> Iq_set_point[m];
                     		c_commands[m] :> Id_out[m];
                     		c_commands[m] :> Iq_out[m];
+
+                    		c_commands[m] <: CMD_GET_FAULT;
+                    		c_commands[m] :> fault_flag[m];
                 		}
 
 

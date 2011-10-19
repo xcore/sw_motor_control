@@ -43,6 +43,10 @@
 #define PWM_MIN_LIMIT 200
 #define OFFSET_14 16383
 
+#define ERROR_OVERCURRENT 0x1
+#define ERROR_UNDERVOLTAGE 0x2
+#define ERROR_STALL 0x4
+
 // This constant adjusts for the phase between the theta=0 coil (the A coil) and the actual
 // orientation of the coils in the motor-type (1 coil rotation = 360/3 = 120 degrees)
 #define THETA_PHASE (QEI_COUNT_MAX * 120 / 360 / NUMBER_OF_POLES) // Phase offset of 120 degrees
@@ -118,7 +122,9 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 	unsigned hall, last_hall=0;
 
 	/* Fault detection */
-	unsigned OC_fault_flag=0, UV_fault_flag=0, err_flag=0, count=0;
+	unsigned error_flags=0;
+	unsigned error_count=0;
+	unsigned stop_motor=0;
 
 	/* Timer and timestamp */
 	timer t;
@@ -189,9 +195,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 			}
 			else if(cmm_speed == CMD_GET_FAULT)
 			{
-				c_speed <: OC_fault_flag;
-				c_speed <: UV_fault_flag;
-
+				c_speed <: error_flags;
 			}
 
 			break;
@@ -219,8 +223,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 			}
 			else if (comm_shared == CMD_GET_FAULT)
 			{
-				c_can_eth_shared <: OC_fault_flag;
-				c_can_eth_shared <: valid;
+				c_can_eth_shared <: error_flags;
 			}
 
 			break;
@@ -228,7 +231,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 		/* Initially the below case runs in open loop with the hall sensor responses and then reverts
 		 * back to main FOC algorithem */
 		default:
-			if(err_flag==0)
+			if(stop_motor==0)
 			{
 
 				/* Get hall state */
@@ -236,10 +239,8 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 				p_hall :> hall;
 
 				/* Check error status */
-				if(hall & 0b1000) {
-					OC_fault_flag=0;
-				} else {
-					OC_fault_flag=1;
+				if(!(hall & 0b1000)) {
+					error_flags |= ERROR_OVERCURRENT;
 				}
 
 				/* Initial startup code using HALL mode */
@@ -254,7 +255,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 						pwm[0]=-1;
 						pwm[1]=-1;
 						pwm[2]=-1;
-						err_flag=1;
+						stop_motor=1;
 					} else {
 						// Find the offset between the rotor and the QEI
 						if (valid && (last_hall&0x7)==0b011 && (hall&0x7)==0b001 && theta_offset==-1 && theta < (QEI_COUNT_MAX/NUMBER_OF_POLES)) {
@@ -279,17 +280,14 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 
 						/* Scale to 12bit unsigned for PWM output */
 						pwm[0] = (Va + OFFSET_14) >> 3;
+						if (pwm[0] > PWM_MAX_LIMIT) pwm[0] = PWM_MAX_LIMIT;
+						if (pwm[0] < PWM_MIN_LIMIT) pwm[0] = PWM_MIN_LIMIT;
 						pwm[1] = (Vb + OFFSET_14) >> 3;
+						if (pwm[1] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
+						if (pwm[1] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
 						pwm[2] = (Vc + OFFSET_14) >> 3;
-
-						/* Clamp to avoid switching issues */
-						for (int j = 0; j < 3; j++)
-						{
-							if (pwm[j] > PWM_MAX_LIMIT)
-								pwm[j] = PWM_MAX_LIMIT;
-							if (pwm[j] < PWM_MIN_LIMIT )
-								pwm[j] = PWM_MIN_LIMIT;
-						}
+						if (pwm[2] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
+						if (pwm[2] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
 					}
 
 					/* Update the PWM values */
@@ -363,16 +361,12 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					if (pwm[2] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
 
 
-					if((OC_fault_flag==1)||(UV_fault_flag==1)) {
+					if(error_flags) {
 #pragma xta label "foc_loop_motor_fault"
-						count++;
-						if(count==10)
-						{
-						  pwm[0]=-1;
-						  pwm[1]=-1;
-						  pwm[2]=-1;
-						  err_flag=1;
-						}
+						pwm[0]=-1;
+						pwm[1]=-1;
+						pwm[2]=-1;
+						stop_motor=1;
 					}
 					/* Update the PWM values */
 					update_pwm_inv( pwm_ctrl, c_pwm, pwm );
