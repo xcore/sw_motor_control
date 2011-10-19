@@ -1,10 +1,5 @@
 /**
  * Module:  module_dsc_qei
- * Version: 1v0alpha0
- * Build:   e89e295a87b36dc1ad5ce82058b7434d3df4bb94
- * File:    qei_client.xc
- * Modified by : Srikanth
- * Last Modified on : 26-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
@@ -21,55 +16,34 @@
  **/                                   
 #include <xs1.h>
 #include "qei_commands.h"
+#include "qei_client.h"
 
-unsigned get_qei_position ( chanend c_qei )
+{unsigned, unsigned, unsigned } get_qei_data( streaming chanend c_qei )
 {
-	unsigned r;
+	unsigned p, s, ts1, ts2, v;
 
 	c_qei <: QEI_CMD_POS_REQ;
-	c_qei :> r;
+	c_qei :> p;
+	c_qei :> ts1;
+	c_qei :> ts2;
+	c_qei :> v;
 
-	return r;
-}
+	p &= (QEI_COUNT_MAX-1);
 
-int get_qei_speed ( chanend c_qei )
-{
-	unsigned t1, t2;
-	int r;
-
-	c_qei <: QEI_CMD_SPEED_REQ;
-	c_qei :> t1;
-	c_qei :> t2;
-
-	if (t2-t1 == 0)
-		r = 0;
-	else
-	{
-#ifdef FAULHABER_MOTOR
-		r = 3000000000 / ((t2 - t1) * (1024 * 4));
+	// Calculate the speed
+	if (ts1 == ts2)
+		s = 0;
+	else {
+#if PLATFORM_REFERENCE_MHZ == 100
+		// 6000000000 = 10ns -> 1min (100 MHz ports)
+		s = 3000000000 / ((ts1 - ts2) * QEI_COUNT_MAX);
+		s <<= 1;
 #else
-		r = 3000000000 / ((t2 - t1) * (256 * 4));
+		// 15000000000 = 4ns -> 1min (250 MHz ports)
+		s = 1875000000 / ((ts1 - ts2) * QEI_COUNT_MAX);
+		s <<= 3;
 #endif
-		r <<= 1; // double to get RPM
 	}
 
-	return r;
-}
-
-int qei_pos_known ( chanend c_qei )
-{
-	int r;
-	c_qei <: QEI_CMD_POS_KNOWN_REQ;
-	c_qei :> r;
-
-	return r;
-}
-
-int qei_cw ( chanend c_qei )
-{
-	int r;
-	c_qei <: QEI_CMD_CW_REQ;
-	c_qei :> r;
-
-	return r;
+	return {s, p, v};
 }

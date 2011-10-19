@@ -1,30 +1,22 @@
 Analogue to Digital Converter (ADC) Interface
 =============================================
 
-The analogue to digital interface currently provided is written for the 7265. This provides a clocked serial output following a sample and hold conversion trigger signal. The physical interface of the ADC is not covered in detail as the interface for ADC's will vary from manufacturer to manufacturer. Examples of the interfaces for the MAX1379 and LTC1408 is also available in this module.
+The analogue to digital interface currently provided is written for the 7265. This provides a clocked serial output
+following a sample and hold conversion trigger signal. The physical interface of the ADC is not covered in detail
+as the interface for ADC's will vary from manufacturer to manufacturer. Examples of the interfaces for the MAX1379
+and LTC1408 is also available in this module.
 
-Besides the client and server interfaces the key issue discussed in this section is the synchronisation of the ADC to the PWM and how this is achieved on the ADC side.
+Besides the client and server interfaces the key issue discussed in this section is the synchronisation of the ADC to
+the PWM and how this is achieved on the ADC side.
 
-The preprocessor define LOCK_ADC_TO_PWM must be 0 or 1 for off and on respectively. This defines whether the ADC readings are triggered by the PWM so that measurements can be taken at the appropriate point in the PWM cycle.
+The preprocessor define LOCK_ADC_TO_PWM must be 0 or 1 for off and on respectively. This defines whether the ADC readings
+are triggered by the PWM so that measurements can be taken at the appropriate point in the PWM cycle.
 
 ADC Server Usage
 ++++++++++++++++
 
-The following include and function call are required to operate the ADC software as a server. This server is utilised in the case where the ADC is locked to the PWM.
-
-
-::
-
-  #include "adc_7265.h"
-
-  void adc_7265_triggered( chanend c_adc, 
-	chanend c_trig, 
-	clock clk, 
-	port out SCLK, 
-	buffered out port:32 CNVST, 
-	in buffered port:32 DATA_A, 
-	in buffered port:32 DATA_B, 
-	port out MUX)
+The header file *adc_7265.h* and function call *adc_7265_triggered* are required to operate the ADC software
+as a server. This server is utilised in the case where the ADC is locked to the PWM.
 
 See the API section for a full description of the function call.
 
@@ -62,4 +54,13 @@ minimum latency for channel communication. Following the token being received th
 constant that is calibrated to align with the appropriate measurement point.
 
 ADC values can be requested from the server at any point.
+
+The screenshot shows three PWM ports and the ADC conversion trigger port. It shows that the ADC trigger rising edge,
+where the sample hold is made, is directly centred in the PWM channel inter-cycle period.
+
+  .. image:: images/pwm-adc-sync.png
+     :width: 100%
+     
+ 
+
 

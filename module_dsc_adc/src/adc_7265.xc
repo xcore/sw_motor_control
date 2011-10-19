@@ -11,23 +11,18 @@
 #include <adc_common.h>
 #include <adc_7265.h>
 
-#ifdef USE_XSCOPE
-#include <xscope.h>
-#endif
-
-
 #define ADC_FILTER_7265
 
 // This parameter needs to be tuned to move the ADC trigger point into the centre of the 'OFF' period.
 // The 'test_pwm' application can be run in the simulator to tune the parameter.  Use the following
 // command line:
-//    xsim --vcd-tracing "-core stdcore[1] -ports" bin\Release\test_pwm.xe > trace.vcd
+//    xsim --vcd-tracing "-core stdcore[1] -ports" bin\test_pwm.xe > trace.vcd
 //
-// Then open the 'Signals' and 'Waves' panes in the XDE, load the VCD file and look at the traces
-// named 'PORT_M1_LO_A', 'PORT_M1_LO_B', 'PORT_M1_LO_C', and 'PORT_ADC_CONV'.  The ADC conversion
+// Then open the 'Waveforms' perspective in the XDE, click the 'load VCD file' icon and look at the
+// traces named 'PORT_M1_LO_A', 'PORT_M1_LO_B', 'PORT_M1_LO_C', and 'PORT_ADC_CONV'.  The ADC conversion
 // trigger should go high in the centre of the low periods of all of the motor control ports. This
 // occurs periodically, but an example can be found at around 94.8us into the simulaton.
-#define ADC_TRIGGER_DELAY 2020
+#define ADC_TRIGGER_DELAY 1980
 
 #pragma xta command "analyze loop adc_7265_main_loop"
 #pragma xta command "set required - 40 us"
@@ -78,14 +73,19 @@ static void adc_get_data_7265( int adc_val[], unsigned channel, port CNVST, in b
 
 	MUX <: channel;
 
+    clearbuf(DATA_A);
+    clearbuf(DATA_B);
+
 	CNVST <: 1 @ts;
 	ts += 16;
 	CNVST @ts <: 0;
 
-	endin(DATA_A);
-	endin(DATA_B);
+	sync(CNVST);
 
+	endin(DATA_A);
 	DATA_A :> val1;
+
+	endin(DATA_B);
 	DATA_B :> val3;
 
 	val1 = bitrev(val1);
@@ -96,11 +96,6 @@ static void adc_get_data_7265( int adc_val[], unsigned channel, port CNVST, in b
 
 	val1 = 0x00000FFF & val1;
 	val3 = 0x00000FFF & val3;
-
-#ifdef USE_XSCOPE
-	xscope_probe_data(0, val1);
-	xscope_probe_data(1, val3);
-#endif
 
 #ifdef ADC_FILTER_7265
 	adc_val[0] = (adc_val[0] >> 1) + (val1 >> 1);
@@ -119,8 +114,9 @@ void adc_7265_triggered( chanend c_adc[ADC_NUMBER_OF_TRIGGERS], chanend c_trig[A
 	int cmd;
 	unsigned char ct;
 
-	timer t;
-	unsigned ts;
+	timer t[ADC_NUMBER_OF_TRIGGERS];
+	unsigned ts[ADC_NUMBER_OF_TRIGGERS];
+	char go[ADC_NUMBER_OF_TRIGGERS];
 
 	set_thread_fast_mode_on();
 
@@ -129,6 +125,7 @@ void adc_7265_triggered( chanend c_adc[ADC_NUMBER_OF_TRIGGERS], chanend c_trig[A
 	for (unsigned int c=0; c<ADC_NUMBER_OF_TRIGGERS; ++c) {
 		adc_val[c][0] = 0;
 		adc_val[c][1] = 0;
+		go[c] = 0;
 	}
 
 
@@ -141,20 +138,26 @@ void adc_7265_triggered( chanend c_adc[ADC_NUMBER_OF_TRIGGERS], chanend c_trig[A
 		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) inct_byref(c_trig[trig], ct):
 			if (ct == ADC_TRIG_TOKEN)
 			{
-				t :> ts;
-				t when timerafter(ts + ADC_TRIGGER_DELAY) :> ts;
-				adc_get_data_7265( adc_val[trig], trigger_channel_to_adc_mux[trig], CNVST, DATA_A, DATA_B, MUX );
-				if (calibration_mode[trig] > 0) {
-					calibration_mode[trig]--;
-					calibration_acc[trig][0] += adc_val[trig][0];
-					calibration_acc[trig][1] += adc_val[trig][1];
-					if (calibration_mode[trig] == 0) {
-						calibration[trig][0] = calibration_acc[trig][0] / 512;
-						calibration[trig][1] = calibration_acc[trig][1] / 512;
-					}
+				t[trig] :> ts[trig];
+				ts[trig] += ADC_TRIGGER_DELAY;
+				go[trig] = 1;
+			}
+			break;
+
+		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) go[trig] => t[trig] when timerafter(ts[trig]) :> void:
+			go[trig] = 0;
+			adc_get_data_7265( adc_val[trig], trigger_channel_to_adc_mux[trig], CNVST, DATA_A, DATA_B, MUX );
+			if (calibration_mode[trig] > 0) {
+				calibration_mode[trig]--;
+				calibration_acc[trig][0] += adc_val[trig][0];
+				calibration_acc[trig][1] += adc_val[trig][1];
+				if (calibration_mode[trig] == 0) {
+					calibration[trig][0] = calibration_acc[trig][0] / 512;
+					calibration[trig][1] = calibration_acc[trig][1] / 512;
 				}
 			}
 			break;
+
 		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) c_adc[trig] :> cmd:
 			if (cmd == 1) {
 				calibration_mode[trig] = 512;

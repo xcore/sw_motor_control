@@ -70,6 +70,11 @@ void reset_devices()
 	t :> ts;
 	t when timerafter(ts+10000000) :> void;
 	p_shared_rs <: 0x2;
+
+	printstr("Connect the CAN and Ethernet loopback cables and press any button\n");
+	btns when pinsneq(0xF) :> void;
+	btns when pinseq(0xF) :> void;
+	waitfor(10);
 }
 
 int test_buttons_and_leds()
@@ -100,7 +105,7 @@ int test_buttons_and_leds()
 
 	printstr("Press any button if all LEDs are lit\n");
 	leds <: 0xF0;
-	btns when pinseq(0x7) :> void;
+	btns when pinsneq(0xF) :> void;
 	btns when pinseq(0xF) :> void;
 	waitfor(10);
 

@@ -11,7 +11,7 @@
  * to a working system.
  *
  * Try using the command line:
- *   xsim --vcd-tracing "-core stdcore[1] -ports" bin\Release\test_pwm.xe > trace.vcd
+ *   xsim --vcd-tracing "-core stdcore[1] -ports" bin\test_pwm.xe > trace.vcd
  */
 
 /* motor1 core ports */
@@ -37,9 +37,9 @@ void do_test(chanend c_pwm[])
 
 	pwm_share_control_buffer_address_with_server(c_pwm[0], pwm_ctrl);
 
-	value[0] = 15;
-	value[1] = 1000;
-	value[2] = 4080;
+	value[0] = 200;
+	value[1] = 2000;
+	value[2] = 3800;
 	update_pwm_inv(pwm_ctrl, c_pwm[0], value);
 }
 

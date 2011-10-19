@@ -168,8 +168,9 @@ void init_can_phy( chanend c_rxChan, chanend c_txChan, clock p_can_clk, buffered
 int main ( void )
 {
 	chan c_wd, c_speed[NUMBER_OF_MOTORS], c_commands[NUMBER_OF_MOTORS];
-	chan c_qei[NUMBER_OF_MOTORS], c_pwm[NUMBER_OF_MOTORS];
+	chan c_pwm[NUMBER_OF_MOTORS];
 	chan c_adc[NUMBER_OF_MOTORS], c_adc_trig[NUMBER_OF_MOTORS], c_motor_comms;
+	streaming chan c_qei[NUMBER_OF_MOTORS];
 
 #ifdef USE_CAN
 	chan c_rxChan, c_txChan;
@@ -177,7 +178,6 @@ int main ( void )
 #ifdef USE_ETH
 	chan c_mac_rx[1], c_mac_tx[1], c_xtcp[1], c_connect_status;
 #endif
-
 
 	par
 	{
@@ -200,15 +200,15 @@ int main ( void )
 		// Xcore 1 - MOTOR_CORE
 		on stdcore[MOTOR_CORE] : {
 #ifdef USE_XSCOPE
-			xscope_register(5,
-					XSCOPE_CONTINUOUS, "Ia", XSCOPE_UINT , "n",
-					XSCOPE_CONTINUOUS, "Ib", XSCOPE_UINT , "n",
-					XSCOPE_CONTINUOUS, "pwm_a", XSCOPE_UINT , "n",
-					XSCOPE_CONTINUOUS, "pwm_b", XSCOPE_UINT , "n",
-//					XSCOPE_CONTINUOUS, "Ic", XSCOPE_UINT , "n"
-//					XSCOPE_CONTINUOUS, "Speed", XSCOPE_UINT , "n"
+			xscope_register(4,
+					XSCOPE_CONTINUOUS, "Ia", XSCOPE_INT , "n",
+					XSCOPE_CONTINUOUS, "Ib", XSCOPE_INT , "n",
+					XSCOPE_CONTINUOUS, "pwm_a", XSCOPE_INT , "n",
+					XSCOPE_CONTINUOUS, "pwm_b", XSCOPE_INT , "n"
+//					XSCOPE_CONTINUOUS, "Ic", XSCOPE_INT , "n",
+//					XSCOPE_CONTINUOUS, "Speed", XSCOPE_INT , "n"
 //					XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT , "n",
-					XSCOPE_CONTINUOUS, "Theta", XSCOPE_UINT , "n"
+//					XSCOPE_CONTINUOUS, "Theta", XSCOPE_UINT , "n"
 //					XSCOPE_CONTINUOUS, "PWM[0]", XSCOPE_UINT , "n"
 			);
 #endif

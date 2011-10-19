@@ -44,25 +44,39 @@
 #define PWM_MIN_LIMIT 200
 #define OFFSET_14 16383
 #define RAMP 50
-#define THETA_LIMIT 1024 									// 1024 is the counts around the QEI
-#define THETA_PHASE 85 //(THETA_LIMIT / NUMBER_OF_POLES / 3) 	// Phase offset of 120 degrees
 
+// This constant adjusts for the phase between the theta=0 coil (the A coil) and the actual
+// orientation of the coils in the motor-type (1 coil rotation = 360/3 = 120 degrees)
+#define THETA_PHASE 85 //(120 degrees * QEI_COUNT_MAX / 360 degrees / NUMBER_OF_POLES) // Phase offset of 120 degrees
 
+// This is half of the coil sector angle (6 sectors = 60 degrees per sector, 30 degrees per half sector)
+#define THETA_HALF_PHASE 21 // (30 degrees * QEI_COUNT_MAX / 360 degrees / NUMBER_OF_POLES)
+
+#pragma xta command "add exclusion foc_loop_motor_fault"
+#pragma xta command "add exclusion foc_loop_speed_comms"
+#pragma xta command "add exclusion foc_loop_shared_comms"
+#pragma xta command "add exclusion foc_loop_startup"
 #pragma xta command "analyze loop foc_loop"
 #pragma xta command "set required - 40 us"
 
 /*
- *run_motor() function Initially runs in open loop uses hall sensor outputs and finds hall_state.
- *Based on the hall state it identifies the rotor position and give the commutation sequence to
- *Upper and Lower IGBT's. After rotating for some number of iterations it finds zero hall state
- *and executes field oriented control algorithem.It get actual speed and position of rotor using
- *encoder module and phase currents using ADC then it updates PWM based on this values. This
- *funcntion uses five channels c_wd for watchdog timer, c_qei to get the update speed and position,
- *c_speed for display and c_adc for currents.
+ * run_motor() function Initially runs in open loop uses hall sensor outputs and finds hall_state.
+ * Based on the hall state it identifies the rotor position and give the commutation sequence to
+ * Upper and Lower IGBT's. After rotating for some number of iterations it finds zero hall state
+ * and executes field oriented control algorithem.It get actual speed and position of rotor using
+ * encoder module and phase currents using ADC then it updates PWM based on this values. This
+ * funcntion uses five channels c_wd for watchdog timer, c_qei to get the update speed and position,
+ * c_speed for display and c_adc for currents.
+ *
+ * Notes:
+ *
+ *   when theta=0, the Iq component (the major magnetic vector) transforms to the Ia current.
+ *   therefore we want to have theta=0 aligned with the centre of the '110' state of hall effect
+ *   detector.
  **/
 
 #pragma unsafe arrays
-void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, chanend c_adc, chanend c_speed, chanend? c_wd, port in p_hall, chanend c_can_eth_shared )
+void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend c_qei, chanend c_adc, chanend c_speed, chanend? c_wd, port in p_hall, chanend c_can_eth_shared )
 {
 	/* Currents from ADC */
 	int Ia_in = 0, Ib_in = 0, Ic_in = 0;
@@ -92,19 +106,25 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 	int id_set_point = 0;
 
 	/* General state management */
-	unsigned start_up = 1, counter = 0;
+	unsigned start_up = 0;
 
 	/* Position and Speed */
-	unsigned theta = 0, speed = 0, set_speed = 1000, theta_flag = 0, run = 0;
+	unsigned theta = 0, theta_offset = -1, valid = 0;
+	int speed = 1000, set_speed = 1000;
+
+	// Channel comms
 	unsigned cmm_speed;
 	unsigned comm_shared;
 
+	/* Hall state */
+	unsigned hall, last_hall=0;
+
 	/* Fault detection */
-	unsigned OC_fault_flag=0, UV_fault_flag=0, err_flag=0, count=0, oc_status=0b0000;
+	unsigned OC_fault_flag=0, UV_fault_flag=0, err_flag=0, count=0;
 
 	/* Timer and timestamp */
 	timer t;
-	unsigned ts;
+	unsigned ts1;
 
 	/*  */
 	unsigned cycle_count=0;
@@ -118,30 +138,18 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 	/* Iq PID structure */
 	pid_data pid_q;
 	
-	if (!isnull(c_in)) {
-		while (1);
-	}
-
 	// First send my PWM server the shared memory structure address
 	pwm_share_control_buffer_address_with_server(c_pwm, pwm_ctrl);
 
 	// Pause to allow the rest of the system to settle
 	{
 		unsigned thread_id = get_thread_id();
-		t :> ts;
-		t when timerafter(ts+2*SEC+256*thread_id) :> ts;
+		t :> ts1;
+		t when timerafter(ts1+2*SEC+256*thread_id) :> void;
 	}
-
-	/* Zero pwm */
-	pwm[0] = 0;
-	pwm[1] = 0;
-	pwm[2] = 0;
 
 	/* ADC centrepoint calibration before we start the PWM */
 	do_adc_calibration( c_adc );
-
-	/* Update PWM */
-	update_pwm_inv( pwm_ctrl, c_pwm, pwm );
 
 	/* allow the WD to get going */
 	if (!isnull(c_wd)) {
@@ -151,14 +159,17 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 	// Pause to allow the rest of the system to settle
 	{
 		unsigned thread_id = get_thread_id();
-		t :> ts;
-		t when timerafter(ts+1*SEC) :> ts;
+		t :> ts1;
+		t when timerafter(ts1+1*SEC) :> void;
 	}
 
 	/* PID control initialisation... */
 	init_pid( MOTOR_P, MOTOR_I, MOTOR_D, pid_d);
 	init_pid( MOTOR_P, MOTOR_I, MOTOR_D, pid_q);
 	init_pid( Kp, Ki, Kd, pid );
+
+	// Initially - pretend that the speed and the set speed are the same
+	speed = set_speed;
 
 	/* Main loop */
 	while (1)
@@ -168,6 +179,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 		{
 		/* This case responds to speed control through shared I/O */
 		case c_speed :> cmm_speed:
+#pragma xta label "foc_loop_speed_comms"
 			if(cmm_speed == CMD_GET_IQ)
 			{
 				c_speed <: speed;
@@ -188,6 +200,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 
 		//This case responds to CAN or ETHERNET commands
 		case c_can_eth_shared :> comm_shared:
+#pragma xta label "foc_loop_shared_comms"
 			if(comm_shared == CMD_GET_VALS)
 			{
 				c_can_eth_shared <: speed;
@@ -209,7 +222,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 			else if (comm_shared == CMD_GET_FAULT)
 			{
 				c_can_eth_shared <: OC_fault_flag;
-				c_can_eth_shared <: theta_flag;
+				c_can_eth_shared <: valid;
 			}
 
 			break;
@@ -220,43 +233,46 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 			if(err_flag==0)
 			{
 
-				/* Get OC fault pin status */
-				p_hall :> oc_status;
-				if(oc_status & 0b1000) {
+				/* Get hall state */
+				last_hall = hall;
+				p_hall :> hall;
+
+				/* Check error status */
+				if(hall & 0b1000) {
 					OC_fault_flag=0;
 				} else {
 					OC_fault_flag=1;
 				}
 
 				/* Initial startup code using HALL mode */
-				if (start_up==0)
+				if (valid==0 || theta_offset==-1 )
 				{
-					while (speed < 2000) {
-						/* Get ADC readings */
-						{Ia_in, Ib_in, Ic_in} = get_adc_vals_calibrated_int16( c_adc );
+#pragma xta label "foc_loop_startup"
 
-						/* Get the position from encoder module */
-						theta = get_qei_position ( c_qei );
+					{speed, theta, valid } = get_qei_data( c_qei );
 
-						/* Actual speed calculated using encoder module */
-						speed = get_qei_speed ( c_qei );
+					if (valid && (last_hall&0x7)==0b011 && (hall&0x7)==0b010) {
+						// We are spinning in the wrong direction
+						pwm[0]=-1;
+						pwm[1]=-1;
+						pwm[2]=-1;
+						err_flag=1;
+					} else {
+						// Find the offset between the rotor and the QEI
+						if (valid && (last_hall&0x7)==0b100 && (hall&0x7)==0b110 && theta_offset==-1) {
+							theta_offset = (theta - THETA_HALF_PHASE) + THETA_PHASE;
+							theta_offset &= (QEI_COUNT_MAX-1);
+						}
 
-						/* To calculate alpha and beta currents */
-						clarke_transform(alpha_in, beta_in, Ia_in, Ib_in, Ic_in);
+						/* Spin the magnetic field around regardless of the encoder */
+#if PLATFORM_REFERENCE_MHZ == 100
+						theta = (start_up >> 2) & (QEI_COUNT_MAX-1);
+#else
+						theta = (start_up >> 4) & (QEI_COUNT_MAX-1);
+#endif
 
-						/* Id and Iq outputs derived from park transform */
-						park_transform( Id_in, Iq_in, alpha_in, beta_in, theta  );
-
-						/* Applying Speed PID */
-						iq_set_point = pid_regulator_delta_cust_error_speed((int)(set_speed - speed), pid );
-
-						/* Apply PID control to Iq and Id */
-						Iq_err = iq_set_point - Iq_in;
-						Id_err = id_set_point - Id_in;
-
-						iq_out = pid_regulator_delta_cust_error_Iq_control( Iq_err, pid_q );
-
-						id_out = pid_regulator_delta_cust_error_Id_control( Id_err, pid_d );
+						iq_out = 2000;
+						id_out = 0;
 
 						/* Inverse park  [d,q] to [alpha, beta] */
 						inverse_park_transform( alpha_out, beta_out, id_out, iq_out, theta  );
@@ -277,88 +293,81 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 							if (pwm[j] < PWM_MIN_LIMIT )
 								pwm[j] = PWM_MIN_LIMIT;
 						}
-
-						/* Update the PWM values */
-						update_pwm_inv( pwm_ctrl, c_pwm, pwm );
-
-						/* Ramp the set_speed up */
-						t when timerafter(ts+ 5* MSec ) :> ts;
-						set_speed = set_speed + RAMP;
 					}
-					start_up = 1;
+
+					/* Update the PWM values */
+					update_pwm_inv( pwm_ctrl, c_pwm, pwm );
+
+					start_up++;
 				}
 				else
 				{
 					cycle_count++;
 
-					/* Hunt for correct phase difference */
-					if(run == 0) {
-						counter++;
-						if(counter >= 4000) {
-							if((set_speed == 2000) && (speed < 1500)) {
-							theta_flag = 1;
-							}
-							run = 1;
-						}
-					}
+#pragma xta label "foc_loop_read_hardware"
 
 					/* ---	FOC ALGORITHM	--- */
 					/* Get ADC readings */
 					{Ia_in, Ib_in, Ic_in} = get_adc_vals_calibrated_int16( c_adc );
 
 					/* Get the position from encoder module */
-					theta = get_qei_position ( c_qei );
+					{speed, theta, valid } = get_qei_data( c_qei );
 
-//					if(theta_flag)
-//					{
-						theta = theta + THETA_PHASE;
-						if (theta >= THETA_LIMIT) theta = theta - THETA_LIMIT;
-//					}
+					// Bring theta into the correct phase (adjustment between QEI and motor windings)
+					theta = theta + theta_offset;
+					theta &= (QEI_COUNT_MAX-1);
 
-					/* Actual speed calculated using encoder module */
-					speed = get_qei_speed ( c_qei );
+#pragma xta label "foc_loop_clarke"
 
 					/* To calculate alpha and beta currents */
 					clarke_transform(alpha_in, beta_in, Ia_in, Ib_in, Ic_in);
 
+#pragma xta label "foc_loop_park"
+
 					/* Id and Iq outputs derived from park transform */
 					park_transform( Id_in, Iq_in, alpha_in, beta_in, theta  );
 
+#pragma xta label "foc_loop_speed_pid"
+
 					/* Applying Speed PID */
 					iq_set_point = pid_regulator_delta_cust_error_speed((int)(set_speed - speed), pid );
-
-//					Iq_in = 1;
-//					Id_in = 0;
+					if (iq_set_point <0) iq_set_point = 0;
 
 					/* Apply PID control to Iq and Id */
-					Iq_err = iq_set_point - Iq_in;
-					Id_err = id_set_point - Id_in;
+					Iq_err = Iq_in - iq_set_point;
+					Id_err = Id_in - id_set_point;
+
+#pragma xta label "foc_loop_id_iq_pid"
 
 					iq_out = pid_regulator_delta_cust_error_Iq_control( Iq_err, pid_q );
-
 					id_out = pid_regulator_delta_cust_error_Id_control( Id_err, pid_d );
+
+#pragma xta label "foc_loop_inverse_park"
 
 					/* Inverse park  [d,q] to [alpha, beta] */
 					inverse_park_transform( alpha_out, beta_out, id_out, iq_out, theta  );
 
+#pragma xta label "foc_loop_inverse_clarke"
+
 					/* Final voltages applied */
 					inverse_clarke_transform( Va, Vb, Vc, alpha_out, beta_out );
 
+#pragma xta label "foc_loop_update_pwm"
+
 					/* Scale to 12bit unsigned for PWM output */
 					pwm[0] = (Va + OFFSET_14) >> 3;
+					if (pwm[0] > PWM_MAX_LIMIT) pwm[0] = PWM_MAX_LIMIT;
+					if (pwm[0] < PWM_MIN_LIMIT) pwm[0] = PWM_MIN_LIMIT;
 					pwm[1] = (Vb + OFFSET_14) >> 3;
+					if (pwm[1] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
+					if (pwm[1] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
 					pwm[2] = (Vc + OFFSET_14) >> 3;
+					if (pwm[2] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
+					if (pwm[2] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
 
-					/* Clamp to avoid switching issues */
-					for (int j = 0; j < 3; j++)
-					{
-						if (pwm[j] > PWM_MAX_LIMIT)
-							pwm[j] = PWM_MAX_LIMIT;
-						if (pwm[j] < PWM_MIN_LIMIT )
-							pwm[j] = PWM_MIN_LIMIT;
-					}
 
 					if((OC_fault_flag==1)||(UV_fault_flag==1)) {
+#pragma xta label "foc_loop_motor_fault"
 						count++;
 						if(count==10)
 						{
@@ -373,13 +382,12 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, chanend c_qei, ch
 
 #ifdef USE_XSCOPE
 					if ((cycle_count & 0x1) == 0) {
-						if (isnull(c_in)) {
-//							xscope_probe_data(0, Ia_in);
-//							xscope_probe_data(1, Ib_in);
-							xscope_probe_data(2, pwm[0]);
-							xscope_probe_data(3, pwm[2]);
-							xscope_probe_data(4, iq_out);
-						}
+					        if (isnull(c_in)) {
+					        	xscope_probe_data(0, speed);
+					        	xscope_probe_data(1, iq_set_point);
+					        	xscope_probe_data(2, Va);
+					        	xscope_probe_data(3, Vb);
+					        }
 					}
 #endif
 				}

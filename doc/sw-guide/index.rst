@@ -34,7 +34,10 @@ The modules listed above are implemented in one or more processor threads. The a
    .. image:: images/foc-thread.*
       :width: 100%
 
+In the diagrams, the rectangular blocks are ports, the circles are threads, the solid lines are channel communication, and the dotted lines are port IO.
 
+The ethernet control threads are shown in green, and the CAN threads are shown in red.  The system can function with either the CAN or ethernet control,
+methods, or with neither of them.
 
 .. toctree::
    :maxdepth: 2
@@ -48,5 +51,7 @@ The modules listed above are implemented in one or more processor threads. The a
    hsi
    qei
    api
+   resources
+
 
 
