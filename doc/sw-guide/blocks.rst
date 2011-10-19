@@ -72,7 +72,7 @@ Each function has the calculation destinations passed as pointers (or references
 Sine & Cosine lookup
 ++++++++++++++++++++
 
-The sine and cosine functions are largely provided for use in the Park transforms, but may be used by other functions if required. The sine table provided operate in 0.1 degree steps. The valid range is 0 to 3599.
+The sine and cosine functions are largely provided for use in the Park transforms, but may be used by other functions if required. The sine table provided has a 1024 entry lookup, consisting of the sine values for a 4 pole motor.  The table would need to be adjusted if the motor has fewer or more poles, or if the value used to index into it does not have the range 0-1023.
 
 The lookup functions provided are as follows.
 
