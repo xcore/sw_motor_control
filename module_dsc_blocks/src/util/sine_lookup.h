@@ -40,7 +40,7 @@ int sine( unsigned angle );
  * This looks up the cosine of a value. The value is the index into the
  * sine table, rather than a particular angular measurement.
  *
- * \param deg the index of the cosine value to look up
+ * \param angle the index of the cosine value to look up
  * \return the 18.14 fixed point cosine value
  */
 int cosine( unsigned angle );
