@@ -29,13 +29,13 @@
 	 * values in the 120 degree separation coils into a radial and tangential
 	 * component values.
 	 *
-	 * \param I_alpha the output tangential component
-	 * \param I_beta the output radial component
 	 * \param Ia the parameter from coil A
 	 * \param Ib the parameter from coil B
 	 * \param Ic the parameter from coil C
+	 * \param I_alpha the output tangential component
+	 * \param I_beta the output radial component
 	 */
-	void clarke_transform( int &I_alpha, int &I_beta, int Ia, int Ib, int Ic );
+	void clarke_transform( int Ia, int Ib, int Ic, int &I_alpha, int &I_beta );
 
 	/** \brief Perform an inverse clarke transform
 	 *
@@ -55,7 +55,7 @@
 #else
 
 	// C Versions
-	void clarke_transform( int *I_alpha, int *I_beta, int Ia, int Ib, int Ic );
+	void clarke_transform( int Ia, int Ib, int Ic, int *I_alpha, int *I_beta );
 	void inverse_clarke_transform( int *Ia, int *Ib, int *Ic, int alpha, int beta );
 
 #endif

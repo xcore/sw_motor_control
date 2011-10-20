@@ -169,7 +169,8 @@ int main ( void )
 {
 	chan c_wd, c_speed[NUMBER_OF_MOTORS], c_commands[NUMBER_OF_MOTORS];
 	chan c_pwm[NUMBER_OF_MOTORS];
-	chan c_adc[NUMBER_OF_MOTORS], c_adc_trig[NUMBER_OF_MOTORS], c_motor_comms;
+	streaming chan c_adc[NUMBER_OF_MOTORS];
+	chan c_adc_trig[NUMBER_OF_MOTORS], c_motor_comms;
 	streaming chan c_qei[NUMBER_OF_MOTORS];
 
 #ifdef USE_CAN

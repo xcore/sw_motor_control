@@ -22,24 +22,20 @@
 #include <xs1.h>
 #include "dsc_config.h"
 
-void do_adc_calibration( chanend c_adc )
+void do_adc_calibration( streaming chanend c_adc )
 {
 	c_adc <: 1;
 }
 
-{int, int, int} get_adc_vals_calibrated_int16( chanend c_adc )
+{int, int, int} get_adc_vals_calibrated_int16( streaming chanend c_adc )
 {
 	int a, b, c;
 
 	/* request and then receive adc data */
 	c_adc <: 0;
-
-	slave
-	{
-		c_adc :> a;
-		c_adc :> b;
-		c_adc :> c;
-	}
+	c_adc :> a;
+	c_adc :> b;
+	c_adc :> c;
 
 	/* convert to 14 bit from 12 bit */
 	a = a << 2;

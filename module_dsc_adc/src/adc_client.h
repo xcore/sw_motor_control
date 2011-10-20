@@ -27,7 +27,7 @@
  *
  * \param c_adc the control channel to the ADC server
  */
-void do_adc_calibration( chanend c_adc );
+void do_adc_calibration( streaming chanend c_adc );
 
 /** \brief Get values converted from 14 bit unsigned to 16 bit signed and calibrated
  *
@@ -36,7 +36,7 @@ void do_adc_calibration( chanend c_adc );
  *
  * \param c_adc the control channel to the ADC server
  */
-{int, int, int} get_adc_vals_calibrated_int16( chanend c_adc );
+{int, int, int} get_adc_vals_calibrated_int16( streaming chanend c_adc );
 
 
 

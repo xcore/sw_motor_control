@@ -43,6 +43,9 @@
 #define PWM_MIN_LIMIT 200
 #define OFFSET_14 16383
 
+#define STALL_SPEED 100
+#define STALL_TRIP_COUNT 5000
+
 #define ERROR_OVERCURRENT 0x1
 #define ERROR_UNDERVOLTAGE 0x2
 #define ERROR_STALL 0x4
@@ -78,7 +81,7 @@
  **/
 
 #pragma unsafe arrays
-void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend c_qei, chanend c_adc, chanend c_speed, chanend? c_wd, port in p_hall, chanend c_can_eth_shared )
+void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend c_qei, streaming chanend c_adc, chanend c_speed, chanend? c_wd, port in p_hall, chanend c_can_eth_shared )
 {
 	/* Currents from ADC */
 	int Ia_in = 0, Ib_in = 0, Ic_in = 0;
@@ -124,6 +127,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 	/* Fault detection */
 	unsigned error_flags=0;
 	unsigned stop_motor=0;
+	unsigned stall_count=0;
 
 	/* Timer and timestamp */
 	timer t;
@@ -301,15 +305,19 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 #pragma xta label "foc_loop_read_hardware"
 
 					/* ---	FOC ALGORITHM	--- */
-					/* Get ADC readings */
-					{Ia_in, Ib_in, Ic_in} = get_adc_vals_calibrated_int16( c_adc );
 
 					/* Get the position from encoder module */
 					{speed, theta, valid } = get_qei_data( c_qei );
 
 					// Check for a stall
-					if (speed < 100) {
-						error_flags |= ERROR_STALL;
+					if (speed < STALL_SPEED) {
+						if (stall_count > STALL_TRIP_COUNT) {
+							error_flags |= ERROR_STALL;
+						} else {
+							stall_count++;
+						}
+					} else {
+						stall_count=0;
 					}
 
 					// Bring theta into the correct phase (adjustment between QEI and motor windings)
@@ -318,8 +326,11 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 
 #pragma xta label "foc_loop_clarke"
 
+					/* Get ADC readings */
+					{Ia_in, Ib_in, Ic_in} = get_adc_vals_calibrated_int16( c_adc );
+
 					/* To calculate alpha and beta currents */
-					clarke_transform(alpha_in, beta_in, Ia_in, Ib_in, Ic_in);
+					clarke_transform(Ia_in, Ib_in, Ic_in, alpha_in, beta_in);
 
 #pragma xta label "foc_loop_park"
 
@@ -355,14 +366,14 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 
 					/* Scale to 12bit unsigned for PWM output */
 					pwm[0] = (Va + OFFSET_14) >> 3;
-					if (pwm[0] > PWM_MAX_LIMIT) pwm[0] = PWM_MAX_LIMIT;
-					if (pwm[0] < PWM_MIN_LIMIT) pwm[0] = PWM_MIN_LIMIT;
 					pwm[1] = (Vb + OFFSET_14) >> 3;
-					if (pwm[1] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
-					if (pwm[1] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
 					pwm[2] = (Vc + OFFSET_14) >> 3;
+					if (pwm[0] > PWM_MAX_LIMIT) pwm[0] = PWM_MAX_LIMIT;
+					else if (pwm[0] < PWM_MIN_LIMIT) pwm[0] = PWM_MIN_LIMIT;
+					if (pwm[1] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
+					else if (pwm[1] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
 					if (pwm[2] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
-					if (pwm[2] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
+					else if (pwm[2] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
 
 
 					if(error_flags) {
@@ -372,6 +383,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 						pwm[2]=-1;
 						stop_motor=1;
 					}
+
 					/* Update the PWM values */
 					update_pwm_inv( pwm_ctrl, c_pwm, pwm );
 

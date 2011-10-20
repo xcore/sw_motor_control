@@ -108,7 +108,7 @@ static void adc_get_data_7265( int adc_val[], unsigned channel, port CNVST, in b
 }
 
 #pragma unsafe arrays
-void adc_7265_triggered( chanend c_adc[ADC_NUMBER_OF_TRIGGERS], chanend c_trig[ADC_NUMBER_OF_TRIGGERS], clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
+void adc_7265_triggered( streaming chanend c_adc[ADC_NUMBER_OF_TRIGGERS], chanend c_trig[ADC_NUMBER_OF_TRIGGERS], clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
 {
 	int adc_val[ADC_NUMBER_OF_TRIGGERS][2];
 	int cmd;
@@ -164,13 +164,11 @@ void adc_7265_triggered( chanend c_adc[ADC_NUMBER_OF_TRIGGERS], chanend c_trig[A
 				calibration_acc[trig][0]=0;
 				calibration_acc[trig][1]=0;
 			} else {
-				master {
-					unsigned a = adc_val[trig][0] - calibration[trig][0];
-					unsigned b = adc_val[trig][1] - calibration[trig][1];
-					c_adc[trig] <: a;
-					c_adc[trig] <: b;
-					c_adc[trig] <: -(a+b);
-				}
+				unsigned a = adc_val[trig][0] - calibration[trig][0];
+				unsigned b = adc_val[trig][1] - calibration[trig][1];
+				c_adc[trig] <: a;
+				c_adc[trig] <: b;
+				c_adc[trig] <: -(a+b);
 			}
 			break;
 		}

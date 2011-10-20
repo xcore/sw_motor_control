@@ -24,13 +24,13 @@
 
 
 // Do a clarke transform
-void clarke_transform( int *I_alpha, int *I_beta, int Ia, int Ib, int Ic )
+void clarke_transform( int Ia, int Ib, int Ic, int *I_alpha, int *I_beta )
 {
 	int tmp;
 
 	*I_alpha = Ia;
 
-	tmp = ((ONE_OVER_ROOT_3 * Ib) >> 14) - ((ONE_OVER_ROOT_3 * Ic) >> 14);
+	tmp = ((ONE_OVER_ROOT_3 * Ib) - (ONE_OVER_ROOT_3 * Ic)) >> 14;
 	*I_beta = tmp ;
 
 }

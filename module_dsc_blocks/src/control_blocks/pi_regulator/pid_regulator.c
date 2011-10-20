@@ -112,21 +112,17 @@ int pid_regulator_delta_cust_error_speed( int error, pid_data *d )
 
 	d->integral = d->integral + error;
 
-	if (d->integral > SPEED_INTEGRAL_LIMIT)
-		d->integral = SPEED_INTEGRAL_LIMIT;
-	if (d->integral < -SPEED_INTEGRAL_LIMIT)
-		d->integral = -SPEED_INTEGRAL_LIMIT;
+	if (d->integral > SPEED_INTEGRAL_LIMIT) d->integral = SPEED_INTEGRAL_LIMIT;
+	else if (d->integral < -SPEED_INTEGRAL_LIMIT) d->integral = -SPEED_INTEGRAL_LIMIT;
 
 	int derivative = (error - d->previous_error);
 	d->previous_error = error;
 
-	result = ((((d->Kp * error) >> PID_RESOLUTION) + frac_mul( d->Ki, d->integral) + ((d->Kd * derivative)  >> PID_RESOLUTION)));
+	result = (((d->Kp * error) + (d->Kd * derivative)) >> PID_RESOLUTION) + frac_mul( d->Ki, d->integral);
 
 #ifdef BLDC_FOC
-	if (result > SPEED_LIMIT)
-		result = result >> 2;
-	if (result < -SPEED_LIMIT)
-		result = -(result >> 2);
+	if (result > SPEED_LIMIT) result = (result >> 2);
+	else if (result < -SPEED_LIMIT) result = -(result >> 2);
 #endif
 
 
@@ -136,53 +132,20 @@ int pid_regulator_delta_cust_error_speed( int error, pid_data *d )
 int pid_regulator_delta_cust_error_Iq_control( int error, pid_data *iq )
 {
 	/* PID algorithm */
-
-	int P=0, D=0, I=0;
 	int result=0;
 
 	iq->integral = iq->integral + error;
 
-	if (iq->integral > DQ_INTEGRAL_LIMIT)
-		iq->integral = DQ_INTEGRAL_LIMIT;
-	if (iq->integral < -DQ_INTEGRAL_LIMIT)
-		iq->integral = -DQ_INTEGRAL_LIMIT;
+	if (iq->integral > DQ_INTEGRAL_LIMIT) iq->integral = DQ_INTEGRAL_LIMIT;
+	else if (iq->integral < -DQ_INTEGRAL_LIMIT) iq->integral = -DQ_INTEGRAL_LIMIT;
 
 	int derivative = (error - iq->previous_error);
 	iq->previous_error = error;
 
-	P = (iq->Kp * error) >> PID_RESOLUTION;
-	if( P > Q_LIMIT)
-	{
-		P = Q_LIMIT;
-	}
-	else if(P < Q_LIMIT_L)
-	{
-		P = Q_LIMIT_L;
-	}
+	result = (((iq->Kp * error) + (iq->Kd * derivative)) >> PID_RESOLUTION) + frac_mul( iq->Ki, iq->integral );
 
-	I = frac_mul( iq->Ki, iq->integral );
-
-	if( I > Q_LIMIT)
-	{
-		I = Q_LIMIT;
-	}
-	else if(I < Q_LIMIT_L)
-	{
-		I = Q_LIMIT_L;
-	}
-
-	D = (iq->Kd * derivative) >> PID_RESOLUTION;
-
-	result = (P + I + D);
-
-	if(result > Q_LIMIT)
-	{
-		result = Q_LIMIT;
-	}
-	else if(result < Q_LIMIT_L)
-	{
-		result = Q_LIMIT_L;
-	}
+	if(result > Q_LIMIT) result = Q_LIMIT;
+	else if(result < -Q_LIMIT) result = -Q_LIMIT;
 
 	return result;
 
@@ -191,50 +154,20 @@ int pid_regulator_delta_cust_error_Iq_control( int error, pid_data *iq )
 int pid_regulator_delta_cust_error_Id_control( int error, pid_data *id )
 {
 	/* PID algorithm */
-	int P=0, D=0, I=0;
 	int result=0;
 
 	id->integral = id->integral + error;
 
-	if (id->integral > DQ_INTEGRAL_LIMIT)
-		id->integral = DQ_INTEGRAL_LIMIT;
-	if (id->integral < -DQ_INTEGRAL_LIMIT)
-		id->integral = -DQ_INTEGRAL_LIMIT;
+	if (id->integral > DQ_INTEGRAL_LIMIT) id->integral = DQ_INTEGRAL_LIMIT;
+	else if (id->integral < -DQ_INTEGRAL_LIMIT) id->integral = -DQ_INTEGRAL_LIMIT;
 
 	int derivative = (error - id->previous_error);
 	id->previous_error = error;
 
-	P = (id->Kp * error) >> PID_RESOLUTION;
-	if( P > D_LIMIT)
-	{
-		P = D_LIMIT;
-	}
-	else if(P < D_LIMIT_L)
-	{
-		P = D_LIMIT_L;
-	}
+	result = (((id->Kp * error) + (id->Kd * derivative)) >> PID_RESOLUTION) + frac_mul( id->Ki, id->integral );
 
-	I = frac_mul( id->Ki, id->integral );
-	if( I > D_LIMIT)
-	{
-		I = D_LIMIT;
-	}
-	else if(I < D_LIMIT_L)
-	{
-		I = D_LIMIT_L;
-	}
-
-	D = (id->Kd * derivative) >> PID_RESOLUTION;
-
-	result = (P + I + D);
-	if(result > D_LIMIT)
-	{
-		result = D_LIMIT;
-	}
-	else if(result < D_LIMIT_L)
-	{
-		result = D_LIMIT_L;
-	}
+	if(result > D_LIMIT) result = D_LIMIT;
+	else if(result < -D_LIMIT) result = -D_LIMIT;
 
 	return result;
 }
