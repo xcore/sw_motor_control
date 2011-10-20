@@ -39,6 +39,8 @@ static int calibration_mode[ADC_NUMBER_OF_TRIGGERS];
 // Accumultor for the calibration average
 static int calibration_acc[ADC_NUMBER_OF_TRIGGERS][2];
 
+// 1 revolution at 600RPM is 0.1sec, at 61kHz needs at lease 6.1k samples
+#define CALIBRATION_COUNT 8192
 
 static void configure_adc_ports_7265(clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, out port MUX)
 {
@@ -152,23 +154,29 @@ void adc_7265_triggered( streaming chanend c_adc[ADC_NUMBER_OF_TRIGGERS], chanen
 				calibration_acc[trig][0] += adc_val[trig][0];
 				calibration_acc[trig][1] += adc_val[trig][1];
 				if (calibration_mode[trig] == 0) {
-					calibration[trig][0] = calibration_acc[trig][0] / 512;
-					calibration[trig][1] = calibration_acc[trig][1] / 512;
+					calibration[trig][0] = calibration_acc[trig][0] / CALIBRATION_COUNT;
+					calibration[trig][1] = calibration_acc[trig][1] / CALIBRATION_COUNT;
 				}
 			}
 			break;
 
 		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) c_adc[trig] :> cmd:
 			if (cmd == 1) {
-				calibration_mode[trig] = 512;
+				calibration_mode[trig] = CALIBRATION_COUNT;
 				calibration_acc[trig][0]=0;
 				calibration_acc[trig][1]=0;
 			} else {
-				unsigned a = adc_val[trig][0] - calibration[trig][0];
-				unsigned b = adc_val[trig][1] - calibration[trig][1];
-				c_adc[trig] <: a;
-				c_adc[trig] <: b;
-				c_adc[trig] <: -(a+b);
+				if (calibration_mode[trig] > 0) {
+					c_adc[trig] <: 0;
+					c_adc[trig] <: 0;
+					c_adc[trig] <: 0;
+				} else {
+					unsigned a = adc_val[trig][0] - calibration[trig][0];
+					unsigned b = adc_val[trig][1] - calibration[trig][1];
+					c_adc[trig] <: a;
+					c_adc[trig] <: b;
+					c_adc[trig] <: -(a+b);
+				}
 			}
 			break;
 		}
