@@ -123,7 +123,6 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 
 	/* Fault detection */
 	unsigned error_flags=0;
-	unsigned error_count=0;
 	unsigned stop_motor=0;
 
 	/* Timer and timestamp */
@@ -308,6 +307,11 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					/* Get the position from encoder module */
 					{speed, theta, valid } = get_qei_data( c_qei );
 
+					// Check for a stall
+					if (speed < 100) {
+						error_flags |= ERROR_STALL;
+					}
+
 					// Bring theta into the correct phase (adjustment between QEI and motor windings)
 					theta = theta - theta_offset;
 					theta &= (QEI_COUNT_MAX-1);
@@ -378,6 +382,8 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					        	xscope_probe_data(1, iq_set_point);
 					        	xscope_probe_data(2, Va);
 					        	xscope_probe_data(3, Vb);
+					        	xscope_probe_data(4, Ia_in);
+					        	xscope_probe_data(5, Ib_in);
 					        }
 					}
 #endif

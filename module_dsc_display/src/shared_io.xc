@@ -43,7 +43,7 @@
 /* Manages the display, buttons and shared ports. */
 void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface_t, p), in port btns, out port leds )
 {
-	unsigned int time, MIN_VAL=0, speed[2], set_speed = 1000;
+	unsigned int time, MIN_VAL=0, speed[2]={0,0}, set_speed = 1000;
 	unsigned int btn_en = 0;
 	unsigned toggle = 1,  value;
 	char my_string[50];

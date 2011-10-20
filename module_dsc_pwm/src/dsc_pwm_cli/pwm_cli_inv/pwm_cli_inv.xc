@@ -23,41 +23,33 @@
 #pragma unsafe arrays
 void update_pwm_inv( t_pwm_control& ctrl, chanend c, unsigned value[])
 {
-	unsigned pwm_val[PWM_CHAN_COUNT];
-
 	/* update buffer value for next calculation */
-	if (ctrl.pwm_cur_buf == 1) {
-		ctrl.pwm_cur_buf = 0;
-	} else {
-		ctrl.pwm_cur_buf = 1;
-	}
-
-	/* store new values */
-	for (int pwm_chan = 0; pwm_chan < PWM_CHAN_COUNT; pwm_chan++)
-		pwm_val[pwm_chan] = value[pwm_chan];
-
-	/* initialise PWM channel list */
-	for (int i = 0; i < PWM_CHAN_COUNT; i++) {
-		ctrl.chan_id_buf[ctrl.pwm_cur_buf][i] = i;
-	}
+	ctrl.pwm_cur_buf = (ctrl.pwm_cur_buf+1)&1;
 
 	/* calculate the required outputs */
+#pragma loop unroll
 	for (int i = 0; i < PWM_CHAN_COUNT; i++) {
+
+		// Initialise channel number
+		ctrl.chan_id_buf[ctrl.pwm_cur_buf][i] = i;
+
+#ifndef PWM_CLIPPED_RANGE
 		/* clamp to avoid issues with LONG_SINGLE */
-		if (pwm_val[i] > (PWM_MAX_VALUE - (32+PWM_DEAD_TIME))) {
-			pwm_val[i] = (PWM_MAX_VALUE - (32+PWM_DEAD_TIME));
+		if (value[i] > (PWM_MAX_VALUE - (32+PWM_DEAD_TIME))) {
+			value[i] = (PWM_MAX_VALUE - (32+PWM_DEAD_TIME));
 		}
+#endif
 
 #ifdef PWM_CLIPPED_RANGE
-		calculate_data_out_quick(pwm_val[i], ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i]);
+		calculate_data_out_quick(value[i], ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i]);
 #else
-		calculate_data_out_ref( pwm_val[i],
+		calculate_data_out_ref( value[i],
 				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].ts0,
 				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].out0,
 				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].ts1,
 				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].out1,
 				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].cat );
-		calculate_data_out_ref( (pwm_val[i]+PWM_DEAD_TIME),
+		calculate_data_out_ref( (value[i]+PWM_DEAD_TIME),
 				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].inv_ts0,
 				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].inv_out0,
 				ctrl.pwm_out_data_buf[ctrl.pwm_cur_buf][i].inv_ts1,

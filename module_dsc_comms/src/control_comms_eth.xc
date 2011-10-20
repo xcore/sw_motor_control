@@ -56,50 +56,12 @@ int from_hex_string(char digit)
 	return 0;
 }
 
-// Print out the current IP address
-static void print_ip( chanend xtcp )
-{
-	xtcp_ipconfig_t ip;
-	xtcp_get_ipconfig(xtcp, ip);
-
-	printstr( "IP addr: " );
-	printuint( ip.ipaddr[0] );
-	printchar( '.' );
-	printuint( ip.ipaddr[1] );
-	printchar( '.' );
-	printuint( ip.ipaddr[2] );
-	printchar( '.' );
-	printuint( ip.ipaddr[3] );
-	printchar( '\n' );
-}
-
-
-// Print out the current MAC address
-static void print_mac( chanend xtcp )
-{
-	unsigned char mac[6];
-	xtcp_get_mac_address(xtcp, mac);
-
-	printstr( "MAC: " );
-	printhex( mac[0] );
-	printchar( ':' );
-	printhex( mac[1] );
-	printchar( ':' );
-	printhex( mac[2] );
-	printchar( ':' );
-	printhex( mac[3] );
-	printchar( ':' );
-	printhex( mac[4] );
-	printchar( ':' );
-	printhex( mac[5] );
-	printchar( '\n' );
-}
+unsigned char tx_buf[128];
+unsigned char rx_buf[128];
 
 void do_comms_eth( chanend c_commands[], chanend tcp_svr )
 {
 	xtcp_connection_t conn;
-	unsigned char tx_buf[512];
-	unsigned char rx_buf[512];
 	unsigned int speed[2] = {0,0};
 	unsigned int set_speed = 500;
 	unsigned int n;
@@ -113,10 +75,6 @@ void do_comms_eth( chanend c_commands[], chanend tcp_svr )
 	{
 		printstr("Didn't get XTCP_IFDOWN!\n");
 	}
-
-	// Print out the MAC and IP addresses to the user
-	print_mac( tcp_svr );
-	print_ip( tcp_svr );
 
 	// listen on a port
 	xtcp_listen(tcp_svr, TCP_CONTROL_PORT, XTCP_PROTOCOL_TCP);

@@ -175,7 +175,7 @@ void do_comms_can( chanend c_commands[], chanend rxChan, chanend txChan)
 						c_commands[m] :> Iq_out[m];
 
 						c_commands[m] <: CMD_GET_FAULT;
-						c_commands[m] :> fault_flag[m];
+						c_commands[m] :> error_flag[m];
 					}
 
 					// Put Ia2 and Ib2 into the packet

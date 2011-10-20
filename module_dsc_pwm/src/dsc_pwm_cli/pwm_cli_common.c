@@ -132,6 +132,19 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 #endif
 		*mode = 4;
 
+#if PWM_CHAN_COUNT==3
+		if (pwm_out_data[0].value > pwm_out_data[1].value) {
+			chan_id_tmp = chan_id[0];
+			chan_id[0] = chan_id[1];
+			chan_id[1] = chan_id_tmp;
+		}
+		if (pwm_out_data[1].value > pwm_out_data[2].value) {
+			chan_id_tmp = chan_id[1];
+			chan_id[1] = chan_id[2];
+			chan_id[2] = chan_id_tmp;
+		}
+		return;
+#else
 		/* now order by length*/
 		for (int i = 0; i < PWM_CHAN_COUNT-1; i++) /* start point loop */
 		{
@@ -142,12 +155,13 @@ void order_pwm( unsigned *mode, unsigned *chan_id, t_out_data *pwm_out_data)
 					max_index = j;
 			}
 
-			/* swap if we need to, but it might be in the right place */
+			/* swap, even if it is a swap in place */
 			chan_id_tmp = chan_id[i];
 			chan_id[i] = chan_id[max_index];
 			chan_id[max_index] = chan_id_tmp;
 		}
 		return;
+#endif
 #ifndef PWM_CLIPPED_RANGE
 	}
 
