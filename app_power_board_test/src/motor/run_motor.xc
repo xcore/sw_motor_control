@@ -38,7 +38,7 @@
 #define OFFSET_14 16383
 
 
-void run_motor(chanend? c_ctrl_in, chanend? c_ctrl_out, chanend? c_wd, chanend c_pwm, chanend c_adc, streaming chanend c_qei, port in p_hall)
+void run_motor(chanend? c_ctrl_in, chanend? c_ctrl_out, chanend? c_wd, chanend c_pwm, streaming chanend c_adc, streaming chanend c_qei, port in p_hall)
 {
 	/* FOC variables */
 	int id_out = 0, iq_out = 0;
@@ -62,7 +62,7 @@ void run_motor(chanend? c_ctrl_in, chanend? c_ctrl_out, chanend? c_wd, chanend c
 	unsigned start_up = 1024;
 
 	/* Position and Speed */
-	unsigned theta = 0, last_theta=-1, speed = 1000;
+	unsigned theta = 0, last_theta=-1, speed = 0, valid=0;
 	unsigned qei_spd=1, qei_pos=1;
 
 	/* Fault detection */
@@ -125,7 +125,7 @@ void run_motor(chanend? c_ctrl_in, chanend? c_ctrl_out, chanend? c_wd, chanend c
 		{a, b, c} = get_adc_vals_calibrated_int16( c_adc );
 
 		// Read QEI
-		{speed, theta} = get_qei_data( c_qei );
+		{speed, theta, valid} = get_qei_data( c_qei );
 
 		/* Spin the magnetic field around regardless of the encoder */
 		theta = (start_up >> 2) & (QEI_COUNT_MAX-1);
@@ -157,7 +157,7 @@ void run_motor(chanend? c_ctrl_in, chanend? c_ctrl_out, chanend? c_wd, chanend c
 		/* Update the PWM values */
 		update_pwm_inv( pwm_ctrl, c_pwm, pwm );
 
-		if (start_up < QEI_COUNT_MAX*64) {
+		if (start_up > QEI_COUNT_MAX*64) {
 
 			// Record ADC
 			if (mina > a) mina = a;
@@ -168,12 +168,12 @@ void run_motor(chanend? c_ctrl_in, chanend? c_ctrl_out, chanend? c_wd, chanend c
 			if (maxc < c) maxc = c;
 
 			// Check QEI speed
-			if (speed < 500 || speed > 1000) qei_spd=0;
+			if (speed < 10 || speed > 10000) qei_spd=0;
 
 			// Check QEI position
 			{
 				int pos_diff = theta - last_theta;
-				if (pos_diff < 0 && -QEI_COUNT_MAX/2) qei_pos=0;
+				if (pos_diff < 0 || valid==0) qei_pos=0;
 			}
 		}
 	}
@@ -204,7 +204,7 @@ void run_motor(chanend? c_ctrl_in, chanend? c_ctrl_out, chanend? c_wd, chanend c
 
 	// Verify QEI
 	fail <<= 1;
-	fail |= (qei_pos==1 || qei_spd==0)?0:1;
+	fail |= (qei_pos==0 || qei_spd==0)?1:0;
 
 	// Trigger next motor
 	c_ctrl_out <: fail;

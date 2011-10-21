@@ -41,6 +41,6 @@
 #define ADC_COUNT2 3000
 
 /* run the motor using pwm on the high side and normal switching on the low side */
-void run_motor( chanend? c_wd, chanend? c_ctrl_in, chanend? c_ctrl_out, chanend c_pwm, chanend c_adc, streaming chanend c_qei, port in p_hall);
+void run_motor( chanend? c_wd, chanend? c_ctrl_in, chanend? c_ctrl_out, chanend c_pwm, streaming chanend c_adc, streaming chanend c_qei, port in p_hall);
 
 #endif /* _RUN_MOTOR_H_ */
