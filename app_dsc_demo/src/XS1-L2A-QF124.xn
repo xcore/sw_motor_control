@@ -93,6 +93,9 @@ xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
 	<Port Location="XS1_PORT_1I" Name="PORT_ADC_MISOB"/>
 	<Port Location="XS1_PORT_4C" Name="PORT_ADC_MUX"/>
 
+    <!-- UV FAULT  --> 
+    <Port Location="XS1_PORT_8C" Name="PORT_UV_FAULT" />
+    
     	</Core>
     </Node>
   	</Nodes>
@@ -116,7 +119,7 @@ xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
 	     <LinkEndpoint NodeId="1" Link="4"/>
 	   </Link>
     
-    <!-- XSCOPE -->
+    <!-- XSCOPE --
     <Link Encoding="2wire" Delays="4,5" Flags="SOD">
       <LinkEndpoint NodeId="1" Link="X0LB"/>
       <LinkEndpoint RoutingId="0x8000" Chanend="1"/>

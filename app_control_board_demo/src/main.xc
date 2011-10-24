@@ -541,7 +541,7 @@ void do_demo_interface(chanend c_xtcp, chanend commands)
 	}
 }
 
-void do_demo_motor(chanend commands, chanend c_pwm[], streaming chanend c_qei[], chanend c_adc[], in port p_hall1, in port p_hall2)
+void do_demo_motor(chanend commands, chanend c_pwm[], streaming chanend c_qei[], streaming chanend c_adc[], in port p_hall1, in port p_hall2)
 {
 	unsigned cmd;
 	unsigned r1, r2, r3, s1, v1;
@@ -616,7 +616,8 @@ int main ( void )
 {
 	streaming chan c_qei[NUMBER_OF_MOTORS];
 	chan c_pwm[NUMBER_OF_MOTORS];
-	chan c_adc[NUMBER_OF_MOTORS], c_adc_trig[NUMBER_OF_MOTORS];
+	streaming chan c_adc[NUMBER_OF_MOTORS];
+	chan c_adc_trig[NUMBER_OF_MOTORS];
 	chan c_mac_rx[1], c_mac_tx[1], c_xtcp[1], c_connect_status;
 	chan c_demo_commands;
 
