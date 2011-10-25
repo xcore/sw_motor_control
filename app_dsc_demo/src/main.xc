@@ -88,14 +88,15 @@ on stdcore[MOTOR_CORE]: port in p_hall1 = PORT_M1_HALLSENSOR;
 on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_hi1[3] = {PORT_M1_HI_A, PORT_M1_HI_B, PORT_M1_HI_C};
 on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_lo1[3] = {PORT_M1_LO_A, PORT_M1_LO_B, PORT_M1_LO_C};
 on stdcore[MOTOR_CORE]: clock pwm_clk1 = XS1_CLKBLK_REF;
-on stdcore[MOTOR_CORE]: port in p_qei1 = PORT_M1_ENCODER;
 
 // Motor 2 ports
 on stdcore[MOTOR_CORE]: port in p_hall2 = PORT_M2_HALLSENSOR;
 on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_hi2[3] = {PORT_M2_HI_A, PORT_M2_HI_B, PORT_M2_HI_C};
 on stdcore[MOTOR_CORE]: buffered out port:32 p_pwm_lo2[3] = {PORT_M2_LO_A, PORT_M2_LO_B, PORT_M2_LO_C};
 on stdcore[MOTOR_CORE]: clock pwm_clk2 = XS1_CLKBLK_4;
-on stdcore[MOTOR_CORE]: port in p_qei2 = PORT_M2_ENCODER;
+
+// QEI ports
+on stdcore[MOTOR_CORE]: port in p_qei[2] = { PORT_M1_ENCODER, PORT_M2_ENCODER };
 
 // Watchdog port
 on stdcore[INTERFACE_CORE]: out port i2c_wd = PORT_WATCHDOG;
@@ -217,12 +218,20 @@ int main ( void )
 		}
 
 		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[0], c_adc_trig[0], ADC_SYNC_PORT1, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
-		on stdcore[MOTOR_CORE] : do_qei ( c_qei[0], p_qei1 );
 
 #if NUMBER_OF_MOTORS > 1
 		on stdcore[MOTOR_CORE] : run_motor( c_motor_comms, null, c_pwm[1], c_qei[1], c_adc[1], c_speed[1], null, p_hall2, c_commands[1]);
 		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[1], c_adc_trig[1], ADC_SYNC_PORT2, p_pwm_hi2, p_pwm_lo2, pwm_clk2 );
-		on stdcore[MOTOR_CORE] : do_qei ( c_qei[1], p_qei2 );
+
+#ifdef USE_SEPARATE_QEI_THREADS
+		on stdcore[MOTOR_CORE] : do_qei ( c_qei[0], p_qei[0] );
+		on stdcore[MOTOR_CORE] : do_qei ( c_qei[1], p_qei[1] );
+#else
+		on stdcore[MOTOR_CORE] : do_multiple_qei( c_qei, p_qei );
+#endif
+
+#else
+		on stdcore[MOTOR_CORE] : do_qei ( c_qei[0], p_qei[0] );
 #endif
 
 		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );

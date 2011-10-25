@@ -27,4 +27,12 @@
  */
 void do_qei ( streaming chanend c_qei, port in p_qei );
 
+/** \brief Implementation of the QEI server thread that services multiple QEI devices
+ *
+ *  \param c_qei The control channels used by the client
+ *  \param p_qei The hardware ports where the quadrature encoder is located
+ */
+void do_multiple_qei ( streaming chanend c_qei[], port in p_qei[] );
+
+
 #endif /*__QEI_SERVER_H__ */

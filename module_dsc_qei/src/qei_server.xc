@@ -24,38 +24,36 @@
 #pragma xta command "analyze loop qei_main_loop"
 #pragma xta command "set required - 14.64 us"
 
+// Order is 00 -> 10 -> 11 -> 01
+static const unsigned char lookup[16][4] = {
+		{ 5, 4, 6, 5 }, // 00 00
+		{ 6, 5, 5, 4 }, // 00 01
+		{ 4, 5, 5, 6 }, // 00 10
+		{ 5, 6, 4, 5 }, // 00 11
+		{ 0, 0, 0, 0 }, // 01 xx
+		{ 0, 0, 0, 0 }, // 01 xx
+		{ 0, 0, 0, 0 }, // 01 xx
+		{ 0, 0, 0, 0 }, // 01 xx
+
+		{ 5, 4, 6, 5 }, // 10 00
+		{ 6, 5, 5, 4 }, // 10 01
+		{ 4, 5, 5, 6 }, // 10 10
+		{ 5, 6, 4, 5 }, // 10 11
+		{ 0, 0, 0, 0 }, // 11 xx
+		{ 0, 0, 0, 0 }, // 11 xx
+		{ 0, 0, 0, 0 }, // 11 xx
+		{ 0, 0, 0, 0 }  // 11 xx
+};
+
+
 #pragma unsafe arrays
 void do_qei ( streaming chanend c_qei, port in pQEI )
 {
-	unsigned pos = 0, v, ts1, ts2, ok=0;
+	unsigned pos = 0, v, ts1, ts2, ok=0, old_pins=0, new_pins;
 	timer t;
 
-	// Order is 00 -> 10 -> 11 -> 01
-	unsigned char lookup[16][4] = {
-			{ 5, 4, 6, 5 }, // 00 00
-			{ 6, 5, 5, 4 }, // 00 01
-			{ 4, 5, 5, 6 }, // 00 10
-			{ 5, 6, 4, 5 }, // 00 11
-			{ 0, 0, 0, 0 }, // 01 xx
-			{ 0, 0, 0, 0 }, // 01 xx
-			{ 0, 0, 0, 0 }, // 01 xx
-			{ 0, 0, 0, 0 }, // 01 xx
-
-			{ 5, 4, 6, 5 }, // 10 00
-			{ 6, 5, 5, 4 }, // 10 01
-			{ 4, 5, 5, 6 }, // 10 10
-			{ 5, 6, 4, 5 }, // 10 11
-			{ 0, 0, 0, 0 }, // 11 xx
-			{ 0, 0, 0, 0 }, // 11 xx
-			{ 0, 0, 0, 0 }, // 11 xx
-			{ 0, 0, 0, 0 }  // 11 xx
-	};
-
-	unsigned old_pins=0, new_pins;
 	pQEI :> new_pins;
-
 	t :> ts1;
-
 
 	while (1) {
 #pragma xta endpoint "qei_main_loop"
@@ -87,3 +85,51 @@ void do_qei ( streaming chanend c_qei, port in pQEI )
 		}
 	}
 }
+
+#pragma unsafe arrays
+void do_multiple_qei ( streaming chanend c_qei[], port in pQEI[] )
+{
+	unsigned pos[NUMBER_OF_MOTORS], v, ts1[NUMBER_OF_MOTORS], ts2[NUMBER_OF_MOTORS];
+	unsigned ok[NUMBER_OF_MOTORS], old_pins[NUMBER_OF_MOTORS], new_pins[NUMBER_OF_MOTORS];
+	timer t;
+
+	for (int q=0; q<NUMBER_OF_MOTORS; ++q) {
+		old_pins[q] = 0;
+		pQEI[q] :> new_pins[q];
+		t :> ts1[q];
+		pos[q] = 0;
+		ok[q] = 0;
+	}
+
+	while (1) {
+#pragma xta endpoint "qei_main_loop"
+		select {
+			case (int q=0; q<NUMBER_OF_MOTORS; ++q) pQEI[q] when pinsneq(new_pins[q]) :> new_pins[q] :
+			{
+				if ((new_pins[q] & 0x3) != old_pins[q]) {
+					ts2[q] = ts1[q];
+					t :> ts1[q];
+				}
+				v = lookup[new_pins[q]][old_pins[q]];
+				if (!v) {
+					pos[q] = 0;
+					ok[q] = 1;
+				} else {
+					{ v, pos[q] } = lmul(1, pos[q], v, -5);
+				}
+				old_pins[q] = new_pins[q] & 0x3;
+			}
+			break;
+			case (int q=0; q<NUMBER_OF_MOTORS; ++q) c_qei[q] :> int :
+			{
+				c_qei[q] <: pos[q];
+				c_qei[q] <: ts1[q];
+				c_qei[q] <: ts2[q];
+				c_qei[q] <: ok[q];
+			}
+			break;
+		}
+	}
+}
+
+
