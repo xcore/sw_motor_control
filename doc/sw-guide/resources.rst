@@ -27,7 +27,7 @@ resource usage.
 MIPS
 ----
 
-This table shows the control loop timing worst case, agains't the number of threads
+This table shows the FOC control loop worst case timing, against the number of threads
 running in the motor control core. These values were measured on a 500MHz core.
 
 +-------------------+-----------------+------------+
@@ -45,4 +45,4 @@ running in the motor control core. These values were measured on a 500MHz core.
 +-------------------+-----------------+------------+
 
 For a single motor, using PWM, ADC, QEI and a control loop, only 4 threads are required on
-the motor core, provided there is another core to 
+the motor core, provided there is another core to provide any further external control.
