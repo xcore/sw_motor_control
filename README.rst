@@ -40,7 +40,7 @@ The software is split into modules and applicatons, as describes below:
  Component     module_dsc_display      Module for operating the LCD and buttons                            
  Component     module_dsc_hall         Interface to Hall sensors (only used for BLDC commutation           
  Component     module_dsc_qei          A single threadm, dual quadrature encoder interface                 
-=============== ======================== =====================================================================
+============== ======================= ======================================================================
 
 Required Modules
 ================
