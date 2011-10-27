@@ -42,6 +42,7 @@ Component      module_dsc_hall         Interface to Hall sensors (only used for 
 Component      module_dsc_qei          A single threadm, dual quadrature encoder interface                 
 ============== ======================= =====================================================================
 
+
 Required Modules
 ================
 
