@@ -27,20 +27,20 @@ The software is split into modules and applicatons, as describes below:
 ============== ======================= =====================================================================
  Type          Name                    Description
 -------------- ----------------------- ---------------------------------------------------------------------  
- Application   app_dsc_demo            Fully functional dual axis FOC speed control of two LDO PMSM motors 
- Application   app_control_board_demo  ???                                                                 
- Application   app_basic_bldc          Simple dual axis motor BLDC trapezoidal commutation example         
- Application   app_power_board_test    Manufacturing test sw for power board                               
- Application   app_control_board_test  Manufacturing test sw for power board                               
- Host Software gui                     LabView gui for ethernet or CAN control of dev board from PC        
- Component     module_dsc_pwm          Provides 4ns resolution complementary PWM for 3 phase inverter      
- Component     module_dsc_adc          Interfaces to various external ADCs for current sampling            
- Component     module_dsc_blocks       Inner loop transforms (e.g. park, clarke, PI)                       
- Component     module_dsc_comms        Code to bridge the ethernet/CAN into the main code loop             
- Component     module_dsc_display      Module for operating the LCD and buttons                            
- Component     module_dsc_hall         Interface to Hall sensors (only used for BLDC commutation           
- Component     module_dsc_qei          A single threadm, dual quadrature encoder interface                 
-=============== ======================== =====================================================================
+Application    app_dsc_demo            Fully functional dual axis FOC speed control of two LDO PMSM motors 
+Application    app_control_board_demo  ???                                                                 
+Application    app_basic_bldc          Simple dual axis motor BLDC trapezoidal commutation example         
+Application    app_power_board_test    Manufacturing test sw for power board                               
+Application    app_control_board_test  Manufacturing test sw for power board                               
+Host Software  gui                     LabView gui for ethernet or CAN control of dev board from PC        
+Component      module_dsc_pwm          Provides 4ns resolution complementary PWM for 3 phase inverter      
+Component      module_dsc_adc          Interfaces to various external ADCs for current sampling            
+Component      module_dsc_blocks       Inner loop transforms (e.g. park, clarke, PI)                       
+Component      module_dsc_comms        Code to bridge the ethernet/CAN into the main code loop             
+Component      module_dsc_display      Module for operating the LCD and buttons                            
+Component      module_dsc_hall         Interface to Hall sensors (only used for BLDC commutation           
+Component      module_dsc_qei          A single threadm, dual quadrature encoder interface                 
+============== ======================= =====================================================================
 
 Required Modules
 ================
