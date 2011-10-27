@@ -55,6 +55,6 @@
 #define BLDC_FOC
 
 // Define this to include XSCOPE support
-//#define USE_XSCOPE
+#define USE_XSCOPE
 
 #endif /* _DSC_CONFIG__H_ */
