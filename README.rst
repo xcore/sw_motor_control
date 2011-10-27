@@ -25,7 +25,7 @@ Firmware Overview
 The software is split into modules and applicatons, as describes below:
 
 ============== ======================= =====================================================================
- Type          Name                    Description
+Type           Name                    Description
 -------------- ----------------------- ---------------------------------------------------------------------  
 Application    app_dsc_demo            Fully functional dual axis FOC speed control of two LDO PMSM motors 
 Application    app_control_board_demo  ???                                                                 
@@ -49,20 +49,20 @@ Required Modules
 In addition, the code imports and uses the following components from the xcore github repos:
 
 ============ ======================================= ============================================
- Type         Name                                   Description
+Type         Name                                    Description
 ------------ --------------------------------------- --------------------------------------------
- Component    git://github.com/xcore/sc_ethernet.git Ethernet MII module
- Component    git://github.com/xcore/sc_xtcp.git     TCP/IP stack
- Component    git://github.com/xcore/sc_can.git      CAN phy/mac module
- Component    ???                                    Software locks for the ethernet buffering
- Component    git://github.com/xcore/xcommon.git     Common makefile and build tools
-============ ======================= ============================================================
+Component    git://github.com/xcore/sc_ethernet.git  Ethernet MII module
+Component    git://github.com/xcore/sc_xtcp.git      TCP/IP stack
+Component    git://github.com/xcore/sc_can.git       CAN phy/mac module
+Component    ???                                     Software locks for the ethernet buffering
+Component    git://github.com/xcore/xcommon.git      Common makefile and build tools
+============ ======================================= ============================================
  
 
 Known Issues
 ============
 
-See CHANHELOG.rst
+See CHANGELOG.rst
 
 Getting Started and Installation
 ================================
