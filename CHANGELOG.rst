@@ -1,5 +1,5 @@
 *****************************************************************
-* DSC Basic BLDC Demo CHANGELOG
+* XMOS Motor Control CHANGELOG
 *****************************************************************
 
 
@@ -25,17 +25,23 @@ Change / Notes:
 	- Example Java Control apps for CAN and ethernet control
 
 
-Version 2v0 - 2001-08-10
+Version 2v0 - 2011-10-27
 ===========================================
 
 Change / Notes:
 -----------------
+* Support for new 2 board hardware
+
 * Second release of BLDC commutation
     - LabView based control application using Ethernet or CAN control
     - Dual axis control
    
 * First release of full FOC control
     - Ethernet and CAN control
+    - Dual axis control
+    - 2 device QEI interface
+    - Self-correcting QEI to ADC phase shifter
+    - Monitoring for undervoltage and overcurrent
     
  
  

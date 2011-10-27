@@ -27,6 +27,22 @@ resource usage.
 MIPS
 ----
 
-Loop timing per MIPS available.
+This table shows the control loop timing worst case, agains't the number of threads
+running in the motor control core. These values were measured on a 500MHz core.
 
++-------------------+-----------------+------------+
+| Number of threads | MIPS per thread | Loop time  |
++-------------------+-----------------+------------+
+| 4                 | 125             | 7.9 us     |
++-------------------+-----------------+------------+
+| 5                 | 100             | 10 us      |
++-------------------+-----------------+------------+
+| 6                 | 83.3            | 12 us      |
++-------------------+-----------------+------------+
+| 7                 | 71.4            | 14 us      |
++-------------------+-----------------+------------+
+| 8                 | 62.5            | 16 us      |
++-------------------+-----------------+------------+
 
+For a single motor, using PWM, ADC, QEI and a control loop, only 4 threads are required on
+the motor core, provided there is another core to 

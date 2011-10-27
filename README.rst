@@ -1,7 +1,7 @@
 Advanced Motor Control 
 .......................
 
-:Stable release:  1.0
+:Stable release:  2.0
 
 :Status:  Design Ready
 
@@ -16,7 +16,7 @@ Key Features
    * Dual Axis Trapezoidal Commutation (Speed Control) of BLDC Motors
    * Up to 60 kHz inner loop performance
    * Complementary PWM up to 60 KHz at 11-bit resolution  
-   * CAN or Ethernet interfacewith LabView GUI, or use push-button control
+   * CAN or Ethernet interface with LabView GUI, or use push-button control
    * Component based approach to motor drive and communications interfaces
 
 Firmware Overview
@@ -28,7 +28,7 @@ The software is split into modules and applicatons, as describes below:
 Type           Name                    Description
 -------------- ----------------------- ---------------------------------------------------------------------  
 Application    app_dsc_demo            Fully functional dual axis FOC speed control of two LDO PMSM motors 
-Application    app_control_board_demo  ???                                                                 
+Application    app_control_board_demo  Standalone control board demonstration example                                                                 
 Application    app_basic_bldc          Simple dual axis motor BLDC trapezoidal commutation example         
 Application    app_power_board_test    Manufacturing test sw for power board                               
 Application    app_control_board_test  Manufacturing test sw for power board                               
@@ -38,8 +38,8 @@ Component      module_dsc_adc          Interfaces to various external ADCs for c
 Component      module_dsc_blocks       Inner loop transforms (e.g. park, clarke, PI)                       
 Component      module_dsc_comms        Code to bridge the ethernet/CAN into the main code loop             
 Component      module_dsc_display      Module for operating the LCD and buttons                            
-Component      module_dsc_hall         Interface to Hall sensors (only used for BLDC commutation           
-Component      module_dsc_qei          A single threadm, dual quadrature encoder interface                 
+Component      module_dsc_hall         Interface to Hall sensors (only used for BLDC commutation)           
+Component      module_dsc_qei          A quadrature encoder interface                 
 ============== ======================= =====================================================================
 
 
@@ -54,7 +54,6 @@ Type         Name                                    Description
 Component    git://github.com/xcore/sc_ethernet.git  Ethernet MII module
 Component    git://github.com/xcore/sc_xtcp.git      TCP/IP stack
 Component    git://github.com/xcore/sc_can.git       CAN phy/mac module
-Component    ???                                     Software locks for the ethernet buffering
 Component    git://github.com/xcore/xcommon.git      Common makefile and build tools
 ============ ======================================= ============================================
  
