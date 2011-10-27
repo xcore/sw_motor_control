@@ -83,7 +83,6 @@ one of the coils being the sum of the other two. See a description of Field Orie
 Sine & Cosine lookup
 ++++++++++++++++++++
 
-<<<<<<< HEAD:doc/sw-guide/blocks.rst
 The sine and cosine functions are largely provided for use in the Park transforms, but may be used by other
 functions if required. The sine table provided has a 256 entry lookup. This is convenient for a 1024 step full
 circle QEI on a 4 pole motor, since each angular increment in the QEI represents 4 times the electrical
