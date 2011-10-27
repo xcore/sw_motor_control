@@ -14,8 +14,8 @@ Key Features
 
    * Dual Axis Field Oriented Control (Speed Control) of PMSM Motors
    * Dual Axis Trapezoidal Commutation (Speed Control) of BLDC Motors
-   * Up to 60 kHz inner loop performance
-   * Complementary PWM up to 60 KHz at 11-bit resolution  
+   * Up to 142kHz inner loop performance
+   * Complementary PWM up to 48 KHz at 11-bit complementary PWM resolution  
    * CAN or Ethernet interface with LabView GUI, or use push-button control
    * Component based approach to motor drive and communications interfaces
 
