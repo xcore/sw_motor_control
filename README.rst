@@ -1,66 +1,80 @@
-DSC
-.......
+Advanced Motor Control 
+.......................
 
-:Stable release:  1.0.0
+:Stable release:  1.0
 
-:Status:  under development
+:Status:  Design Ready
 
 :Maintainer: https://github.com/DavidNorman
 
-
-This is the demonstration software for the XMOS DSC motor control evaluation board
+Firmware and documentation to go with the XMOS XK-MC-LVM2 and XP-MC-CTRL-L2 Motor Control Development Kits.
 
 Key Features
 ============
 
-   * Simple commutation of two BLDC motors
-
-To Do
-=====
-
-   * Demo example controls the motors with the buttons and LCD.  Add instructions for using
-     ethernet and CAN.
-
-   * Allow motors to be controlled at different speeds.
+   * Dual Axis Field Oriented Control (Speed Control) of PMSM Motors
+   * Dual Axis Trapezoidal Commutation (Speed Control) of BLDC Motors
+   * Up to 60 kHz inner loop performance
+   * Complementary PWM up to 60 KHz at 11-bit resolution  
+   * CAN or Ethernet interfacewith LabView GUI, or use push-button control
+   * Component based approach to motor drive and communications interfaces
 
 Firmware Overview
 =================
 
-The software is split into modules, as describes below:
+The software is split into modules and applicatons, as describes below:
 
-   :apps_control: Three example Java applications for external control of the demo.
-   :app_basic_bldc: Simple 2 motor BLDC commutation example
-   :app_dsc_demo: Currently non-functional example for FOC control
-   :module_can: XMOS CAN module
-   :module_dsc_adc: Interface to the on-board ADC
-   :module_dsc_blocks: Useful code blocks, eg PID controller, spatial transforms, SIN tables.
-   :module_dsc_comms: Code to bridge the ethernet/CAN into the main code loop
-   :module_dsc_display: Module for operating the LCD and buttons
-   :module_dsc_hall: Interface to the Hall sensors
-   :module_dsc_logging: Used by the incomplete FOC code for logging data to the SDRAM.
-   :module_dsc_pwm: Provides accurately timed PWM signals for the bridge drivers
-   :module_dsc_qei: An example of a quadrature encoder interface
-   :module_dsc_sdram: Provides read and write for the on-board SDRAM.  Used by the logging system.
-   :module_ethernet: The XMOS ethernet MII module
-   :module_locks: Software locks for the ethernet buffering
-   :module_xmos_common: Common makefile and build tools
-   :module_xtcp: An instance of the XMOS TCP/IP stack
+============== ======================= =====================================================================
+Type           Name                    Description
+-------------- ----------------------- ---------------------------------------------------------------------  
+Application    app_dsc_demo            Fully functional dual axis FOC speed control of two LDO PMSM motors 
+Application    app_control_board_demo  ???                                                                 
+Application    app_basic_bldc          Simple dual axis motor BLDC trapezoidal commutation example         
+Application    app_power_board_test    Manufacturing test sw for power board                               
+Application    app_control_board_test  Manufacturing test sw for power board                               
+Host Software  gui                     LabView gui for ethernet or CAN control of dev board from PC        
+Component      module_dsc_pwm          Provides 4ns resolution complementary PWM for 3 phase inverter      
+Component      module_dsc_adc          Interfaces to various external ADCs for current sampling            
+Component      module_dsc_blocks       Inner loop transforms (e.g. park, clarke, PI)                       
+Component      module_dsc_comms        Code to bridge the ethernet/CAN into the main code loop             
+Component      module_dsc_display      Module for operating the LCD and buttons                            
+Component      module_dsc_hall         Interface to Hall sensors (only used for BLDC commutation           
+Component      module_dsc_qei          A single threadm, dual quadrature encoder interface                 
+============== ======================= =====================================================================
 
+
+Required Modules
+================
+
+In addition, the code imports and uses the following components from the xcore github repos:
+
+============ ======================================= ============================================
+Type         Name                                    Description
+------------ --------------------------------------- --------------------------------------------
+Component    git://github.com/xcore/sc_ethernet.git  Ethernet MII module
+Component    git://github.com/xcore/sc_xtcp.git      TCP/IP stack
+Component    git://github.com/xcore/sc_can.git       CAN phy/mac module
+Component    ???                                     Software locks for the ethernet buffering
+Component    git://github.com/xcore/xcommon.git      Common makefile and build tools
+============ ======================================= ============================================
+ 
 
 Known Issues
 ============
 
-   * CAN and Ethernet control are not enabled by default
+See CHANGELOG.rst
 
-Required Repositories
-================
+Getting Started and Installation
+================================
 
-   * The xmos_mc is a standalone repository
+If you have purchased one of the XMOS motor control kits (available from digikey), the doc directory contains a quickstart guide to get your board up and running quickly. The doc directory also contains a user guide for the motor control application firmware and components. 
 
 Support
 =======
 
-Contact davidn@xmos.com for techincal support.
+Issues may be submitted via the Issues tab in this github repo. Response to any issues submitted as at the discretion of the manitainer for this line.
+
+
 
 
 
