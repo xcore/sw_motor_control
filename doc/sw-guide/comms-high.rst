@@ -9,8 +9,8 @@ With suitable compile time options, the example applications will automatically 
 A high level communication server has been written for each, and these interface to the standard MAC and PHY components
 for the two protocols.  These high level server threads are called *do_comms_eth* and *do_comms_can*.
 
-Documentation for the CAN, Ethernet and TCP/IP XMOS components can be found on
-https://www.xmos.com/applications/software-components.
+Documentation for the CAN, Ethernet and TCP/IP XMOS components can be found in the software guides for those components,
+either on the xmos.com website or from the relevent open source respositories.
 
 A LabView runtime based control application, suitable for both CAN and Ethernet control, is included with the software
 release, in the *gui* subdirectory.
