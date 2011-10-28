@@ -90,7 +90,7 @@ Server functions
 
 .. doxygenfunction:: do_qei
 
-.. doxygenfunction:: do_qei_multiple
+.. doxygenfunction:: do_multiple_qei
 
 
 PWM
