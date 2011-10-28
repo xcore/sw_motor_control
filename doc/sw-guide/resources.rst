@@ -1,7 +1,7 @@
 Resource usage
 ==============
 
-The table shows the resource usage for the main components in the systemm.  The
+The table shows the resource usage for the main components in the system.  The
 transforms are a functional library and thus do not have a thread or port usage.
 
 

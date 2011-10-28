@@ -173,9 +173,6 @@
   <polyline style="fill: none; fill-opacity:0; stroke-width: 4; stroke-dasharray: 4; stroke: #000000" points="464.344,333.048 260,333.048 260,130 80,130 "/>
   <line style="fill: none; fill-opacity:0; stroke-width: 4; stroke-dasharray: 4; stroke: #000000" x1="1154.13" y1="133.534" x2="1200" y2="133.115"/>
   <line style="fill: none; fill-opacity:0; stroke-width: 4; stroke-dasharray: 4; stroke: #000000" x1="1154.13" y1="413.534" x2="1200" y2="413.114"/>
-  <text style="fill: #000000;text-anchor:start;font-size:36.1244;font-family:sanserif;font-style:normal;font-weight:normal" x="60" y="40">
-    <tspan x="60" y="40">Basic BLDC</tspan>
-  </text>
   <g>
     <rect style="fill: #ffffff" x="1200" y="220" width="80" height="100"/>
     <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="1200" y="220" width="80" height="100"/>
