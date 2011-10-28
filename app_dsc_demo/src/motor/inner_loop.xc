@@ -50,10 +50,6 @@
 #define ERROR_UNDERVOLTAGE 0x2
 #define ERROR_STALL 0x4
 
-// This constant adjusts for the phase between the theta=0 coil (the A coil) and the actual
-// orientation of the coils in the motor-type (1 coil rotation = 360/3 = 120 degrees)
-#define THETA_PHASE (QEI_COUNT_MAX * 120 / 360 / NUMBER_OF_POLES) // Phase offset of 120 degrees
-
 // This is half of the coil sector angle (6 sectors = 60 degrees per sector, 30 degrees per half sector)
 #define THETA_HALF_PHASE (QEI_COUNT_MAX * 30 / 360 / NUMBER_OF_POLES)
 
@@ -65,61 +61,92 @@
 #pragma xta command "set required - 40 us"
 
 /*
- * run_motor() function Initially runs in open loop uses hall sensor outputs and finds hall_state.
- * Based on the hall state it identifies the rotor position and give the commutation sequence to
- * Upper and Lower IGBT's. After rotating for some number of iterations it finds zero hall state
- * and executes field oriented control algorithem.It get actual speed and position of rotor using
- * encoder module and phase currents using ADC then it updates PWM based on this values. This
- * funcntion uses five channels c_wd for watchdog timer, c_qei to get the update speed and position,
- * c_speed for display and c_adc for currents.
+ * run_motor() function initially runs in open loop, spinning the magnetic field around at a fixed
+ * torque until the QEI reports that it has an accurate position measurement.  After this time,
+ * it uses the hall sensors to calculate the phase difference between the QEI zero point and the
+ * hall sectors, and therefore between the motors coils and the QEI disc.
+ *
+ * After this, the full field oriented control is used to commutate the rotor. Each iteration
+ * of the control loop does the following actions:
+ *
+ *   Reads the QEI and ADC state
+ *   Calculate the Id and Iq values by transforming the coil currents reported by the ADC
+ *   Use the speed value from the QEI in a speed control PID, producing a demand Iq value
+ *   Use the demand Iq and the measured Iq and Id in two current control PIDs
+ *   Transform the current control PID outputs into coil demand currents
+ *   Use these to set the PWM duty cycles for the next PWM phase
+ *
+ * This is a standard FOC algorithm, with the current and speed control loops combined.
  *
  * Notes:
  *
  *   when theta=0, the Iq component (the major magnetic vector) transforms to the Ia current.
- *   therefore we want to have theta=0 aligned with the centre of the '110' state of hall effect
+ *   therefore we want to have theta=0 aligned with the centre of the '001' state of hall effect
  *   detector.
  **/
 
 #pragma unsafe arrays
 void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend c_qei, streaming chanend c_adc, chanend c_speed, chanend? c_wd, port in p_hall, chanend c_can_eth_shared )
 {
-	/* Currents from ADC */
+	/* Measured coil currents from ADC */
 	int Ia_in = 0, Ib_in = 0, Ic_in = 0;
 
-	/* Clark transform variable declaration */
+	/* Measured currents once transformed to a 2D vector */
 	int alpha_in = 0, beta_in = 0;
 
-	/* Park transform variables */
+	/* Measured radial and tangential currents in the rotor frame of reference */
 	int Id_in = 0, Iq_in = 0;
 
-	/* PID variables */
-	int id_out = 0, iq_out = 0;
+	/* Ideal current producing tangential magnetic field. Generates torque in the
+	 * rotor, and therefore set by the speed error */
+	int iq_set_point = 0;
+
+	/* Ideal current producing radial magnetic field. Since no radial force is required
+	 * to spin the rotor, this is always zero for PMSM and BLDC motors */
+	int id_set_point = 0;
+
+	/* Speed PID control structure */
+	pid_data pid;
+
+	/* Id PID control structure */
+	pid_data pid_d;
+
+	/* Iq PID control structure */
+	pid_data pid_q;
+
+	/* The difference between the actual coil currents, and the demand coil currents
+	 * required to produce the correct magnetic field
+	 */
 	int Id_err = 0, Iq_err = 0;
 
-	/* Inverse Park transform outputs */
+	/* The demand radial and tangential currents from the current control PIDs */
+	int id_out = 0, iq_out = 0;
+
+	/* The demand currents as a 2D vector */
 	int alpha_out = 0, beta_out = 0;
+
+	/* The demand currents as coil currents */
+	int Ia_out, Ib_out, Ic_out;
 
 	/* PWM variables */
 	unsigned pwm[3] = {0, 0, 0};
-	int Va = 0, Vb = 0, Vc = 0;
 	t_pwm_control pwm_ctrl;
-
-	/* Speed feed back variable */
-	int iq_set_point = 0;
-
-	/* Always zero for BLDC */
-	int id_set_point = 0;
 
 	/* General state management */
 	unsigned start_up = 0;
 
-	/* Position and Speed */
-	unsigned theta = 0, theta_offset = -1, valid = 0;
-	int speed = 1000, set_speed = 1000;
+	/* Position and speed as measured by the QEI */
+	unsigned theta = 0, valid = 0;
+	int speed = 1000;
 
-	// Channel comms
-	unsigned cmm_speed;
-	unsigned comm_shared;
+	// Demand speed set by the user/comms interface
+	int set_speed = 1000;
+
+	// Phase difference between the QEI and the coils
+	unsigned theta_offset = -1;
+
+	// Command received from the control interface
+	unsigned command;
 
 	/* Hall state */
 	unsigned hall, last_hall=0;
@@ -133,18 +160,11 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 	timer t;
 	unsigned ts1;
 
-	/*  */
+	/* General counter for the number of iterations of the control loop */
 	unsigned cycle_count=0;
 
-	/* Speed PID structure */
-	pid_data pid;
 
-	/* Id PID User defined datatype */
-	pid_data pid_d;
 
-	/* Iq PID structure */
-	pid_data pid_q;
-	
 	// First send my PWM server the shared memory structure address
 	pwm_share_control_buffer_address_with_server(c_pwm, pwm_ctrl);
 
@@ -185,18 +205,18 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 		select
 		{
 		/* This case responds to speed control through shared I/O */
-		case c_speed :> cmm_speed:
+		case c_speed :> command:
 #pragma xta label "foc_loop_speed_comms"
-			if(cmm_speed == CMD_GET_IQ)
+			if(command == CMD_GET_IQ)
 			{
 				c_speed <: speed;
 				c_speed <: set_speed;
 			}
-			else if (cmm_speed == CMD_SET_SPEED)
+			else if (command == CMD_SET_SPEED)
 			{
 				c_speed :> set_speed;
 			}
-			else if(cmm_speed == CMD_GET_FAULT)
+			else if(command == CMD_GET_FAULT)
 			{
 				c_speed <: error_flags;
 			}
@@ -204,15 +224,15 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 			break;
 
 		//This case responds to CAN or ETHERNET commands
-		case c_can_eth_shared :> comm_shared:
+		case c_can_eth_shared :> command:
 #pragma xta label "foc_loop_shared_comms"
-			if(comm_shared == CMD_GET_VALS)
+			if(command == CMD_GET_VALS)
 			{
 				c_can_eth_shared <: speed;
 				c_can_eth_shared <: Ia_in;
 				c_can_eth_shared <: Ib_in;
 			}
-			else if(comm_shared == CMD_GET_VALS2)
+			else if(command == CMD_GET_VALS2)
 			{
 				c_can_eth_shared <: Ic_in;
 				c_can_eth_shared <: iq_set_point;
@@ -220,11 +240,11 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 				c_can_eth_shared <: iq_out;
 			}
 
-			else if (comm_shared == CMD_SET_SPEED)
+			else if (command == CMD_SET_SPEED)
 			{
 				c_can_eth_shared :> set_speed;
 			}
-			else if (comm_shared == CMD_GET_FAULT)
+			else if (command == CMD_GET_FAULT)
 			{
 				c_can_eth_shared <: error_flags;
 			}
@@ -279,18 +299,18 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 						inverse_park_transform( alpha_out, beta_out, id_out, iq_out, theta  );
 
 						/* Final voltages applied */
-						inverse_clarke_transform( Va, Vb, Vc, alpha_out, beta_out );
+						inverse_clarke_transform( Ia_out, Ib_out, Ic_out, alpha_out, beta_out );
 
 						/* Scale to 12bit unsigned for PWM output */
-						pwm[0] = (Va + OFFSET_14) >> 3;
+						pwm[0] = (Ia_out + OFFSET_14) >> 3;
 						if (pwm[0] > PWM_MAX_LIMIT) pwm[0] = PWM_MAX_LIMIT;
-						if (pwm[0] < PWM_MIN_LIMIT) pwm[0] = PWM_MIN_LIMIT;
-						pwm[1] = (Vb + OFFSET_14) >> 3;
+						else if (pwm[0] < PWM_MIN_LIMIT) pwm[0] = PWM_MIN_LIMIT;
+						pwm[1] = (Ib_out + OFFSET_14) >> 3;
 						if (pwm[1] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
-						if (pwm[1] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
-						pwm[2] = (Vc + OFFSET_14) >> 3;
+						else if (pwm[1] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
+						pwm[2] = (Ic_out + OFFSET_14) >> 3;
 						if (pwm[2] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
-						if (pwm[2] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
+						else if (pwm[2] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
 					}
 
 					/* Update the PWM values */
@@ -360,18 +380,18 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 #pragma xta label "foc_loop_inverse_clarke"
 
 					/* Final voltages applied */
-					inverse_clarke_transform( Va, Vb, Vc, alpha_out, beta_out );
+					inverse_clarke_transform( Ia_out, Ib_out, Ic_out, alpha_out, beta_out );
 
 #pragma xta label "foc_loop_update_pwm"
 
 					/* Scale to 12bit unsigned for PWM output */
-					pwm[0] = (Va + OFFSET_14) >> 3;
-					pwm[1] = (Vb + OFFSET_14) >> 3;
-					pwm[2] = (Vc + OFFSET_14) >> 3;
+					pwm[0] = (Ia_out + OFFSET_14) >> 3;
 					if (pwm[0] > PWM_MAX_LIMIT) pwm[0] = PWM_MAX_LIMIT;
 					else if (pwm[0] < PWM_MIN_LIMIT) pwm[0] = PWM_MIN_LIMIT;
+					pwm[1] = (Ib_out + OFFSET_14) >> 3;
 					if (pwm[1] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
 					else if (pwm[1] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
+					pwm[2] = (Ic_out + OFFSET_14) >> 3;
 					if (pwm[2] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
 					else if (pwm[2] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
 
@@ -392,8 +412,8 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					        if (isnull(c_in)) {
 					        	xscope_probe_data(0, speed);
 					        	xscope_probe_data(1, iq_set_point);
-					        	xscope_probe_data(2, Va);
-					        	xscope_probe_data(3, Vb);
+					        	xscope_probe_data(2, pwm[0]);
+					        	xscope_probe_data(3, pwm[1]);
 					        	xscope_probe_data(4, Ia_in);
 					        	xscope_probe_data(5, Ib_in);
 					        }

@@ -1,14 +1,25 @@
 Application Level Communications Interfaces
 ===========================================
 
-This module provides a details on the higher application level communication interfaces used in the XMOS Motor Control Development Platform.
+This module provides a details on the higher application level communication interfaces used in the XMOS Motor Control
+Development Platform.
 
-The motor control platform has been written to take advantage of the XMOS Ethernet and XMOS CAN open source components.  With suitable compile time options, the example applications will automatically contain ethernet or CAN control modules.  A high level communication server has been written for each, and these interface to the standard MAC and PHY components for the two protocols.  These high level server threads are called *do_comms_eth* and *do_comms_can*.
+The motor control platform has been written to take advantage of the XMOS Ethernet and XMOS CAN open source components.
+With suitable compile time options, the example applications will automatically contain ethernet or CAN control modules.
+A high level communication server has been written for each, and these interface to the standard MAC and PHY components
+for the two protocols.  These high level server threads are called *do_comms_eth* and *do_comms_can*.
+
+Documentation for the CAN, Ethernet and TCP/IP XMOS components can be found on
+https://www.xmos.com/applications/software-components.
+
+A LabView runtime based control application, suitable for both CAN and Ethernet control, is included with the software
+release, in the *gui* subdirectory.
 
 do_comms_eth
 ++++++++++++
 
-The thread do_comms_eth interfaces to the TCP/IP stack and provides a server interface on the TCP port defined by TCP_CONTROL_PORT (this is typically defined as 9595).
+The thread do_comms_eth interfaces to the TCP/IP stack and provides a server interface on the TCP port defined by TCP_CONTROL_PORT
+(this is typically defined as 9595). 
 
 After configuring the TCP port and TCP/IP stack interface, the thread just sits in a while(1){} loop processing TCP/IP events. 
 The following actions are performed based on the event type:

@@ -23,7 +23,6 @@
 #define SHARED_IO_H_
 
 #include <xccompat.h>
-#include <dsc_config.h>
 #include "lcd.h"
 
 // Individual command interfaces

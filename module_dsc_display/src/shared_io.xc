@@ -26,7 +26,6 @@
 
 #include "lcd.h"
 #include "shared_io.h"
-#include "lcd_logo.h"
 
 #ifndef NUMBER_OF_MOTORS
 #define NUMBER_OF_MOTORS 1

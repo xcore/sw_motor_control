@@ -19,9 +19,7 @@
 #include <print.h>
 
 #include "lcd.h"
-#include "shared_io.h"
-
-extern unsigned char xmos_logo[];
+#include "lcd_logo.h"
 
 // LCD
 on stdcore[0]: lcd_interface_t p = { PORT_SPI_CLK, PORT_SPI_MOSI, PORT_SPI_SS_DISPLAY, PORT_SPI_DSA };

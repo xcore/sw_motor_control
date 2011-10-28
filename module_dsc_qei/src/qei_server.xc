@@ -20,6 +20,10 @@
 #include "dsc_config.h"
 #include <stdio.h>
 
+#ifndef NUMBER_OF_MOTORS
+#define NUMBER_OF_MOTORS 1
+#endif
+
 // This is the loop time for 4000RPM on a 1024 count QEI
 #pragma xta command "analyze loop qei_main_loop"
 #pragma xta command "set required - 14.64 us"
