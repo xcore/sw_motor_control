@@ -1,8 +1,4 @@
 /**
- * Module:  app_basic_bldc
- * Version: 1v0alpha1
- * Build:   c11b66ffaab22a7a781611c5d9eb8cb742ebe60b
- * File:    watchdog.h
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 

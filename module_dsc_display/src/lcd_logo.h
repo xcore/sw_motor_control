@@ -1,8 +1,5 @@
 /**
  * Module:  module_dsc_display
- * Version: 1v0module_dsc_display0
- * Build:   2dfe7de13fb331bd93dee1a7397dfbf4cac3f053
- * File:    lcd_logo.h
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 

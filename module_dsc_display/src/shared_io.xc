@@ -1,9 +1,5 @@
 /**
  * Module:  module_dsc_display
- * Version: 1v0module_dsc_display3
- * File:    shared_io.xc
- * Modified by : Srikanth
- * Last Modified on : 28-Jul-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 

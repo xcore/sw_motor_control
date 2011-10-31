@@ -1,10 +1,5 @@
 /**
  * Module:  module_dsc_display
- * Version: 1v0module_dsc_display3
- * Build:
- * File:    shared_io.h
- * Modified by : Srikanth
- * Last Modified on : 27-May-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 

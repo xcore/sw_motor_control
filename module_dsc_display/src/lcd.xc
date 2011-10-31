@@ -1,10 +1,5 @@
 /**
  * Module:  module_dsc_display
- * Version: 1v0module_dsc_display0
- * Build:   1a950f97dabd166488e2b4ec0bb1fd750b532de8
- * File:    lcd.xc
- * Modified by : Srikanth
- * Last Modified on : 05-Jul-2011
  *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
