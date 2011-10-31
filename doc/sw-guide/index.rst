@@ -29,13 +29,13 @@ In contrast to a typical microcontroller, hardware interfaces are implemented on
 The modules listed above are implemented in one or more processor threads. The architecture of the threads is shown below for both the basic BLDC and FOC configurations. The red and green components show the optional control threads for ethernet and CAN.
 
 Simple BLDC commutation thread diagram
-======================================
+--------------------------------------
 
    .. image:: images/bldc-thread.*
       :width: 100%
 
 Field Oriented Control thread diagram
-=====================================
+-------------------------------------
 
    .. image:: images/foc-thread.*
       :width: 100%
