@@ -306,8 +306,8 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 						if (pwm[0] > PWM_MAX_LIMIT) pwm[0] = PWM_MAX_LIMIT;
 						else if (pwm[0] < PWM_MIN_LIMIT) pwm[0] = PWM_MIN_LIMIT;
 						pwm[1] = (Ib_out + OFFSET_14) >> 3;
-						if (pwm[1] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
-						else if (pwm[1] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
+						if (pwm[1] > PWM_MAX_LIMIT) pwm[1] = PWM_MAX_LIMIT;
+						else if (pwm[1] < PWM_MIN_LIMIT) pwm[1] = PWM_MIN_LIMIT;
 						pwm[2] = (Ic_out + OFFSET_14) >> 3;
 						if (pwm[2] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
 						else if (pwm[2] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
