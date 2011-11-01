@@ -37,9 +37,9 @@ void do_test(chanend c_pwm[])
 
 	pwm_share_control_buffer_address_with_server(c_pwm[0], pwm_ctrl);
 
-	value[0] = 200;
+	value[0] = 1000;
 	value[1] = 2000;
-	value[2] = 3800;
+	value[2] = 3000;
 	update_pwm_inv(pwm_ctrl, c_pwm[0], value);
 }
 
