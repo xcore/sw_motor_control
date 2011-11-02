@@ -24,8 +24,9 @@ XCC_FLAGS = -O3 -g -report -Wno-timing
 
 # The USED_MODULES variable lists other module used by the application. 
 
-USED_MODULES = module_dsc_hall module_dsc_pwm module_dsc_display module_dsc_blocks
+USED_MODULES = module_dsc_hall module_dsc_display module_dsc_blocks
 USED_MODULES += module_dsc_adc module_dsc_qei
+USED_MODULES += module_pwm_symmetrical module_pwm_common
 
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure

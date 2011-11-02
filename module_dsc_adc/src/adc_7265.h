@@ -8,7 +8,7 @@
 #ifndef ADC_7265_H_
 #define ADC_7265_H_
 
-#include <adc_common.h>
+#include "adc_common.h"
 
 /** \brief Implements the AD7265 triggered ADC service
  *

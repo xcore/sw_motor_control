@@ -104,7 +104,7 @@ void adc_ltc1408_triggered( chanend c_adc[], chanend c_trig[], clock clk, port o
 		select
 		{
 		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) inct_byref(c_trig[trig], ct):
-			if (ct == ADC_TRIG_TOKEN)
+			if (ct == XS1_CT_END)
 			{
 				t :> ts;
 				t when timerafter(ts + 1740) :> ts;

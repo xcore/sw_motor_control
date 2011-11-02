@@ -1,4 +1,4 @@
-/**
+/*
  * \file adc_common.h
  *
  * The copyrights, all other intellectual and industrial 
@@ -18,9 +18,6 @@
 #define __ADC_COMMON_H__
 
 #include <dsc_config.h>
-
-// The token which is passed over the control channel for triggering the ADC
-#define ADC_TRIG_TOKEN  XS1_CT_END
 
 // The number of trigger channels coming from PWM units
 #define ADC_NUMBER_OF_TRIGGERS NUMBER_OF_MOTORS

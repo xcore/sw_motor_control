@@ -20,7 +20,9 @@
  **/
 
 #include <xs1.h>
+
 #include "dsc_config.h"
+#include "pwm_config.h"
 #include "shared_io.h"
 #include "pid_regulator.h"
 

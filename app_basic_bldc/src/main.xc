@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 
+#include "dsc_config.h"
 #include "hall_input.h"
 #include "pwm_cli_simple.h"
 #include "pwm_service_simple.h"

@@ -138,7 +138,7 @@ void adc_7265_triggered( streaming chanend c_adc[ADC_NUMBER_OF_TRIGGERS], chanen
 		select
 		{
 		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) inct_byref(c_trig[trig], ct):
-			if (ct == ADC_TRIG_TOKEN)
+			if (ct == XS1_CT_END)
 			{
 				t[trig] :> ts[trig];
 				ts[trig] += ADC_TRIGGER_DELAY;

@@ -1,10 +1,4 @@
-/**
- * Module:  app_basic_bldc
- * Version: 1v1
- * Build:
- * File:    dsc_config.h
- * Author: 	L & T
- *
+/*
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
  * Terms and conditions covering the use of this code can
@@ -24,18 +18,8 @@
 // Define the number of motors
 #define NUMBER_OF_MOTORS 2
 
-// Define dead time period in 10ns period, i.e. dead time = PWM_DEAD_TIME * 10ns
-#define PWM_DEAD_TIME 10
-
 // Define the number of poles the motor has
 #define NUMBER_OF_POLES	4
-
-// Define the resolution of PWM (affects operational freq. as tied to ref clock)
-#define PWM_MAX_VALUE 4096
-
-// Define if ADC sampling is locked to PWM switching. The ADC sampling will occur in the middle of the  switching sequence.
-// It is triggered over a channel. Set this define to 0 to disable this feature
-#define LOCK_ADC_TO_PWM 1
 
 // Define the port for the control app to connect to
 #define TCP_CONTROL_PORT 23

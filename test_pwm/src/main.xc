@@ -1,7 +1,8 @@
 #include <xs1.h>
 #include <platform.h>
-
 #include <print.h>
+
+#include "dsc_config.h"
 
 #include "pwm_cli_inv.h"
 #include "pwm_service_inv.h"

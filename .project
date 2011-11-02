@@ -5,6 +5,7 @@
     <projects>
         <project>sc_can</project>
         <project>sc_ethernet</project>
+        <project>sc_pwm</project>
         <project>sc_xtcp</project>
     </projects>
     <buildSpec>
