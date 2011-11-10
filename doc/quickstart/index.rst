@@ -31,13 +31,13 @@ Setting up the hardware
 Control board
 ~~~~~~~~~~~~~
 
-   .. image:: control.JPG
+   .. image:: control.png
       :width: 100%
 
 Power board
 ~~~~~~~~~~~
 
-   .. image:: power.JPG
+   .. image:: power.png
       :width: 100%
 
 
