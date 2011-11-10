@@ -2,6 +2,12 @@
 Quickstart guide for the XMOS Brushless DC Motor development platform, version 2.0
 ==================================================================================
 
+Supported hardware
+------------------
+
+XMOS Bushless DC Motor Control development platform *XK-MC-LVM2*
+
+
 Setting up the hardware
 -----------------------
 
