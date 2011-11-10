@@ -19,9 +19,10 @@ do_comms_eth
 ++++++++++++
 
 The thread do_comms_eth interfaces to the TCP/IP stack and provides a server interface on the TCP port defined by TCP_CONTROL_PORT
-(this is typically defined as 9595). 
+(this is typically defined as 9595).  See the documentation for the *sc_xtcp* and *sc_ethernet* modules, which describe the use
+of the TCP/IP service and Ethernet services.
 
-After configuring the TCP port and TCP/IP stack interface, the thread just sits in a while(1){} loop processing TCP/IP events. 
+After configuring the TCP port and TCP/IP stack interface, the thread sits in a while(1){} loop processing TCP/IP events. 
 The following actions are performed based on the event type:
 
 
@@ -65,6 +66,9 @@ The files for this thread are in ``control_comms_eth.xc`` and ``control_comms_et
 
 do_comms_can
 ++++++++++++
+
+XMOS provides an independent CAN component in the *sc_can* open source repository. See the documentation for that
+component for more details of the CAN PHY interface.
 
 This thread is similar in operation to the do_comms_eth thread, and provides the same interface to the speed_control_loop.
 
