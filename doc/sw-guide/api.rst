@@ -56,6 +56,10 @@ code. This file can set the following defines:
 
     The maximum RPM that the controllers can set.
 
+External modules
+----------------
+
+For documentation on the Ethernet, CAN and PWM modules, see the relevent XMOS software module documentation.
 
 
 ADC
@@ -93,32 +97,6 @@ Server functions
 .. doxygenfunction:: do_multiple_qei
 
 
-PWM
----
-
-Client functions
-++++++++++++++++
-
-.. doxygenfunction:: pwm_share_control_buffer_address_with_server
-
-Simple PWM mode
-~~~~~~~~~~~~~~~
-
-.. doxygenfunction:: update_pwm_simple
-
-Inverting centre aligned PWM mode
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. doxygenfunction:: update_pwm_inv
-
-Server functions
-++++++++++++++++
-
-.. doxygenfunction:: do_pwm_simple
-
-.. doxygenfunction:: do_pwm_inv
-
-.. doxygenfunction:: do_pwm_inv_triggered
 
 Hall sensors
 ------------
