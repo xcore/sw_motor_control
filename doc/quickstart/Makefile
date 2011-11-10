@@ -1,0 +1,7 @@
+SPHINX_PROJECT_NAME=Motor Control
+VERSION=2.0.0
+COLLECTION=1
+DOXYGEN_DIRS = 
+SOURCE_INCLUDE_DIRS=
+XDOC_DIR ?= ../../../xdoc
+include $(XDOC_DIR)/Makefile.inc
