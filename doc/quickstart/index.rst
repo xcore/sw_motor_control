@@ -34,6 +34,9 @@ Setting up the hardware
    The default application will spin the motors using a field oriented control algorithm.  The display will show
    the speed of each motor, and the demand speed of both.  Buttons A and B will alter the demand speed for the system.
 
+   **NOTE** : The ADC configuration jumpers, J34 and J35 on the control board must be set as follows in order
+   for the default firmware to correctly run.  J34 must be set to *South*, and J35 must be set to *North*. 
+
 Control board
 ~~~~~~~~~~~~~
 
