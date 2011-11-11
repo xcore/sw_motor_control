@@ -65,6 +65,9 @@ Configuring the firmware
     Contained in this file is the address configuration structure which is passed to the TCP/IP module, in a function called
     **init_tcp_server()**.
 
+  There are other compile time configuration options present in the *dsc_config.h* file. These are described in more detail
+  in the software guide.
+
 Building the firmware
 ---------------------
 
