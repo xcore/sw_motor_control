@@ -28,27 +28,27 @@ Setting up the hardware
    **WARNING** : Do *NOT* put the 24V power supply into the control board. The control board takes a 5V power
    supply and will be damaged by 24V. 
       
-   By default, the power board will provide power to the control board. Jumper J2 can be set to the alternative (East)
-   position to allow a separate 5V power supply to be provided to the control board.
-        
    The default application will spin the motors using a field oriented control algorithm.  The display will show
    the speed of each motor, and the demand speed of both.  Buttons A and B will alter the demand speed for the system.
 
-   **NOTE** : The ADC configuration jumpers, J34 and J35 on the control board must be set as follows in order
-   for the default firmware to correctly run.  J34 must be set to *South*, and J35 must be set to *North*. 
-
-   **NOTE** : The power board has 6 configuration jumpers, J31 to J36.  These will typically be set to *South*
-   to enable the hall effect port. Setting to *North* will enable the back-EMF zero crossing detection, but the
-   default firmware implementations do not use this sensor.
-
 Control board
 ~~~~~~~~~~~~~
+
+   By default, the power board will provide power to the control board. Jumper J2 can be set to the alternative (East)
+   position to allow a separate 5V power supply to be provided to the control board.
+        
+   The ADC configuration jumpers, J34 and J35 on the control board must be set as follows in order
+   for the default firmware to correctly run.  J34 must be set to *South*, and J35 must be set to *North*. 
 
    .. image:: control.png
       :width: 100%
 
 Power board
 ~~~~~~~~~~~
+
+   The power board has 6 configuration jumpers, J31 to J36.  These will typically be set to *South*
+   to enable the hall effect port. Setting to *North* will enable the back-EMF zero crossing detection, but the
+   default firmware implementations do not use this sensor.
 
    .. image:: power.png
       :width: 100%
