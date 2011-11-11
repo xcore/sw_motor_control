@@ -37,6 +37,10 @@ Setting up the hardware
    **NOTE** : The ADC configuration jumpers, J34 and J35 on the control board must be set as follows in order
    for the default firmware to correctly run.  J34 must be set to *South*, and J35 must be set to *North*. 
 
+   **NOTE** : The power board has 6 configuration jumpers, J31 to J36.  These will typically be set to *South*
+   to enable the hall effect port. Setting to *North* will enable the back-EMF zero crossing detection, but the
+   default firmware implementations do not use this sensor.
+
 Control board
 ~~~~~~~~~~~~~
 
