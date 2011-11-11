@@ -1,6 +1,6 @@
-==================================================================================
-Quickstart guide for the XMOS Brushless DC Motor development platform, version 2.0
-==================================================================================
+=================================================================
+Quickstart guide for the XMOS Motor Control platform, version 2.0
+=================================================================
 
 Supported hardware
 ------------------
@@ -21,7 +21,7 @@ Setting up the hardware
         
       - Connect the quadrature encoder connections from each motor to the power board.  
 
-      - Connect the XMOS JTAG adaptor to the appropriate port, and connect it back to the PC with a USB cable.
+      - Connect the XMOS JTAG adaptor to the 20 pin IDC header, and connect it to the PC with a USB cable.
 
       - Connect a 24V power supply to the power section of the BLDC board.
       
@@ -73,7 +73,7 @@ Building the firmware
 
   The XTAG-2 debug adapter supplied with the kit can be connected to the board to provide a JTAG interface from
   your development system that you can use to load and debug software. You need to install a set of drivers for
-  the XTAG-2 debug adapter and download a set of free Development Tools (11.2 or later) from the XMOS website:
+  the XTAG-2 debug adapter and download a set of free Development Tools (11.10 or later) from the XMOS website:
 
     http://www.xmos.com/tools
 
