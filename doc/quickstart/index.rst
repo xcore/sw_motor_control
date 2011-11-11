@@ -123,6 +123,9 @@ Running the firmware
   Controlling the motor speed
     Button A increases the demand speed in steps of 100 RPM.  Button B decreases the motor speed in steps of 100 RPM.
 
+  The buttons will change the demand speed within a maximum and minimum of *MIN_RPM* and *MAX_RPM*.  These are configured
+  in the *dsc_config.h* file, and are 500 and 3800.
+
 Using the GUI interface
 -----------------------
 
