@@ -16,7 +16,7 @@ Configuration
 The QEI module provides one or multiple QEI device versions of the server. If more than one QEI device is interfaced to the XMOS device, then the designer can
 opt to use multiple single-device QEI server threads, or one multi-device thread.
 
-The multiple-QEI service loop has a worst-case timing of 1.4us.  This means that it can service can deal with two 1024 position QEI devices spinning at 20kRPM.
+The multiple-QEI service loop has a worst-case timing of 1.4us, therefore being able to service two 1024 position QEI devices spinning at 20kRPM.
 
 
 QEI Server Usage
