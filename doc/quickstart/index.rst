@@ -24,6 +24,8 @@ Setting up the hardware
       - Connect the XMOS JTAG adaptor to the 20 pin IDC header, and connect it to the PC with a USB cable.
 
       - Connect a 24V power supply to the power section of the BLDC board.
+
+   .. image:: boards.pdf
       
    **WARNING** : Do *NOT* put the 24V power supply into the control board. The control board takes a 5V power
    supply and will be damaged by 24V. 
@@ -51,6 +53,10 @@ Control board
    | J34    | *North* - 0 to 2 Vref ADC range | *South* - 0 - Vref ADC range           |
    +--------+---------------------------------+----------------------------------------+
 
+   .. image:: jumper-2.pdf
+
+   .. image:: jumper-b.pdf
+
 Power board
 ~~~~~~~~~~~
 
@@ -67,6 +73,12 @@ Power board
    | J31 - J36 | *North* - zero cross detectors          | *South* - hall sensors                           |
    +-----------+-----------------------------------------+--------------------------------------------------+
 
+   *WARNING* - When connecting the quadrature encoder cable to the LDO motors, the connector can often
+   be inserted into the motor both correctly, and upside down.  Check that the the alignment flanges on
+   the motor match those on the connector before inserting.  The quadrature encoder will be permanently
+   damaged with an incorrectly inserted connector.
+
+   .. image:: quadrature.pdf
 
 Configuring the firmware
 ------------------------
