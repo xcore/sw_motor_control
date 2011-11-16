@@ -45,4 +45,20 @@ running in the motor control core. These values were measured on a 500MHz core.
 +-------------------+-----------------+------------+
 
 For a single motor, using PWM, ADC, QEI and a control loop, only 4 threads are required on
-the motor core, provided there is another core to provide any further external control.
+the motor core. Another core can be used to provide further functionality, or for a single
+motor, the remaining 4 threads in the motor core can be used for control and IO, giving a
+single core FOC motor control solution.
+
+A dual motor, single core FOC solution can be created, by using the dual-QEI mode of the
+QEI server.  The threads for such a solution would be:
+
+  * PWM for motor 1
+  * PWM for motor 2
+  * dual QEI
+  * Control loop for motor 1
+  * Control loop for motor 2
+  * ADC
+  * Watchdog and main application
+  * CAN PHY interface
+
+

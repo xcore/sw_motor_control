@@ -6,7 +6,6 @@ Introduction
 
 The XMOS motor control development platform is provided with a software framework and example control loop. This document provides information relating to the structure, implementation and use of the software modules that are specific to the motor control development platform, and interfacing to associated peripheral modules such as the CAN component.
 
-For information on the XMOS Motor Control Development Platform hardware please see the Motor Control Platform Hardware Manual.
 
 
 Software Modules
@@ -26,7 +25,7 @@ The system utilizes the XMOS standard open source IP blocks for low level Ethern
 
 In contrast to a typical microcontroller, hardware interfaces are implemented on XMOS devices in software. This gives the developer the flexibility to implement or customise any interface they require. Designers have a greater number of options when selecting ADC's, PWM schemes or control and measurement interfaces.
 
-The modules listed above are implemented in one or more processor threads. The architecture of the threads is shown below for both the basic BLDC and FOC configurations. The red and green components show the optional control threads for ethernet and CAN.
+The modules listed above are implemented in one or more processor threads. The architecture of the threads is shown below for both the basic BLDC and field oriented control configurations. The red and green components show the optional control threads for ethernet and CAN.
 
 Simple BLDC commutation thread diagram
 --------------------------------------

@@ -33,7 +33,6 @@ Application    app_basic_bldc          Simple dual axis motor BLDC trapezoidal c
 Application    app_power_board_test    Manufacturing test sw for power board                               
 Application    app_control_board_test  Manufacturing test sw for power board                               
 Host Software  gui                     LabView gui for ethernet or CAN control of dev board from PC        
-Component      module_dsc_pwm          Provides 4ns resolution complementary PWM for 3 phase inverter      
 Component      module_dsc_adc          Interfaces to various external ADCs for current sampling            
 Component      module_dsc_blocks       Inner loop transforms (e.g. park, clarke, PI)                       
 Component      module_dsc_comms        Code to bridge the ethernet/CAN into the main code loop             
@@ -54,6 +53,7 @@ Type         Name                                    Description
 Component    git://github.com/xcore/sc_ethernet.git  Ethernet MII module
 Component    git://github.com/xcore/sc_xtcp.git      TCP/IP stack
 Component    git://github.com/xcore/sc_can.git       CAN phy/mac module
+Component    git://github.com/xcore/sc_pwm.git       PWM module
 Component    git://github.com/xcore/xcommon.git      Common makefile and build tools
 ============ ======================================= ============================================
  

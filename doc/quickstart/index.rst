@@ -1,6 +1,12 @@
-==================================================================================
-Quickstart guide for the XMOS Brushless DC Motor development platform, version 2.0
-==================================================================================
+=================================================================
+Quickstart guide for the XMOS Motor Control platform, version 2.0
+=================================================================
+
+Supported hardware
+------------------
+
+XMOS Bushless DC Motor Control development platform *XK-MC-LVM2*
+
 
 Setting up the hardware
 -----------------------
@@ -15,18 +21,64 @@ Setting up the hardware
         
       - Connect the quadrature encoder connections from each motor to the power board.  
 
-      - Connect the XMOS JTAG adaptor to the appropriate port, and connect it back to the PC with a USB cable.
+      - Connect the XMOS JTAG adaptor to the 20 pin IDC header, and connect it to the PC with a USB cable.
 
       - Connect a 24V power supply to the power section of the BLDC board.
+
+   .. image:: boards.pdf
       
    **WARNING** : Do *NOT* put the 24V power supply into the control board. The control board takes a 5V power
    supply and will be damaged by 24V. 
       
+   The default application will spin the motors using a field oriented control algorithm.  The display will show
+   the speed of each motor, and the demand speed of both.  Buttons A and B will alter the demand speed for the system.
+
+Control board
+~~~~~~~~~~~~~
+
    By default, the power board will provide power to the control board. Jumper J2 can be set to the alternative (East)
    position to allow a separate 5V power supply to be provided to the control board.
         
-   The default application will spin the motors using a field oriented control algorithm.  The display will show
-   the speed of each motor, and the demand speed of both.  Buttons A and B will alter the demand speed for the system.
+   The ADC configuration jumpers, J34 and J35 on the control board must be set as follows in order
+   for the default firmware to correctly run.  J34 must be set to *South*, and J35 must be set to *North*. 
+
+   .. image:: control.png
+      :width: 100%
+
+   +--------+---------------------------------+----------------------------------------+
+   | J2     | *West* - power from Power Board | *East* - power from External connector |
+   +--------+---------------------------------+----------------------------------------+
+   | J33    | *North* - single ended ADC      | *South* - differential ADC             |
+   +--------+---------------------------------+----------------------------------------+
+   | J34    | *North* - 0 to 2 Vref ADC range | *South* - 0 - Vref ADC range           |
+   +--------+---------------------------------+----------------------------------------+
+
+   .. image:: jumper-2.pdf
+
+   .. image:: jumper-b.pdf
+
+Power board
+~~~~~~~~~~~
+
+   The power board has 6 configuration jumpers, J31 to J36.  These will typically be set to *South*
+   to enable the hall effect port. Setting to *North* will enable the back-EMF zero crossing detection, but the
+   default firmware implementations do not use this sensor.
+
+   .. image:: power.png
+      :width: 100%
+
+   +-----------+-----------------------------------------+--------------------------------------------------+
+   | J6        | *Fitted* - standard watchdog protection | *Absent* - watchdog requires SW1 to be depressed |
+   +-----------+-----------------------------------------+--------------------------------------------------+
+   | J31 - J36 | *North* - zero cross detectors          | *South* - hall sensors                           |
+   +-----------+-----------------------------------------+--------------------------------------------------+
+
+   *WARNING* - When connecting the quadrature encoder cable to the LDO motors, the connector can often
+   be inserted into the motor both correctly, and upside down.  Check that the the alignment flanges on
+   the motor match those on the connector before inserting.  The quadrature encoder will be permanently
+   damaged with an incorrectly inserted connector.
+
+   .. image:: quadrature.pdf
 
 Configuring the firmware
 ------------------------
@@ -46,12 +98,15 @@ Configuring the firmware
     Contained in this file is the address configuration structure which is passed to the TCP/IP module, in a function called
     **init_tcp_server()**.
 
+  There are other compile time configuration options present in the *dsc_config.h* file. These are described in more detail
+  in the software guide.
+
 Building the firmware
 ---------------------
 
   The XTAG-2 debug adapter supplied with the kit can be connected to the board to provide a JTAG interface from
   your development system that you can use to load and debug software. You need to install a set of drivers for
-  the XTAG-2 debug adapter and download a set of free Development Tools (11.2 or later) from the XMOS website:
+  the XTAG-2 debug adapter and download a set of free Development Tools (11.10 or later) from the XMOS website:
 
     http://www.xmos.com/tools
 
@@ -104,12 +159,19 @@ Running the firmware
   Controlling the motor speed
     Button A increases the demand speed in steps of 100 RPM.  Button B decreases the motor speed in steps of 100 RPM.
 
+  The buttons will change the demand speed within a maximum and minimum of *MIN_RPM* and *MAX_RPM*.  These are configured
+  in the *dsc_config.h* file, and are 500 and 3800.
+
 Using the GUI interface
 -----------------------
 
 The GUI application is available from XMOS on request. It is based on the LabView suite, and so requires the LabView
 8.1 runtime environment to be installed on the user's PC.  This is available from the LabView website, at 
 *http://joule.ni.com/nidu/cds/view/p/id/861/lang/en*.
+
+  .. image:: gui.png
+     :width: 100%
+
 
 For interfacing to the board using CAN, LabView supports the Kvaser Leaf Light HS USB to CAN dongle.
 
