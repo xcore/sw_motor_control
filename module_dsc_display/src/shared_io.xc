@@ -18,7 +18,9 @@
 #include "xs1.h"
 #include <stdio.h>
 
+#ifdef __dsc_config_h_exists__
 #include "dsc_config.h"
+#endif
 
 #include "lcd.h"
 #include "shared_io.h"
