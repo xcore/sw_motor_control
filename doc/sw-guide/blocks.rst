@@ -41,7 +41,7 @@ and then returns the result. The returned error will be applied to the set_point
 ``pid_regulator_delta`` does a standard PID calculation using the set_point and actual values. It calculates the error and applies the PID
 coefficients and then returns the resulting error.
 
-``pid_regulator_delta_cust_error`` does a standard PID calculation using a precalculated error value. It calculates the error and applies
+``pid_regulator_delta_cust_error`` does a standard PID calculation using a previously calculated error value. It calculates the error and applies
 the PID coefficients and then returns the resulting error.
 
 ``pid_regulator_delta_cust_error_speed``, ``pid_regulator_delta_cust_error_Iq_control`` and ``pid_regulator_delta_cust_error_Id_control`` are

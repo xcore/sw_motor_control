@@ -24,7 +24,7 @@
 
 	/** \brief Perform a clarke transform
 	 *
-	 * A Clarke transform is a 2D to 3D transformation where the 3D components
+	 * A Clarke transform is a 3D to 2D transformation where the 3D components
 	 * have only 2 degrees of freedom.  It is used to convert the three current
 	 * values in the 120 degree separation coils into a radial and tangential
 	 * component values.
@@ -39,10 +39,9 @@
 
 	/** \brief Perform an inverse clarke transform
 	 *
-	 * A Clarke transform is a 2D to 3D transformation where the 3D components
-	 * have only 2 degrees of freedom.  It is used to convert the three current
-	 * values in the 120 degree separation coils into a radial and tangential
-	 * component values.
+	 * The inverse Clarke transform is a 2D to 3D transformation where the 3D components
+	 * have only 2 degrees of freedom.  It is used to convert radial and tangential components
+         * of the current vector into the three coil currents.
 	 *
 	 * \param Ia the output parameter for coil A
 	 * \param Ib the output parameter for coil B

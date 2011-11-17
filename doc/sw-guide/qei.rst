@@ -8,7 +8,7 @@ The particular interface that is implemented utilises three signals comprising o
 information while I indicates a return to 0 or origin. The signals A and B are provided out of phase so that the direction of rotation can be resolved.
 
   .. image:: images/QeiOutput.pdf
-     :width: 100%
+     :align: center
 
 Configuration
 +++++++++++++

@@ -64,6 +64,20 @@ number.
 
 The files for this thread are in ``control_comms_eth.xc`` and ``control_comms_eth.h``
 
+Customizing the TCP/IP packet
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ethernet and TCP/IP communications module is an example of a simple query and reply protocol using a fixed packet
+format.  Many alternatives exist for communication with the device through ethernet, and an incomplete list is given
+below.
+
+  * Remove TCP/IP altogether and send and receive ethernet layer 2 packets of a given fixed format
+  * Use UDP instead of TCP, with the same packet format
+  * Alter the packet format to a proprietory alternative
+  * Integrate an industry standard communication protocol on either Ethernet layer 2 or TCP/IP.  Modbus/IP is
+    a good example of this.
+
+
 do_comms_can
 ++++++++++++
 
@@ -93,5 +107,38 @@ The format of a transmitted CAN packet is:
 
 The files for this thread are in ``control_comms_can.xc`` and ``control_comms_can.h``
 
+Customizing the CAN communcation module
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+The *sc_can* XMOS CAN component supports the CAN PHY, as used in the example communication
+system given.  Many alternative configurations exist, and an incomplete list is given below.
+
+  * Use the CAN LLC supported by the *sc_can* module to provide a set of CAN registers containing the
+    read and write parameters of the application.
+  * Alter the CAN packet format.
+
+
+Replacing the communications module
++++++++++++++++++++++++++++++++++++
+
+The ethernet/TCP and CAN communications systems are only examples of the many alternatives that
+can be implemented using the flexible XMOS architecture.  Both of these communication modules are
+implemented as a collection of threads running in the device. They communicate with the motor
+control thread using channels.
+
+By replacing the threads with alternative physical interface and protocol threads, that communicate
+with the motor control thread using the same channel messages, it becomes easy to produce a different
+external control scheme.  If the messages which are currently sent on the channels are not flexible
+enough, then they too can be altered to provide additional functionality.
+
+An incomplete list of other external control schemes is given below.
+
+  * Simple GPIO control
+  * UART
+  * SPI
+  * I2C
+  * Clocked parallel port
+  * Bluetooth
+  * EtherCAT
+  * RS485
 

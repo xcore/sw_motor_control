@@ -11,7 +11,6 @@ synchronized PWM reduces the number of coincident edges, thus reducing switching
 
   .. image:: images/pwmFig.pdf
      :align: center
-     :width: 100%
 
 Configuration
 +++++++++++++

@@ -83,7 +83,7 @@ The main loop consists of a select statement that responds to three events. The 
 PID control and an update to the motor control threads PWM value. This simply applies the calculated PID error to the set point
 that is requested.
 
-The second and third events are a request from the LCD and buttons thread or the ethernet thread. This can either be a request
+The second and third events are a request from the LCD and buttons thread or the communication I/O thread. This can either be a request
 from the display for updated speed, set point and PWM demand values or a change in set point. 
 
 FOC Application ``app_dsc_demo``
@@ -117,14 +117,60 @@ The control loop can be found in ``src/motor/inner_loop.xc``. The thread is laun
     chanend c_can_eth_shared)
 
 The control loop takes input from the encoder, a set speed from the control modules and applies it via
-PWM. It utilises the feedback from the ADC and calculations done using the Park and Clarke transforms and
-application of PID regulation of *I_d* and *I_q*.  The resulting values of *V_a*, *V_b* and *V_c* are
-output to the PWM.
+PWM. It contains two controllers in one loop, the speed controller and the current controller.  The
+speed controller uses the QEI input to measure the speed of the motor, in order to bring the motor to
+the correct demand speed.  The output of this controller is a tangential torque which is required to
+acheive that demand speed.  The torque is passed through the *iq_set_point* variable.  The
+*id_set_point* variable is always zero, as no force is required in the radial direction. The torque
+is a direct consequence of current flow in the coils, and therefore the *iq_set_point* is also a
+measure of the demand current.
+
+The second controller is the torque/current controller.  This uses the measured coil currents from the ADC,
+and tries to make them equal to the *iq_set_point* demand. The output of this controller is the extra
+current required to deliver the required torque.  This is used to set the PWM duty cycles for the three
+coils.
+
+Because the motor is spinning, and the mathematics for the algorithm is done in the frame of reference
+of the spinning rotor, the QEI is used to find the rotor angle. A Park transform is used to transform
+between the fixed coil frame of reference and the spinning rotor frame of reference.
+
+The Clarke transform is used to convert the three currents in the coils into a radial and tangential two
+component current. This is possible because the coil currents have only two degrees of freedom, the
+third coil current being the sum of the other two.
 
 This loop is a simple example of how a control loop may be implemented and the function calls that would be
 used to achieve this.
 
 The first two arguments, *c_in* and *c_out* are used to synchronize the PWMs for multiple motors so that they
 do not have their ADC dead time in exactly the same time.
+
+Further information on field oriented motor control can be found at:
+
+    * http://en.wikipedia.org/wiki/Field-Oriented_Control
+
+Control loop customization
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As described, there are two distinct control loops in the FOC design, but they are both coded into a single
+loop.  Separating these into two loops, running in two different threads, may be necessary for designs that
+have a complex algorithm governing the speed.
+
+The speed control part of the loop uses measurements from the QEI to determine the speed, and a set point
+that is passed in on a channel from the display or comms threads.  To extract the speed control algorithm
+and put it into another thread, the following actions could be taken.
+
+  * Move the speed control PID calculation into a new thread (the speed control thread).
+  * Move the UI/comms channel processing into the new thread.
+  * Add a new channel to join the new thread to the torque control thread.
+  * On a regular timer, send a query to the torque control thread to retreive the rotor speed.
+    Alternatively, the QEI thread could be adjusted to have an extra channel input so that the
+    speed control thread could query the QEI.
+  * After the speed control thread has performed the algorithm to determine the new demand tangential
+    torque, send the result to the torque control thread through the channel.
+
+In this way, the speed control thread can take advantage of a full 62.5 MIPS.  Speed ramping, damping,
+filtering, or predictive torque control could all be implemented.
+
+
 
 

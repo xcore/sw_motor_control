@@ -61,12 +61,9 @@ The main shared IO manager is constructed from a select statement that sits insi
    * ``case t when timerafter(time + 10000000) :> time :`` - timer that executes at 10Hz. This gets the current speed, current Iq and speed setpoint from the motor control loops and updates the display with the new values. It also debounces the buttons.
    * ``case !btn_en => btns when pinsneq(value) :> value:`` - execute commands if a button is pressed.
 
-The switches are debounced by incrementing the ``but\_en`` guard signal for that switch by 4 each time they are pressed.
-This prevents the code for this button being run until the guard has reached 0.
-
+The switches are debounced by setting the ``but\_en`` guard signal to two whenever a button is pressed. 
 The 10Hz timer in the select statement decrements the value by one, if the value is not 0, on each iteration though it's loop.
-
-Therefore, after a minimum of 300ms and a maximum of 400ms the switch is re-enabled.
+Therefore, after a minimum of 200ms and a maximum of 300ms the switch is re-enabled.
 
 
 LCD Communication
