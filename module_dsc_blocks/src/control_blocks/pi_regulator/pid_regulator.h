@@ -20,8 +20,9 @@
  *
  **/
 
+#ifdef __dsc_config_h_exists__
 #include <dsc_config.h>
-
+#endif
 
 #ifndef __PI_REGULATOR_H__
 #define __PI_REGULATOR_H__

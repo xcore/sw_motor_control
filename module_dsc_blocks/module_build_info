@@ -6,5 +6,7 @@ MODULE_DSC_BLOCKS_DIRS += src/control_blocks/transforms
 MODULE_DSC_BLOCKS_DIRS += src/control_blocks/watchdog
 MODULE_DSC_BLOCKS_DIRS += src/util
 
+OPTIONAL_HEADERS += dsc_config.h
+
 SOURCE_DIRS += $(MODULE_DSC_BLOCKS_DIRS)
 INCLUDE_DIRS += $(MODULE_DSC_BLOCKS_DIRS)
