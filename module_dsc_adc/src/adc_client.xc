@@ -20,7 +20,10 @@
  *
  **/                                   
 #include <xs1.h>
-#include "dsc_config.h"
+
+#ifdef __dsc_config_h_exists__
+#include <dsc_config.h>
+#endif
 
 void do_adc_calibration( streaming chanend c_adc )
 {

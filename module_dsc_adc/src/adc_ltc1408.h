@@ -16,7 +16,7 @@
  **/                                   
 #include <xs1.h>
 #include <xclib.h>
-#include "dsc_config.h"
+
 #include "adc_common.h"
 
 /** \brief Execute the triggered ADC server
