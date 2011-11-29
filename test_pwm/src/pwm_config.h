@@ -1,0 +1,3 @@
+#define PWM_MAX_VALUE 4096
+#define PWM_DEAD_TIME 10
+#define LOCK_ADC_TO_PWM 1
