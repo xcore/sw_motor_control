@@ -5,7 +5,7 @@
         <uri>git@github.com:xcore/sc_pwm.git</uri>
     </dependency>
     <dependency repo = "sc_can">
-        <githash>7b37d1917f6fa902efd26f7a72b2e53ad86a03d3</githash>
+        <githash>367d56956161555b9582a7709b4ad7935409b7eb</githash>
         <uri>git@github.com:xcore/sc_can.git</uri>
     </dependency>
     <dependency repo = "xcommon">
@@ -13,7 +13,7 @@
         <uri>https://github.com/xcore/xcommon.git</uri>
     </dependency>
     <dependency repo = "sc_xtcp">
-        <githash>3ec1d14a67f29bc0d0389f57d6929f34663151de</githash>
+        <githash>cea23d3153a6db5e2d5b808ee170eac3603e699d</githash>
         <uri>git@github.com:xcore/sc_xtcp.git</uri>
     </dependency>
     <dependency repo = "sc_ethernet">
