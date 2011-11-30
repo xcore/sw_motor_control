@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<xpd>
+    <dependency repo = "sc_pwm">
+        <githash>9313d718e447aecd188695c8b75f2fed8bd0e5a7</githash>
+        <uri>git@github.com:xcore/sc_pwm.git</uri>
+    </dependency>
+    <dependency repo = "sc_can">
+        <githash>7b37d1917f6fa902efd26f7a72b2e53ad86a03d3</githash>
+        <uri>git@github.com:xcore/sc_can.git</uri>
+    </dependency>
+    <dependency repo = "xcommon">
+        <githash>7ee08c2272e28e9b12e756a8e1045ab783fe761a</githash>
+        <uri>https://github.com/xcore/xcommon.git</uri>
+    </dependency>
+    <dependency repo = "sc_xtcp">
+        <githash>3ec1d14a67f29bc0d0389f57d6929f34663151de</githash>
+        <uri>git@github.com:xcore/sc_xtcp.git</uri>
+    </dependency>
+    <dependency repo = "sc_ethernet">
+        <githash>d7c05ddc22df364b3f0fc0e20a54ab636546eca3</githash>
+        <uri>git@github.com:xcore/sc_ethernet.git</uri>
+    </dependency>
+    <description>XMOS motor control platform</description>
+    <location>git@github.com:xcore/sw_motor_control.git</location>
+    <name>sw_motor_control</name>
+    <maintainer>davidn@xmos.com</maintainer>
+    <vendor>XMOS</vendor>
+    <xpd_version>1.0</xpd_version>
+</xpd>
