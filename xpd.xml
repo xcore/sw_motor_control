@@ -24,6 +24,7 @@
     <location>git@github.com:xcore/sw_motor_control.git</location>
     <name>sw_motor_control</name>
     <maintainer>davidn@xmos.com</maintainer>
+    <release parenthash = "64bbe710e38941a8207c125c069158aad92852d1" version = "1.0.0rc0"></release>
     <vendor>XMOS</vendor>
     <xpd_version>1.0</xpd_version>
 </xpd>
