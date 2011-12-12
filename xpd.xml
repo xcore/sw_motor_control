@@ -30,4 +30,28 @@
     <release parenthash = "ad62da3233b3d55e4afc5d2e7b3016d45b64241a" version = "1.0.1" githash = "6358b683101a871c871f1fb1a6d6cff6e8404b31"></release>
     <vendor>XMOS</vendor>
     <xpd_version>1.0</xpd_version>
+    <template name = "Control Board Demo Project (Standalone)">
+        <board>XP-MC-CTRL-L2</board>
+        <description>This template is a simple demo using the features of the L2 Control Board.</description>
+        <src file = "src/main.xc">sw_motor_control/app_control_board_demo</src>
+        <dependencies>
+          <dependency>sw_motor_control</dependency>
+          <dependency>sc_can</dependency>
+          <dependency>sc_pwm</dependency>
+          <dependency>sc_xtcp</dependency>
+          <dependency>sc_ethernet</dependency>
+        </dependencies>
+    </template>
+    <template name = "Control Board Demo (Dual Axis FOC Motor Control)">
+        <board>XP-MC-CTRL-L2</board>
+        <description>Fully functional dual axis FOC speed control of two LDO PMSM motors</description>
+        <src file = "src/main.xc">sw_motor_control/app_dsc_demo</src>
+        <dependencies>
+          <dependency>sw_motor_control</dependency>
+          <dependency>sc_can</dependency>
+          <dependency>sc_pwm</dependency>
+          <dependency>sc_xtcp</dependency>
+          <dependency>sc_ethernet</dependency>
+        </dependencies>
+    </template>
 </xpd>
