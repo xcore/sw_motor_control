@@ -26,7 +26,8 @@
     <maintainer>davidn@xmos.com</maintainer>
     <release parenthash = "64bbe710e38941a8207c125c069158aad92852d1" version = "1.0.0rc0" githash = "4ceb53cd470e0338d706286a4371bb1e4c1e06bb"></release>
     <release parenthash = "64bbe710e38941a8207c125c069158aad92852d1" version = "1.0.0" githash = "4ceb53cd470e0338d706286a4371bb1e4c1e06bb"></release>
-    <release parenthash = "ad62da3233b3d55e4afc5d2e7b3016d45b64241a" version = "1.0.1rc0"></release>
+    <release parenthash = "ad62da3233b3d55e4afc5d2e7b3016d45b64241a" version = "1.0.1rc0" githash = "6358b683101a871c871f1fb1a6d6cff6e8404b31"></release>
+    <release parenthash = "ad62da3233b3d55e4afc5d2e7b3016d45b64241a" version = "1.0.1" githash = "6358b683101a871c871f1fb1a6d6cff6e8404b31"></release>
     <vendor>XMOS</vendor>
     <xpd_version>1.0</xpd_version>
 </xpd>
