@@ -45,7 +45,6 @@ The ethernet control threads are shown in green, and the CAN threads are shown i
 methods, or with neither of them.
 
 .. toctree::
-   :maxdepth: 2
 
    apps
    blocks

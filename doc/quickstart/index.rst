@@ -106,7 +106,7 @@ Building the firmware
 
   The XTAG-2 debug adapter supplied with the kit can be connected to the board to provide a JTAG interface from
   your development system that you can use to load and debug software. You need to install a set of drivers for
-  the XTAG-2 debug adapter and download a set of free Development Tools (11.10 or later) from the XMOS website:
+  the XTAG-2 debug adapter and download a set of free Development Tools (11.11 or later) from the XMOS website:
 
     http://www.xmos.com/tools
 
