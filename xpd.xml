@@ -30,7 +30,8 @@
     <release parenthash = "ad62da3233b3d55e4afc5d2e7b3016d45b64241a" version = "1.0.1" githash = "6358b683101a871c871f1fb1a6d6cff6e8404b31"></release>
     <release parenthash = "87880368bc900f1215848956c94338be0e5374d9" version = "1.0.2rc0" githash = "eccaec5a2cf331be4dd9faa7d7145fda86220370"></release>
     <release parenthash = "87880368bc900f1215848956c94338be0e5374d9" version = "1.0.2" githash = "eccaec5a2cf331be4dd9faa7d7145fda86220370"></release>
-    <release parenthash = "39fc4492639533d56d5d3f59e7e19e89469ce0ca" version = "1.0.3rc0"></release>
+    <release parenthash = "39fc4492639533d56d5d3f59e7e19e89469ce0ca" version = "1.0.3rc0" githash = "1c53dbed9753ab2050a76827d8645ec0425c4ec4"></release>
+    <release parenthash = "39fc4492639533d56d5d3f59e7e19e89469ce0ca" version = "1.0.3" githash = "1c53dbed9753ab2050a76827d8645ec0425c4ec4"></release>
     <vendor>XMOS</vendor>
     <xpd_version>1.0</xpd_version>
     <template name = "Control Board Demo Project (Standalone)">
