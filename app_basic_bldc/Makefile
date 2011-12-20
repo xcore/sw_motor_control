@@ -21,6 +21,7 @@ APP_NAME =
 XCC_FLAGS = -O3 -g -report -Wno-timing
 #-lxscope
 
+XCC_FLAGS_Debug = $(XCC_FLAGS)
 
 # The USED_MODULES variable lists other module used by the application. 
 
@@ -30,6 +31,7 @@ USED_MODULES += module_pwm_singlebit_bldc
 
 USE_XTCP_MAC_CUSTOM_FILTER = 1
 
+XCC_FLAGS_Release = $(XCC_FLAGS)
 
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure

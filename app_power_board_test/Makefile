@@ -28,6 +28,8 @@ USED_MODULES = module_dsc_hall module_dsc_display module_dsc_blocks
 USED_MODULES += module_dsc_adc module_dsc_qei
 USED_MODULES += module_pwm_symmetrical module_pwm_common
 
+XCC_FLAGS_Debug = $(XCC_FLAGS)
+XCC_FLAGS_Release = $(XCC_FLAGS)
 
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure
