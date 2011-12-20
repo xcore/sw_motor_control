@@ -13,11 +13,11 @@
         <uri>https://github.com/xcore/xcommon.git</uri>
     </dependency>
     <dependency repo = "sc_xtcp">
-        <githash>cea23d3153a6db5e2d5b808ee170eac3603e699d</githash>
+        <githash>b1e4d744a6af8ac89b8d869303ea89d353eb7b8c</githash>
         <uri>git@github.com:xcore/sc_xtcp.git</uri>
     </dependency>
     <dependency repo = "sc_ethernet">
-        <githash>d7c05ddc22df364b3f0fc0e20a54ab636546eca3</githash>
+        <githash>6f4155764dddd2dc702b82561e422b6ddd5b60d1</githash>
         <uri>git@github.com:xcore/sc_ethernet.git</uri>
     </dependency>
     <description>XMOS motor control platform</description>
