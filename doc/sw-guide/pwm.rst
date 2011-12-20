@@ -65,7 +65,7 @@ The following table gives some values of associated resolution and period for 25
 
 +-------------------------+------------------------+--------------------------+
 | Clock / MHz             | Period / Hz            | Resolution / bits        |
-+-------------------------+------------------------+--------------------------+
++=========================+========================+==========================+
 | 250                     | 488,281                | 8                        |
 +-------------------------+------------------------+--------------------------+
 | 250                     | 122,070                | 10                       |
@@ -103,9 +103,10 @@ PWM Server Usage
 The usage for each mode is described below. The PWM server needs to be instantiated on the same core as the PWM client. One of the following
 is required to be included.
 
-  * pwm_service_simple.h
-  * pwm_service_inv.h
+  * ``pwm_service_simple.h``
+  * ``pwm_service_inv.h``
 
+|newpage|
 
 Inverter Mode
 ~~~~~~~~~~~~~
@@ -129,10 +130,10 @@ for which ``LOCK_ADC_TO_PWM`` must be defined.
 
 ``chanend c_pwm`` is the channel used to communication with the client side.
 
-``chanend c_adc_trig`` is the channel used to communicate the triggering of the ADC conversion to the ADC thread
+``chanend c_adc_trig`` is the channel used to communicate the triggering of the ADC conversion to the ADC thread.
 
 ``in port dummy_port`` is an unused port that is used to consistently trigger the ADC conversion. This port can overlap other used
- ports at it is never written to and the input value is never used.
+ports at it is never written to and the input value is never used.
 
 ``buffered out port:32 p_pwm[]`` and ``buffered out port:32 p_pwm_inv[]`` are arrays of 1 bit ports with an array length of 3 that
 are used for the HI and LO sides of inverter respectively.
@@ -303,7 +304,7 @@ further output is required before receiving the update from the client.
 
 +----------------+------------------------------------+
 | MODE           | PWM pulse pattern                  |
-+----------------+------------------------------------+
++================+====================================+
 | 1              | 3 short                            |
 +----------------+------------------------------------+
 | 2              | 2 short + 1 standard               |
@@ -349,17 +350,17 @@ to the ports. The PWM client must:
    * Maintain the shared data set, including which buffer is in use and which one can be updated
 
 Taking the inverter mode as our working example (located in ``module_dsc_pwm/src/dsc_pwm_cli/pwm_cli_inv``) the
-function update_pwm_inv(...) first
+function ``update_pwm_inv`` first
 saves the PWM values for later use and then initialises the channel ordering array to assume a sequential order
 of output. 
 
 If the non-clipped PWM range is being used, then following this the calculation of the timings and output values
 are done for each of the channel. This is done by passing the relevant PWM value
-and data set references to the calculate_data_out_ref(...). This function also ascertains the type of output which
-can be one of three values SINGLE, DOUBLE and LONG_SINGLE.
+and data set references to ``calculate_data_out_ref``. This function also ascertains the type of output which
+can be one of three values ``SINGLE``, ``DOUBLE`` and ``LONG_SINGLE``.
 
 Once the calculations for each of the PWM channels is completed they can be ordered. This is done using the
-order_pwm(...) function. This orders the values in the channel ID buffer and also works out the loop mode that is required.
+``order_pwm`` function. This orders the values in the channel ID buffer and also works out the loop mode that is required.
 
 When the values have been ordered and the loop mode calculated the buffer number is passed to the PWM service to indicate an update.
 

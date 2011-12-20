@@ -26,10 +26,12 @@ This application makes use of the following functionality.
    * Ethernet & Communications
    * Processing Blocks
 
+|newpage|
+
 Motor Control Loop
 ~~~~~~~~~~~~~~~~~~
 
-The main motor control code for this application can be located in ``src/motor/run_motor.xc``. The motor control thread is
+The main motor control code for this application can be found in the file ``src/motor/run_motor.xc``. The motor control thread is
 launched using the following function.
 
 ::
@@ -67,7 +69,7 @@ being sent to the PWM thread and subsequently the motor.
 Speed Control Loop
 ~~~~~~~~~~~~~~~~~~
 
-The speed control loop for this application can be found in ``src/control/speed_control.xc``. The thread is launched by calling
+The speed control loop for this application can be found in the file ``src/control/speed_control.xc``. The thread is launched by calling
 the following function.
 
 ::
@@ -101,7 +103,7 @@ This application makes use of the following functionality.
 Control Loop
 ~~~~~~~~~~~~
 
-The control loop can be found in ``src/motor/inner_loop.xc``. The thread is launched by calling the following function.
+The control loop can be found in the file ``src/motor/inner_loop.xc``. The thread is launched by calling the following function.
 
 ::
 
@@ -120,13 +122,13 @@ The control loop takes input from the encoder, a set speed from the control modu
 PWM. It contains two controllers in one loop, the speed controller and the current controller.  The
 speed controller uses the QEI input to measure the speed of the motor, in order to bring the motor to
 the correct demand speed.  The output of this controller is a tangential torque which is required to
-acheive that demand speed.  The torque is passed through the *iq_set_point* variable.  The
-*id_set_point* variable is always zero, as no force is required in the radial direction. The torque
-is a direct consequence of current flow in the coils, and therefore the *iq_set_point* is also a
+acheive that demand speed.  The torque is passed through the ``iq_set_point`` variable.  The
+``id_set_point`` variable is always zero, as no force is required in the radial direction. The torque
+is a direct consequence of current flow in the coils, and therefore the ``iq_set_point`` is also a
 measure of the demand current.
 
 The second controller is the torque/current controller.  This uses the measured coil currents from the ADC,
-and tries to make them equal to the *iq_set_point* demand. The output of this controller is the extra
+and tries to make them equal to the ``iq_set_point`` demand. The output of this controller is the extra
 current required to deliver the required torque.  This is used to set the PWM duty cycles for the three
 coils.
 
@@ -141,7 +143,7 @@ third coil current being the sum of the other two.
 This loop is a simple example of how a control loop may be implemented and the function calls that would be
 used to achieve this.
 
-The first two arguments, *c_in* and *c_out* are used to synchronize the PWMs for multiple motors so that they
+The first two arguments, ``c_in`` and ``c_out`` are used to synchronize the PWMs for multiple motors so that they
 do not have their ADC dead time in exactly the same time.
 
 Further information on field oriented motor control can be found at:

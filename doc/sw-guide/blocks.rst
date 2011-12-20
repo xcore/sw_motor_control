@@ -31,21 +31,21 @@ The processing blocks module provides the following PID calculation routines. Th
 
   int pid_regulator_delta_cust_error_Id_control( int error, pid_data &id );
 
-``init_pid`` is used to initialise the pid_data structure values with the coefficient values for *Kp*, *Ki* and *Kd*. These value are the proportional,
-integral and differential coefficients controlling the PID controller. The compile time constant *PID_RESOLUTION* determines how many fractional bits
+``init_pid`` initialises the ``pid_data`` structure values with the coefficient values for *Kp*, *Ki* and *Kd*. These value are the proportional,
+integral and differential coefficients controlling the PID controller. The compile time constant ``PID_RESOLUTION`` determines how many fractional bits
 are present in these coefficients.
 
-``pid_regulator`` does a standard PID calculation using the set_point and actual values. It calculates the error and applies the PID coefficients
-and then returns the result. The returned error will be applied to the set_point value.
+``pid_regulator`` performs a standard PID calculation using the ``set_point`` and ``actual`` values. It calculates the error and applies the PID coefficients
+and then returns the result. The returned error will be applied to the ``set_point`` value.
 
-``pid_regulator_delta`` does a standard PID calculation using the set_point and actual values. It calculates the error and applies the PID
+``pid_regulator_delta`` performs a standard PID calculation using the ``set_point`` and ``actual`` values. It calculates the error and applies the PID
 coefficients and then returns the resulting error.
 
-``pid_regulator_delta_cust_error`` does a standard PID calculation using a previously calculated error value. It calculates the error and applies
+``pid_regulator_delta_cust_error`` performs a standard PID calculation using a previously calculated error value. It calculates the error and applies
 the PID coefficients and then returns the resulting error.
 
 ``pid_regulator_delta_cust_error_speed``, ``pid_regulator_delta_cust_error_Iq_control`` and ``pid_regulator_delta_cust_error_Id_control`` are
-customized control PIDs, that limit the output to a specific range appropriate to the variable being controlled.
+customized control PIDs that limit the output to a specific range appropriate to the variable being controlled.
 
 Clarke & Park Transforms
 ++++++++++++++++++++++++
