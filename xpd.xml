@@ -17,7 +17,7 @@
         <uri>git@github.com:xcore/sc_xtcp.git</uri>
     </dependency>
     <dependency repo = "sc_ethernet">
-        <githash>6f4155764dddd2dc702b82561e422b6ddd5b60d1</githash>
+        <githash>2210776c0f329eb97d2ba009ee900a3f7c15778b</githash>
         <uri>git@github.com:xcore/sc_ethernet.git</uri>
     </dependency>
     <description>XMOS motor control platform</description>
@@ -32,6 +32,7 @@
     <release parenthash = "87880368bc900f1215848956c94338be0e5374d9" version = "1.0.2" githash = "eccaec5a2cf331be4dd9faa7d7145fda86220370"></release>
     <release parenthash = "39fc4492639533d56d5d3f59e7e19e89469ce0ca" version = "1.0.3rc0" githash = "1c53dbed9753ab2050a76827d8645ec0425c4ec4"></release>
     <release parenthash = "39fc4492639533d56d5d3f59e7e19e89469ce0ca" version = "1.0.3" githash = "1c53dbed9753ab2050a76827d8645ec0425c4ec4"></release>
+    <release parenthash = "61fa8e2ae543b8aece4e88006685b925d12ec4e8" version = "1.0.4rc0"></release>
     <vendor>XMOS</vendor>
     <xpd_version>1.0</xpd_version>
     <template name = "Control Board Demo Project (Standalone)">
