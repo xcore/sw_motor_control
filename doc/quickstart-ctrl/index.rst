@@ -15,7 +15,7 @@ Setting up the hardware
 
       - Connect the XMOS JTAG adaptor to the 20 pin IDC header, and connect it to the PC with a USB cable.
 
-      - Connect a 6V power supply to the power section of the BLDC board.
+      - Connect a 6V power supply to the board.
 
    **WARNING** : Do *NOT* put a 24V power supply into the control board. The control board takes a 6V power
    supply and will be damaged by 24V. 
@@ -54,8 +54,8 @@ Configuring the firmware
   The default firmware comes from the application directory called **app_control_board_demo**.  
       
   Changing the TCP/IP address
-    By default the ethernet and TCP/IP interface has a statically allocated IP address of 169.254.0.1 (a link local IP address),
-    and a net mask of 255.255.0.0.  To change this, edit the file **app_control_board_demo/src/main.xc**.
+    By default the ethernet and TCP/IP interface uses DHCP to try to get an IP address.
+    To change this, edit the file **app_control_board_demo/src/main.xc**.
     Contained in this file is the address configuration structure which is passed to the TCP/IP module, in a function called
     **init_tcp_server()**.
 
@@ -98,7 +98,7 @@ Building the firmware
 Running the firmware
 --------------------
 
-  The main FOC application can be run on the hardware by executing the following command within an XMOS command line:
+  The example application can be run on the hardware by executing the following command within an XMOS command line:
 
     *xrun app_control_board_demo/bin/Release/app_control_board_demo.xe*
 
@@ -143,7 +143,7 @@ ADC readout
 
 The ADC has two channels of ADC, each of which can be multiplexed to one of two sources. 
 The display shows two lines, prefixed with M1 and M2.  The M1 line shows the measured
-ADC values of *M1_PH_A_CRNT and *M1_PH_B_CRNT* from the control board connector.  Likewise,
+ADC values of *M1_PH_A_CRNT* and *M1_PH_B_CRNT* from the control board connector.  Likewise,
 the M2 line shows the values of *M2_PH_A_CRNT* and *M2_PH_B_CRNT*.
 
 Hall sensor readout
@@ -152,18 +152,18 @@ Hall sensor readout
 The hall sensor readout shows two values, the hall sensor values read from the control board
 connector.
 
-The Hall1 line shows the value from the 4 bit port consisting of signals (M1_OC_FAULT, E_HS2_M1,
-E_HS1_M1, E_HS0_M1).  Likewise, the Hall2 line shows the values of the signals (M2_OC_FAULT, E_HS2_M2,
-E_HS1_M2, E_HS0_M2). 
+The Hall1 line shows the value from the 4 bit port consisting of signals (*M1_OC_FAULT*, *E_HS2_M1*,
+*E_HS1_M1*, *E_HS0_M1*).  Likewise, the Hall2 line shows the values of the signals (*M2_OC_FAULT*, *E_HS2_M2*,
+*E_HS1_M2*, *E_HS0_M2*). 
 
 PWM controllers
 ~~~~~~~~~~~~~~~
 
 When selected, the display shows the current PWM duty cycles, represented as their 24 bit unsigned
 values, as the PWM API requires.  For the PWM channel 1 controller, the six signals on the
-control board connector are (ISO_M1_LOA, ISO_M1_HIA, ISO_M1_LOB, ISO_M1_HIB, ISO_M1_LOC, ISO_M1_HIC).
-Likewise, the control signals modified by the PWM channel 2 controller are (ISO_M2_LOA, ISO_M2_HIA,
-ISO_M2_LOB, ISO_M2_HIB, ISO_M2_LOC, ISO_M2_HIC).
+control board connector are (*ISO_M1_LOA*, *ISO_M1_HIA*, *ISO_M1_LOB*, *ISO_M1_HIB*, *ISO_M1_LOC*, *ISO_M1_HIC*).
+Likewise, the control signals modified by the PWM channel 2 controller are (*ISO_M2_LOA*, *ISO_M2_HIA*,
+*ISO_M2_LOB*, *ISO_M2_HIB*, *ISO_M2_LOC*, *ISO_M2_HIC*).
 
 Pressing the C and D buttons will change the duty cycles through the following table.
 
@@ -201,8 +201,8 @@ QEI readout
 By attaching QEI devices to the QEI signals on the control board connector, the position
 of the two devices will be displayed.
 
-The QEI signals are (ISO_M1ENCO_I, ISO_M1ENCO_A, ISO_M1ENCO_B) for the first QEI device, and
-(ISO_M2ENCO_I, ISO_M2ENCO_A, ISO_M2ENCO_B) for the second.
+The QEI signals are (*ISO_M1ENCO_I*, *ISO_M1ENCO_A*, *ISO_M1ENCO_B*) for the first QEI device, and
+(*ISO_M2ENCO_I*, *ISO_M2ENCO_A*, *ISO_M2ENCO_B*) for the second.
 
 The I signals are the index signals, which should pulse once per revolution at the zero
 point.  The A and B are the quadrature channels.
