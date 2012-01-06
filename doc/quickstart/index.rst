@@ -1,46 +1,66 @@
-=================================================================
-Quickstart guide for the XMOS Motor Control platform, version 2.0
-=================================================================
+==================================================================
+Quick start guide for the XMOS Motor Control platform, version 2.0
+==================================================================
 
 Supported hardware
 ------------------
 
-XMOS Bushless DC Motor Control development platform *XK-MC-LVM2*
+XMOS Bushless DC Motor Control development platform *XK-MC-LVM2*.
 
+Configure the hardware
+----------------------
 
-Setting up the hardware
------------------------
+The XMOS Brushless DC Motor development platform consists of two separate boards, as shown in
+:ref:`sw_motor_control_boards`.
 
-  The XMOS Brushless DC Motor development platform comes as two separate boards.  The first board is the
-  control and processing board.  This is joined with a 50 way ribbon cable to the power board.
+.. sw_motor_control_boards:
 
-      - Connect the power board to the control board with the 50 way ribbon cable.
+.. figure:: boards.*
 
-      - Connect the first motor to the MOTOR1 connector on the power board, and the second motor to
-        the MOTOR2 connection.
+   Motor control development platform
+
+To configure the hardware, follow these steps:
+
+.. steps::
+
+  #. Connect the power board to the control board with the 50-way ribbon cable.
+
+  #. Connect the first motor to the MOTOR1 connector on the power board, and the second motor to
+     the MOTOR2 connector.
         
-      - Connect the quadrature encoder connections from each motor to the power board.  
+  #. Connect the quadrature encoder connections from each motor to the power board.  
 
-      - Connect the XMOS JTAG adaptor to the 20 pin IDC header, and connect it to the PC with a USB cable.
+  #. Connect the XMOS XTAG-2 debug adaptor to the 20 pin XSYS header, and use a USB cable to connect the adapter to your PC.
 
-      - Connect a 24V power supply to the power section of the BLDC board.
-
-   .. image:: boards.pdf
-      
-   **WARNING** : Do *NOT* put the 24V power supply into the control board. The control board takes a 5V power
+  #. Connect a 24V power supply to the power section of the BLDC board.
+   
+.. danger::
+   
+   Do **not** put the 24V power supply into the control board. The control board takes a 5V power
    supply and will be damaged by 24V. 
       
-   The default application will spin the motors using a field oriented control algorithm.  The display will show
-   the speed of each motor, and the demand speed of both.  Buttons A and B will alter the demand speed for the system.
+The demo application spins the motors using a field-oriented control algorithm.  The display shows
+the speed of each motor, and the demand speed of both.  Buttons A and B alter the demand speed for the system.
 
 Control board
 ~~~~~~~~~~~~~
 
-   By default, the power board will provide power to the control board. Jumper J2 can be set to the alternative (East)
-   position to allow a separate 5V power supply to be provided to the control board.
-        
-   The ADC configuration jumpers, J34 and J35 on the control board must be set as follows in order
-   for the default firmware to correctly run.  J34 must be set to *South*, and J35 must be set to *North*. 
+By default, the power board provides power to the control board. Jumper J2 can be set to the alternative (East)
+position to allow a separate 5V power supply to be provided to the control board, as shown in :ref:`sw_motor_control_j2`.
+
+.. sw_motor_control_j2:
+
+.. figure:: jumper-2.*
+
+   Jumper J2 configuration
+		
+The ADC configuration jumpers J33 and J34 on the control board must be set as follows in order
+for the default firmware to run correctly.  J33 must be set to *South*, and J34 must be set to *North*. 
+
+.. figure:: jumper-b.*
+
+   Jumper J34 and J35 configuration
+
 
    .. image:: control.png
       :width: 100%
@@ -52,17 +72,15 @@ Control board
    +--------+---------------------------------+----------------------------------------+
    | J34    | *North* - 0 to 2 Vref ADC range | *South* - 0 - Vref ADC range           |
    +--------+---------------------------------+----------------------------------------+
-
-   .. image:: jumper-2.pdf
-
+   
    .. image:: jumper-b.pdf
 
 Power board
 ~~~~~~~~~~~
 
-   The power board has 6 configuration jumpers, J31 to J36.  These will typically be set to *South*
-   to enable the hall effect port. Setting to *North* will enable the back-EMF zero crossing detection, but the
-   default firmware implementations do not use this sensor.
+The power board has 6 configuration jumpers, J31 to J36.  These will typically be set to *South*
+to enable the hall effect port. Setting to *North* will enable the back-EMF zero crossing detection, but the
+default firmware implementations do not use this sensor.
 
    .. image:: power.png
       :width: 100%
@@ -80,87 +98,164 @@ Power board
 
    .. image:: quadrature.pdf
 
-Configuring the firmware
-------------------------
 
-  The default firmware comes from the application directory called **app_dsc_demo**.  This is the dual axis FOC control
-  algorithm.  An alternative application, **app_basic_bldc**, is provided, which controls the motors using simple
-  hall sector based commutation.
+Configure the firmware
+----------------------
 
-  Selecting Ethernet or CAN control
-    By default the software is set up to be controlled by the buttons around the LCD, and also by the ethernet interface.
-    If CAN is a preferred choice of control, then the **app_dsc_demo\src\dsc_config.h** can be modified.  The preprocessor
-    macros **USE_ETH** and **USE_CAN** can be commented out as appropriate to enable ethernet, CAN, or neither.
-    
-  Changing the TCP/IP address
-    By default the ethernet and TCP/IP interface has a statically allocated IP address of 169.254.0.1 (a link local IP address),
-    and a net mask of 255.255.0.0.  To change this, edit the file **app_basic_bldc/src/main.xc** or **app_dsc_demo/src/main.xc**.
-    Contained in this file is the address configuration structure which is passed to the TCP/IP module, in a function called
-    **init_tcp_server()**.
+The firmware consists of two application projects: a basic BLDC application that controls the motors using
+simple hall sector-based commutation, and a dual-axis FOC control application.
 
-  There are other compile time configuration options present in the *dsc_config.h* file. These are described in more detail
-  in the software guide.
+.. only:: xde-outside
 
-Building the firmware
----------------------
+  The firmware is configured and loaded onto XMOS hardware using the XMOS Development Tools. See the
+  :ref:`Installation instructions <install>` for more information.
 
-  The XTAG-2 debug adapter supplied with the kit can be connected to the board to provide a JTAG interface from
-  your development system that you can use to load and debug software. You need to install a set of drivers for
-  the XTAG-2 debug adapter and download a set of free Development Tools (11.11 or later) from the XMOS website:
+Create a demo application
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    http://www.xmos.com/tools
+.. only:: xde-html
 
-  Instructions on installing and using the XMOS Tools can be found in the XMOS Tools
-  User Guide http://www.xmos.com/published/xtools_en.
+  .. cssclass:: xde-inside
 
-
-  Once the software is configured as required, the system can be built by executing the following make command in an XMOS
-  Tools Prompt.  The command should be executed in the root directory, or the **app_dsc_demo** directory.
-
-    *xmake all*
-
-  The command will build the software and produce an executable file:
+    The firmware is provided as source code, which can be imported from the Developer Column directly into your workspace.
   
-    *app_dsc_demo/bin/Release/app_dsc_demo.xe*
+    .. raw:: html
+ 
+       <ul class="iconmenu">
+         <li class="xde-import"><a href="http://www.xmos.com/automate?automate=ImportComponent&partnum=XM-000011-SW">Click here to create a new project for the motor control firmware.</a></li>
+       </ul>
 
-  Alternatively, the project can be imported into the XDE tool. Once it is imported, the sw_motor_control project can
-  be selected, and the options for building and running each application can be selected.
-  To install the software, open the XDE (XMOS Development Tools) and
-  follow these steps:
+    .. tip::
+  
+      The XDE creates a new project for the demo and imports all of the associated projects. The original source files are available
+      in the directories ``app_basic_bldc`` and ``app_dsc_demo``.
 
-  - Choose *File* > *Import*.
-  - Choose *General* > *Existing Projects into Workspace* and click *Next*.
-  - Click *Browse* next to *Select archive file* and select the file firmware ZIP file.
-  - Make sure the projects you want to import are ticked in the *Projects* list. Import
-    all the components and whichever applications you are interested in. 
-  - Click *Finish*.
+.. cssclass:: xde-outside
 
-  To build, select the appropraite project in the Project Explorer and click the *Build* icon.
+  The firmware is provided as source code, which can be downloaded from the XMOS website. The source code
+  be imported into the XDE or built on the command-line.
+  
+  To use the XDE, follow these steps:
+  
+  .. steps::
+  
+    #. Choose :menuitem:`File,Import`.
+    #. Double-click on the **General** option, select **Existing Projects
+       into Workspace** and click **Next**.
+    #. In the **Import** dialog box, click **Browse** (next to the **Select
+       archive file** text box).
+    #. Select the downloaded ZIP file and click **Open**.
+    #. Click **Finish**.
+	
+	   The XDE imports a set of projects into your workspace.
+	
+	#. In the **Project Explorer**, click the folder ``sw_motor_control`` to expand it.
+	#. Right-click on either the sub-folder ``app_basic_bldc`` or ``app_dsc_demo`` and select :menuitem:`Copy`.
+	#. Right-click an empty area of the workspace and select :menuitem:`Paste`.
+	#. In the dialog that appears, enter a name for the application and click **OK**.
 
-Running the firmware
---------------------
+  To use the command-line tools, follow these steps:
+  
+  .. steps::
+  
+    #. Unzip the firmware package file.
+	   
+    # Change to either directory ``sw_motor_control`` and copy either the directory ``app_basic_bldc`` or ``app_dsc_demo`` 
+	  to a new directory.
+  
+      You can modify the source files in this directory without changing the original files.
+    
+	
+Configure the firmware settings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  The main FOC application can be run on the hardware by executing the following command within an XMOS command line:
+The firmware is configured by modifying the demo source code. Here are some things you can modify.
 
-    *xrun app_dsc_demo/bin/Release/app_dsc_demo.xe*
+.. actions::
 
-  Alternatively, from within the XDE:
+   :Select between Ethernet or CAN control:
 
-    - Right click on the binary within the project.
-    - Choose *Run As* > *Run Configurations*
-    - Choose *hardware* and select the relevant XTAG-2 adapter
-    - Select the *Run UART server* check box.
-    - Click on *Apply* if configuration has changed
-    - Click on *Run*
+     By default the software is controlled by the buttons around the LCD and the Ethernet interface.
+     To use CAN instead, open the source file ``src/dsc_config.h``, enable the macro
+     `USE_CAN`` and disable the macro ``USE_ETH``.
 
-  LCD feedback
-    The LCD shows the current speed of each motor, and the demand speed.  Both motors have the same demand speed.
+   :Change the TCP/IP address:
 
-  Controlling the motor speed
-    Button A increases the demand speed in steps of 100 RPM.  Button B decreases the motor speed in steps of 100 RPM.
+     By default the Ethernet and TCP/IP interface has a statically allocated IP address of 169.254.0.1 (a link local IP address),
+     and a net mask of 255.255.0.0.  To change these values, open the file ``src/main.xc`` and search for the function
+     ``init_tcp_server`` which contains these values.
 
-  The buttons will change the demand speed within a maximum and minimum of *MIN_RPM* and *MAX_RPM*.  These are configured
-  in the *dsc_config.h* file, and are 500 and 3800.
+There are other compile time configuration options present in the file ``dsc_config.h``. These are described in more detail
+in the :ref:`sw_motor_control_sw_guide <software guide>`.
+
+Build and run the firmware
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+	
+To build and run the firmware from the XDE, follow these steps:
+
+.. steps::
+
+  #. Select your project in the **Project Explorer** and click **Build** |-| |button build| |-|.
+  
+     The XDE builds the firmware, displaying progress in the **Console**. On completion, it 
+     adds the compiled binary file to the **bin** sub-folder.
+
+     .. |button build| image:: images/button-build.*
+        :iconmargin:
+
+  #. Choose :menuitem:`Run,Run Configurations`.
+
+  #. In the left panel, double-click **XCore Application**.
+
+     The XDE creates a new configuration and displays the default
+     settings in the right panel.
+
+  #. In **Name**, enter a name such as ``Demo App``.
+
+  #. The XDE tries to identify the target project and executable for you.
+     To select one yourself, click **Browse** to the right of the
+     **Project** text box and select your project in the **Project
+     Selection** dialog box. Then click **Search Project** and select the
+     executable file in the **Program Selection** dialog box.
+
+  #. Check the **hardware** option and select the **L2 Motor Control Board**
+     from the **Hardware** list.
+
+  #. Click **Run**.
+
+The XDE loads your executable, displaying any output generated by your
+program in the **Console**.  
+  
+.. tip::
+    
+  For more information on XDE Run Configurations, see :ref:`xde_run_program`.
+   
+.. cssclass:: xde-outside
+
+  To build and run the firmware using the command-line tools, follow these steps:
+
+  .. steps:: 
+
+    #. Change to the application directory and enter the following command:
+  
+       :command:``xmake all``
+
+       This command builds the software and produces an executable file ``bin/Release/app_dsc_demo.xe``.
+ 
+    #. Enter the following command:
+  
+       :command:`xrun bin/Release/app_dsc_demo.xe`
+
+
+LCD feedback
+  The LCD shows the current speed of each motor, and the demand speed.  Both motors have the same demand speed.
+
+Controlling the motor speed
+  Button A increases the demand speed in steps of 100 RPM.  Button B decreases the motor speed in steps of 100 RPM.
+
+The buttons change the demand speed within a maximum and minimum of ``MIN_RPM`` and ``MAX_RPM``.  These are configured
+in the file ``dsc_config.h`` file, and are 500 and 3800.
+
 
 Using the GUI interface
 -----------------------
