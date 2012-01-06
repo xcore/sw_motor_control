@@ -13,11 +13,11 @@
         <uri>https://github.com/xcore/xcommon.git</uri>
     </dependency>
     <dependency repo = "sc_xtcp">
-        <githash>cea23d3153a6db5e2d5b808ee170eac3603e699d</githash>
+        <githash>b1e4d744a6af8ac89b8d869303ea89d353eb7b8c</githash>
         <uri>git@github.com:xcore/sc_xtcp.git</uri>
     </dependency>
     <dependency repo = "sc_ethernet">
-        <githash>d7c05ddc22df364b3f0fc0e20a54ab636546eca3</githash>
+        <githash>2210776c0f329eb97d2ba009ee900a3f7c15778b</githash>
         <uri>git@github.com:xcore/sc_ethernet.git</uri>
     </dependency>
     <description>XMOS motor control platform</description>
@@ -32,6 +32,8 @@
     <release parenthash = "87880368bc900f1215848956c94338be0e5374d9" version = "1.0.2" githash = "eccaec5a2cf331be4dd9faa7d7145fda86220370"></release>
     <release parenthash = "39fc4492639533d56d5d3f59e7e19e89469ce0ca" version = "1.0.3rc0" githash = "1c53dbed9753ab2050a76827d8645ec0425c4ec4"></release>
     <release parenthash = "39fc4492639533d56d5d3f59e7e19e89469ce0ca" version = "1.0.3" githash = "1c53dbed9753ab2050a76827d8645ec0425c4ec4"></release>
+    <release parenthash = "61fa8e2ae543b8aece4e88006685b925d12ec4e8" version = "1.0.4rc0" githash = "baf33bd8f6386768f68c16bbeb31e7e7c26a1a81"></release>
+    <release parenthash = "4c4b0039d1171fed09bebf46496ef7e4c238e269" version = "1.0.4rc1"></release>
     <vendor>XMOS</vendor>
     <xpd_version>1.0</xpd_version>
     <template name = "Control Board Demo Project (Standalone)">

@@ -137,10 +137,10 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 
 	/* Position and speed as measured by the QEI */
 	unsigned theta = 0, valid = 0;
-	int speed = 100;
+	int speed = 1000;
 
 	// Demand speed set by the user/comms interface
-	int set_speed = 100;
+	int set_speed = 1000;
 
 	// Phase difference between the QEI and the coils
 	unsigned theta_offset = -1;

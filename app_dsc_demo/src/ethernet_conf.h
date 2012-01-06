@@ -22,6 +22,8 @@
 #define MII_RX_BUFSIZE 512
 #define MII_TX_BUFSIZE 512
 
+#define ETHERNET_MAX_TX_PACKET_SIZE 256
+
 #define MAX_ETHERNET_CLIENTS   (1)    
 
 

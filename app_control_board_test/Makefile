@@ -25,6 +25,8 @@ XCC_FLAGS = -O3 -g
 
 USED_MODULES = module_dsc_display
 
+XCC_FLAGS_Debug = $(XCC_FLAGS)
+XCC_FLAGS_Release = $(XCC_FLAGS)
 
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure

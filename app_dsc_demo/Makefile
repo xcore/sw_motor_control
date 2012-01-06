@@ -29,6 +29,8 @@ USED_MODULES += module_dsc_qei module_dsc_adc module_pwm_symmetrical module_pwm_
 
 USE_XTCP_MAC_CUSTOM_FILTER = 1
 
+XCC_FLAGS_Debug = $(XCC_FLAGS)
+XCC_FLAGS_Release = $(XCC_FLAGS)
 
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure
