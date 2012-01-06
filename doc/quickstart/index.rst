@@ -13,9 +13,9 @@ Configure the hardware
 The XMOS Brushless DC Motor development platform consists of two separate boards, as shown in
 :ref:`sw_motor_control_boards`.
 
-.. sw_motor_control_boards:
+.. _sw_motor_control_boards:
 
-.. figure:: boards.*
+.. figure:: images/boards.*
 
    Motor control development platform
 
@@ -48,21 +48,21 @@ Control board
 By default, the power board provides power to the control board. Jumper J2 can be set to the alternative (East)
 position to allow a separate 5V power supply to be provided to the control board, as shown in :ref:`sw_motor_control_j2`.
 
-.. sw_motor_control_j2:
+.. _sw_motor_control_j2:
 
-.. figure:: jumper-2.*
+.. figure:: images/jumper-2.*
 
    Jumper J2 configuration
 		
 The ADC configuration jumpers J33 and J34 on the control board must be set as follows in order
 for the default firmware to run correctly.  J33 must be set to *South*, and J34 must be set to *North*. 
 
-.. figure:: jumper-b.*
+.. figure:: images/jumper-b.*
 
    Jumper J34 and J35 configuration
 
 
-   .. image:: control.png
+   .. image:: images/control.png
       :width: 100%
 
    +--------+---------------------------------+----------------------------------------+
@@ -73,7 +73,7 @@ for the default firmware to run correctly.  J33 must be set to *South*, and J34 
    | J34    | *North* - 0 to 2 Vref ADC range | *South* - 0 - Vref ADC range           |
    +--------+---------------------------------+----------------------------------------+
    
-   .. image:: jumper-b.pdf
+   .. image:: images/jumper-b.*
 
 Power board
 ~~~~~~~~~~~
@@ -82,7 +82,7 @@ The power board has 6 configuration jumpers, J31 to J36.  These will typically b
 to enable the hall effect port. Setting to *North* will enable the back-EMF zero crossing detection, but the
 default firmware implementations do not use this sensor.
 
-   .. image:: power.png
+   .. image:: images/power.png
       :width: 100%
 
    +-----------+-----------------------------------------+--------------------------------------------------+
@@ -96,7 +96,7 @@ default firmware implementations do not use this sensor.
    the motor match those on the connector before inserting.  The quadrature encoder will be permanently
    damaged with an incorrectly inserted connector.
 
-   .. image:: quadrature.pdf
+   .. image:: images/quadrature.*
 
 
 Configure the firmware
@@ -264,7 +264,7 @@ The GUI application is available from XMOS on request. It is based on the LabVie
 8.1 runtime environment to be installed on the user's PC.  This is available from the LabView website, at 
 *http://joule.ni.com/nidu/cds/view/p/id/861/lang/en*.
 
-  .. image:: gui.png
+  .. image:: images/gui.png
      :width: 100%
 
 
