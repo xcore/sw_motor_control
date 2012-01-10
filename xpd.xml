@@ -60,4 +60,17 @@
             <dependency>sc_ethernet</dependency>
         </dependencies>
     </template>
+    <template name = "Control Board Demo (Single axis BLDC control)">
+        <board>XP-MC-CTRL-L2</board>
+        <description>Fully functional single axis speed control of a BLDC motor</description>
+        <src file = "src/main.xc">sw_motor_control/app_basic_bldc</src>
+        <dependencies>
+            <dependency>sw_motor_control</dependency>
+            <dependency>sc_can</dependency>
+            <dependency>sc_pwm</dependency>
+            <dependency>sc_xtcp</dependency>
+            <dependency>sc_ethernet</dependency>
+        </dependencies>
+    </template>
 </xpd>
+
