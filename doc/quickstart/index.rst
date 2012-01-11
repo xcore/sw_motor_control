@@ -1,207 +1,296 @@
-==================================================================
-Quick start guide for the XMOS Motor Control platform, version 2.0
-==================================================================
 
-Supported hardware
-------------------
+.. _motor_control_platform_qs:
 
-XMOS Bushless DC Motor Control development platform *XK-MC-LVM2*.
+Motor Control Platform Quick Start Guide
+========================================
 
-Configure the hardware
-----------------------
+.. _motor_control_platform_qs_introduction:
 
-The XMOS Brushless DC Motor development platform consists of two separate boards, as shown in
-:ref:`sw_motor_control_boards`.
+Introduction
+------------
 
-.. _sw_motor_control_boards:
+The XMOS Motor Control Platform simplifies the development of applications requiring
+multi-axis field orientated control of motors, fieldbus and industrial Ethernet.
+
+.. _motor_control_platform_boards:
 
 .. figure:: images/boards.*
 
-   Motor control development platform
+   Motor Control Platform
 
-To configure the hardware, follow these steps:
+The kit contains the following hardware:
+
+.. points::
+  :class: compact
+
+  - A control board comprising a 500MHz XS1-L2 processor, Ethernet interface, CAN interface, a discrete 2-channel 12-bit sample-and-hold ADC, LCD display and XSYS interface
+  - A power board comprising 2 motor connectors, 2 connectors for QEI sensors, 6x24V 5A per channel inverters and a 0V zero-crossing detector (up to 1 MHz)
+  - 50-way ribbon cable for connecting the control board and power board
+  - XTAG-2 debug adapter
+  - 24V power supply
+
+The board firmware includes a dual-axis field oriented control application and
+simple commutation application for BLDC motors. A single core can 
+drive the current loop for a 3-phase BLDC motor at up to 125kHz, with a 
+PWM resolution of 4ns. The firmware is built from the following 
+software components, which can be used in a wide range of motor
+control applications:
+
+.. only:: html
+
+  .. points::
+    :class: compact
+
+    - `10/100MBit Ethernet interface <http://www.xmos.com/published/can>`_ and `TCP/IP stack <http://www.xmos.com/published/tcpip-stack>`_
+    - `0.5Mbit CAN interface <http://www.xmos.com/published/can>`_
+    - 2 Hall sensor inputs
+    - 3-phase complementary symmetrical PWM with dead time insertion
+
+.. only:: latex
+
+  .. points::
+    :class: compact
+
+    - 10/100MBit Ethernet interface
+    - 0.5Mbit CAN interface
+    - 2 Hall sensor inputs
+    - 3-phase complementary symmetrical PWM with dead time insertion
+
+Multiple chips can be connected to scale to a nearly unlimited number of coordinated 
+axes for robotics and other applications, or the control board can be used by 
+itself as a generic L2 development platform.
+
+The kit is supported by the following tools:
+
+.. points::
+  :class: compact
+
+  - Demo GUI based on LABView run-time, which allows you to control the demo applications from a host PC using the Ethernet or CAN interface.
+  - XMOS Development Tools, which provide everything you need to develop your own applications, including an IDE, real-time software scope and timing analyzer.
+   
+.. _motor_control_platform_qs_setup_hardware_and_run_firmware_demo:
+
+Set up the hardware to run the firmware demo 
+--------------------------------------------
+
+The Motor Control Platform comes with a dual-axis FOC application programmed into
+flash memory on the control card. To set up the hardware and run this demo, follow
+these steps:
 
 .. steps::
 
-  #. Connect the power board to the control board with the 50-way ribbon cable.
+  #. Connect the control board interface to the power board interface using the 50-wire ribbon cable.
 
-  #. Connect the first motor to the MOTOR1 connector on the power board, and the second motor to
-     the MOTOR2 connector.
-        
-  #. Connect the quadrature encoder connections from each motor to the power board.  
-
-  #. Connect the XMOS XTAG-2 debug adaptor to the 20 pin XSYS header, and use a USB cable to connect the adapter to your PC.
-
-  #. Connect a 24V power supply to the power section of the BLDC board.
-   
-.. danger::
-   
-   Do **not** put the 24V power supply into the control board. The control board takes a 5V power
-   supply and will be damaged by 24V. 
-      
-The demo application spins the motors using a field-oriented control algorithm.  The display shows
-the speed of each motor, and the demand speed of both.  Buttons A and B alter the demand speed for the system.
-
-Control board
-~~~~~~~~~~~~~
-
-By default, the power board provides power to the control board. Jumper J2 can be set to the alternative (East)
-position to allow a separate 5V power supply to be provided to the control board, as shown in :ref:`sw_motor_control_j2`.
-
-.. _sw_motor_control_j2:
-
-.. figure:: images/jumper-2.*
-
-   Jumper J2 configuration
-		
-The ADC configuration jumpers J33 and J34 on the control board must be set as follows in order
-for the default firmware to run correctly.  J33 must be set to *South*, and J34 must be set to *North*. 
-
-.. figure:: images/jumper-b.*
-
-   Jumper J34 and J35 configuration
-
-
-   .. image:: images/control.png
-      :width: 100%
-
-   +--------+---------------------------------+----------------------------------------+
-   | J2     | *West* - power from Power Board | *East* - power from External connector |
-   +--------+---------------------------------+----------------------------------------+
-   | J33    | *North* - single ended ADC      | *South* - differential ADC             |
-   +--------+---------------------------------+----------------------------------------+
-   | J34    | *North* - 0 to 2 Vref ADC range | *South* - 0 - Vref ADC range           |
-   +--------+---------------------------------+----------------------------------------+
-   
-   .. image:: images/jumper-b.*
-
-Power board
-~~~~~~~~~~~
-
-The power board has 6 configuration jumpers, J31 to J36.  These will typically be set to *South*
-to enable the hall effect port. Setting to *North* will enable the back-EMF zero crossing detection, but the
-default firmware implementations do not use this sensor.
-
-   .. image:: images/power.png
-      :width: 100%
-
-   +-----------+-----------------------------------------+--------------------------------------------------+
-   | J6        | *Fitted* - standard watchdog protection | *Absent* - watchdog requires SW1 to be depressed |
-   +-----------+-----------------------------------------+--------------------------------------------------+
-   | J31 - J36 | *North* - zero cross detectors          | *South* - hall sensors                           |
-   +-----------+-----------------------------------------+--------------------------------------------------+
-
-   *WARNING* - When connecting the quadrature encoder cable to the LDO motors, the connector can often
-   be inserted into the motor both correctly, and upside down.  Check that the the alignment flanges on
-   the motor match those on the connector before inserting.  The quadrature encoder will be permanently
-   damaged with an incorrectly inserted connector.
-
-   .. image:: images/quadrature.*
-
-
-Configure the firmware
-----------------------
-
-The firmware consists of two application projects: a basic BLDC application that controls the motors using
-simple hall sector-based commutation, and a dual-axis FOC control application.
-
-.. only:: xde-outside
-
-  The firmware is configured and loaded onto XMOS hardware using the XMOS Development Tools. See the
-  :ref:`Installation instructions <install>` for more information.
-
-Create a demo application
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. only:: xde-html
-
-  .. cssclass:: xde-inside
-
-    The firmware is provided as source code, which can be imported from the Developer Column directly into your workspace.
+  #. Connect the green 8-wire cable on one of the motors to the MOTOR-1 connector, and
+     connect the white 4-wire cable to the MOT-1 connector. Connect the second motor
+     to the MOTOR-2 and MOT-2 connectors the same way.
   
-    .. raw:: html
- 
-       <ul class="iconmenu">
-         <li class="xde-import"><a href="http://www.xmos.com/automate?automate=ImportComponent&partnum=XM-000011-SW">Click here to create a new project for the motor control firmware.</a></li>
-       </ul>
+  #. Connect the 24V supply to the power board, and use a power lead with an IEC 320-C13 connector (also known as a "Kettle Lead", not provided)
+     to connect the power supply to a mains outlet.
+   
+     .. danger::
+   
+       Do **not** connect the 24V power supply to the control board. The control board takes a 6V power
+       supply and will be damaged by 24V. 
 
-    .. tip::
+On power-up, the motors should start spinning at a demand speed of 1000RPM. The LCD display
+shows the speed of each motor, and the demand speed of both. You can use buttons A and
+B to alter the demand speed for the system in steps of 100RPM.
+
+.. _motor_control_platform_qs_control_firmware_with_gui:
+
+Control the application using a GUI interface
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+XMOS has developed a demo GUI application that allows you to control the
+board from a host PC using either the Ethernet or CAN interface. The GUI application is
+available for Windows and requires the LabView 8.1 runtime environment to be installed on 
+your PC.
+
+.. raw:: html
   
-      The XDE creates a new project for the demo and imports all of the associated projects. The original source files are available
-      in the directories ``app_basic_bldc`` and ``app_dsc_demo``.
+  <ul class="iconmenu">
+    <li><a href="http://www.xmos.com/partnum/XM-000XXX-SW">Download the GUI Interface</a></li>
+    <li><a href="http://joule.ni.com/nidu/cds/view/p/id/861/lang/en">Download the LabView 8.1 runtime environment</a></li>
+  </ul>
+  
+.. only:: latex
+
+  .. figure:: images/gui.png
+    :width: 100%
+	 
+    Demo GUI application
+
+  The GUI interface can be downloaded from:
+	
+  `<http://www.xmos.com/partnum/XM-001564-SM>`_
+	
+  The LabView 8.1 runtime environment can be downloaded from:
+
+  `<http://joule.ni.com/nidu/cds/view/p/id/861/lang/en>`_
+
+To run the GUI, unzip the download archive to an empty directory and run the file ``MotorControl.exe``.
+
+On launching the GUI, a dialog pops up asking you to select CAN or Ethernet. If you select Ethernet,
+you are then asked to provide the IP address of the board. The default firmware uses IP address
+169.254.0.1 (a link local IP address).
+
+To use the CAN interface, you must first configure the firmware to use the CAN interface 
+(see :ref:`motor_control_platform_qs_configure_application_settings`). LabView supports the Kvaser Leaf Light HS USB to CAN dongle.
+
+.. _motor_control_platform_qs_configure_firmware_demo:
+
+Configure the firmware demo
+---------------------------
+
+The firmware demo is provided as a source code archive. To configure,
+you should modify the source code for the dual-axis FOC application, 
+build the project and load it onto your hardware using the XMOS Development Tools.
 
 .. cssclass:: xde-outside
 
-  The firmware is provided as source code, which can be downloaded from the XMOS website. The source code
-  be imported into the XDE or built on the command-line.
+  .. raw:: html
   
-  To use the XDE, follow these steps:
+    <ul class="iconmenu">
+      <li><a href="http://www.xmos.com/partnum/XM-000011-SW">Download the Motor Control Firmware</a></li>
+	  <li><a href="http://www.xmos.com/tools">Download the XMOS Development Tools</a></li>
+    </ul>
   
+  .. only:: latex
+  
+    The motor control firmware is available from:
+	
+    `<http://www.xmos.com/partnum/XM-000011-SW>`_
+	
+    The XMOS Development Tools are available from:
+   
+    `<http://www.xmos.com/tools>`_
+
+  For instructions on installing the tools and XTAG-2 driver, and on starting up the tools, see
+  :ref:`installation` and :ref:`get_started`.
+
+.. _motor_control_platform_qs_create_demo_application:
+  
+Create a demo application
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. only:: html
+
+  .. cssclass:: xde-inside
+
+    The firmware is provided as source code, which can be imported from the Developer Column directly into your workspace. To import,
+    follow these steps:
+	
+    .. steps::
+  
+      #. `Click here to to lanch the **New XDE Wizard** with the dual-axis motor control demo selected <http://www.xmos.com/automate?automate=ImportComponent&partnum=XM-000011-SW&template=Control Board Demo (Dual Axis FOC Motor Control)">`_.
+
+         If the XDE is unable to connect to the XMOS server, an error message is displayed. Check your network connection
+         and click **Retry**.
+  
+      #. In **Name**, enter a name for the application.
+    
+      #. To import, click **OK**.
+	  
+         The XDE creates a new demo application and imports all of the required software components.
+
+.. cssclass:: xde-outside
+
+  You can create a demo application either in the XMOS Development Environment (XDE) or on the command-line. XMOS recommends
+  making a copy of the original application so that you can easily revert to the default firmware settings in the future.
+  
+  **Create an application using the XDE** |XDE icon|
+
   .. steps::
   
     #. Choose :menuitem:`File,Import`.
     #. Double-click on the **General** option, select **Existing Projects
        into Workspace** and click **Next**.
     #. In the **Import** dialog box, click **Browse** (next to the **Select
-       archive file** text box).
-    #. Select the downloaded ZIP file and click **Open**.
+       archive file** text box). In the dialog that appears, browse to the directory 
+       in which you downloaded the firmware archive, select it (``.zip`` extension) 
+       and click **Open**.
     #. Click **Finish**.
 	
-	   The XDE imports a set of projects into your workspace.
+       The XDE imports a set of projects into your workspace.
 	
-	#. In the **Project Explorer**, click the folder ``sw_motor_control`` to expand it.
-	#. Right-click on either the sub-folder ``app_basic_bldc`` or ``app_dsc_demo`` and select :menuitem:`Copy`.
-	#. Right-click an empty area of the workspace and select :menuitem:`Paste`.
-	#. In the dialog that appears, enter a name for the application and click **OK**.
+    #. In the **Project Explorer**, click the folder ``sw_motor_control`` to expand it.
+    #. Right-click on the sub-folder ``app_dsc_demo`` and select :menuitem:`Copy`,
+       then right-click the folder ``sw_motor_control`` and select :menuitem:`Paste`.
+       In the dialog that appears, enter a name for your application and click **OK**.
+    #. Double-click on the file ``sw_motor_control/Makefile`` to open it
+       in an editor, and ensure that your application is checked as enabled in the build.
 
-  To use the command-line tools, follow these steps:
+  |newpage|
+  
+  **Create an application on the command line** |CMD icon|
   
   .. steps::
-  
-    #. Unzip the firmware package file.
+ 
+    #. Unzip the firmware archive.
+   
+    #. Change to the directory ``sw_motor_control`` and copy the directory ``app_dsc_demo`` 
+       to a new directory. For example, in Linux type the following command:
 	   
-    # Change to either directory ``sw_motor_control`` and copy either the directory ``app_basic_bldc`` or ``app_dsc_demo`` 
-	  to a new directory.
-  
-      You can modify the source files in this directory without changing the original files.
-    
-	
-Configure the firmware settings
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+       :command:`cp -fr app_dsc_demo app_my_demo`
 
-The firmware is configured by modifying the demo source code. Here are some things you can modify.
+    #. Edit the file ``sw_motor_control/Makefile`` and add the name of your application
+       to the ``BUILD_SUBDIRS`` environment variable.
 
-.. actions::
+.. _motor_control_platform_qs_configure_application_settings:
 
-   :Select between Ethernet or CAN control:
+Configure your application settings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-     By default the software is controlled by the buttons around the LCD and the Ethernet interface.
-     To use CAN instead, open the source file ``src/dsc_config.h``, enable the macro
-     `USE_CAN`` and disable the macro ``USE_ETH``.
+Application settings are configured by modifying the source code.
 
-   :Change the TCP/IP address:
+.. paragraph-headings::
 
-     By default the Ethernet and TCP/IP interface has a statically allocated IP address of 169.254.0.1 (a link local IP address),
-     and a net mask of 255.255.0.0.  To change these values, open the file ``src/main.xc`` and search for the function
-     ``init_tcp_server`` which contains these values.
+  * Change the TCP/IP address
 
-There are other compile time configuration options present in the file ``dsc_config.h``. These are described in more detail
-in the :ref:`sw_motor_control_sw_guide <software guide>`.
+    By default the Ethernet and TCP/IP interface has a statically allocated IP address of 169.254.0.1 (a link local IP address)
+    and a net mask of 255.255.0.0.  To change, in your application directory open the file ``src/main.xc`` and search for the function
+    ``init_tcp_server`` which contains these values; modify as required.
 
-Build and run the firmware
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-	
-To build and run the firmware from the XDE, follow these steps:
+  * Switch from Ethernet to CAN control
+
+    By default the application is controlled by the buttons around the LCD and the Ethernet interface.
+    To use CAN instead, in your application directory open the source file ``src/dsc_config.h``, enable the macro
+    ``USE_CAN`` and disable the macro ``USE_ETH``.
+
+The file ``src/dsc_config.h`` contains other compile-time configuration options. These options are described in more detail
+in the :ref:`sw_motor_control_software_guide <motor control software guide>`.
+
+.. _motor_control_platform_qs_build_and_run_application:
+
+Build and run your application
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. cssclass:: xde-inside
+
+  Once you have configured your application, you must build it into an executable binary
+  and load this binary onto your hardware. To build and run, follow these steps:
+
+.. cssclass:: xde-outside
+
+  Once you have configured your application, you must build it into an executable binary
+  and load this binary onto your hardware. 
+
+  **To use the XDE** |XDE icon|
 
 .. steps::
 
-  #. Select your project in the **Project Explorer** and click **Build** |-| |button build| |-|.
+
+  #. Select your application in the **Project Explorer** and click **Build** |-| |button build| |-|.
   
-     The XDE builds the firmware, displaying progress in the **Console**. On completion, it 
-     adds the compiled binary file to the **bin** sub-folder.
+     The XDE builds the firmware, displaying progress in the **Console**. If there are no errors,
+     the XDE adds the compiled binary to the application folder ``bin/Debug``.
 
      .. |button build| image:: images/button-build.*
         :iconmargin:
+
+  #. Ensure that your XMOS XTAG-2 debug adaptor is connected to the the XSYS connector 
+     on the control board, and use a USB cable (not provided) to connect the adapter to your PC.
 
   #. Choose :menuitem:`Run,Run Configurations`.
 
@@ -218,80 +307,103 @@ To build and run the firmware from the XDE, follow these steps:
      Selection** dialog box. Then click **Search Project** and select the
      executable file in the **Program Selection** dialog box.
 
-  #. Check the **hardware** option and select the **L2 Motor Control Board**
-     from the **Hardware** list.
-
+  #. Ensure that the **hardware** option is selected, and in the **Target**
+     drop-down list select your target board.
+	 
   #. Click **Run**.
 
-The XDE loads your executable, displaying any output generated by your
-program in the **Console**.  
-  
-.. tip::
-    
-  For more information on XDE Run Configurations, see :ref:`xde_run_program`.
-   
+     The XDE loads your executable, displaying any output generated by your
+     program in the **Console**.  
+     
 .. cssclass:: xde-outside
 
-  To build and run the firmware using the command-line tools, follow these steps:
-
+  **To use the command-line tools** |CMD icon|
+  
   .. steps:: 
 
-    #. Change to the application directory and enter the following command:
+    #. Change to your application directory and enter the following command:
   
-       :command:``xmake all``
+       :command:`xmake all`
 
-       This command builds the software and produces an executable file ``bin/Release/app_dsc_demo.xe``.
- 
-    #. Enter the following command:
+       The tools build your application. If there are no errors, the tools create a
+       binary in the sub-folder ``bin/Debug``.
+
+    #. Ensure that your XMOS XTAG-2 debug adaptor is connected to the the XSYS connector 
+       on the control board, and use a USB cable (not provided) to connect the adapter to your PC.
+	   
+    #. To run, enter the following command:
   
-       :command:`xrun bin/Release/app_dsc_demo.xe`
+       :command:`xrun bin/Debug/*binary*.xe`
 
+.. _motor_control_platform_qs_configure_hardware:
 
-LCD feedback
-  The LCD shows the current speed of each motor, and the demand speed.  Both motors have the same demand speed.
+Configure the hardware
+----------------------
 
-Controlling the motor speed
-  Button A increases the demand speed in steps of 100 RPM.  Button B decreases the motor speed in steps of 100 RPM.
+The hardware can be configured by modifying the jumper settings on the control board and power board.
 
-The buttons change the demand speed within a maximum and minimum of ``MIN_RPM`` and ``MAX_RPM``.  These are configured
-in the file ``dsc_config.h`` file, and are 500 and 3800.
+.. _motor_control_platform_qs_control_board_jumper_settings:
 
+Control board jumper settings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Using the GUI interface
------------------------
+The control board jumper settings are shown in :ref:`sw_motor_control_board`.
+Jumper J2 controls the power source for the board.
+The board can be powered from either the power board or from a separate 6V power supply.
+For the default firmware to run correctly, jumpers J33 and J34 must be set as shown.
 
-The GUI application is available from XMOS on request. It is based on the LabView suite, and so requires the LabView
-8.1 runtime environment to be installed on the user's PC.  This is available from the LabView website, at 
-*http://joule.ni.com/nidu/cds/view/p/id/861/lang/en*.
+.. _sw_motor_control_board:
 
-  .. image:: images/gui.png
-     :width: 100%
+.. figure:: images/control-jumpers.*
 
+   Control board jumper settings
 
-For interfacing to the board using CAN, LabView supports the Kvaser Leaf Light HS USB to CAN dongle.
+|newpage|
 
-When the application is run (Motor Control.exe), the interface will appear, and a dialog will pop up asking to have
-the user select CAN or Ethernet.  If Ethernet is selected then the IP address of the board will be required. The
-firmware flashed onto the board by default will have the IP address 169.254.0.1 (a link local IP address).
+.. _motor_control_platform_qs_power_board_jumper_settings:
 
-The watchdog timer hardware override
-------------------------------------
+Power board jumper settings
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-On the power board there is a watchdog timer override button.  This allows a physical override to prevent the XMOS
-device watchdog pulse stream to reach the watchdog timer cutout device.  By default, jumper J6 on the power board will
-be present.  This means the watchdog circuit on the power board will be directly connected to the XMOS device.
+The power board jumper settings are shown in :ref:`sw_motor_control_power`.
+Jumper J6 controls the watchdog protection mode. If enabled, the watchdog circuit is directly connected
+to the processor, otherwise you must hold button SW1 on the control board to enable the watchdog connection. 
+This latter configuration is useful for testing new software algorithms: hold down the button for normal operation, 
+and if an error occurs causing risk of damage to the motors or power board, release the button to prevent the 
+FETs from being further engerized.
 
-By removing jumper J6, the button SW1 will need to be held to enable the connection between the XMOS device and the
-watchdog circuit on the power board.  This configuration is useful when testing out new algorithms.  The user would
-hold the button down for normal operation, but if an error occurs and there is a risk of damage to the motors or
-the power board, the button can be quickly released to prevent the FETs from being energized further.
+.. _sw_motor_control_power:
 
+.. figure:: images/power-jumpers.*
 
-Further reading
----------------
+   Power board jumper settings
 
-Visit *http://www.xmos.com/applications/motor-control* for further information and updates.
+Jumpers J31 to J36 are used to enable either the hall sensors or zero-cross detectors. Note that the default
+application firmware does not use the zero-cross detectors.
 
+.. _motor_control_platform_qs_motor_connectors:
 
+Motor connectors
+----------------
 
+If one of the 5-wire quadrature cables becomes disconnected from its motor, care must be taken
+when reconnecting it to ensure that the alignment flanges on the cable match those on the connector
+**before** inserting, as shown in :ref:`sw_motor_control_quad_encoder_connector`.
+Inserting the cable incorrectly may permanently damage your hardware.
 
+.. _sw_motor_control_quad_encoder_connector:
+
+.. figure:: images/quadrature.*
+
+  5-wire quadrature encoder connection
+	
+
+.. |XDE icon| image:: images/ico-xde.*
+   :iconmargin:
+   :iconmarginheight: 2
+   :iconmarginraise:
+
+.. |CMD icon| image:: images/ico-cmd.*
+   :iconmargin:
+   :iconmarginheight: 2
+   :iconmarginraise:

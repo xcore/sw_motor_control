@@ -1,3 +1,5 @@
+.. _sw_motor_control_software_guide:
+
 Motor Control Platform Software Guide
 =====================================
 
