@@ -41,8 +41,8 @@ control applications:
   .. points::
     :class: compact
 
-    - `10/100MBit Ethernet interface <http://www.xmos.com/published/can>`_ and `TCP/IP stack <http://www.xmos.com/published/tcpip-stack>`_
-    - `0.5Mbit CAN interface <http://www.xmos.com/published/can>`_
+    - `10/100MBit Ethernet interface </published/ethernet>`_ and `TCP/IP stack </published/tcpip-stack>`_
+    - `0.5Mbit CAN interface </published/can>`_
     - 2 Hall sensor inputs
     - 3-phase complementary symmetrical PWM with dead time insertion
 
@@ -107,13 +107,14 @@ board from a host PC using either the Ethernet or CAN interface. The GUI applica
 available for Windows and requires the LabView 8.1 runtime environment to be installed on 
 your PC.
 
-.. raw:: html
+.. only:: html
   
-  <ul class="iconmenu">
-    <li><a href="http://www.xmos.com/partnum/XM-000XXX-SW">Download the GUI Interface</a></li>
-    <li><a href="http://joule.ni.com/nidu/cds/view/p/id/861/lang/en">Download the LabView 8.1 runtime environment</a></li>
-  </ul>
-  
+  .. points::
+    :class: compact
+
+     - `Download the GUI Interface </partnum/XM-001564-SM">`_
+     - `Download the LabView 8.1 runtime environment <http://joule.ni.com/nidu/cds/view/p/id/861/lang/en>`_
+
 .. only:: latex
 
   .. figure:: images/gui.png
@@ -149,13 +150,14 @@ build the project and load it onto your hardware using the XMOS Development Tool
 
 .. cssclass:: xde-outside
 
-  .. raw:: html
+  .. only:: html
   
-    <ul class="iconmenu">
-      <li><a href="http://www.xmos.com/partnum/XM-000011-SW">Download the Motor Control Firmware</a></li>
-	  <li><a href="http://www.xmos.com/tools">Download the XMOS Development Tools</a></li>
-    </ul>
-  
+    .. points::
+      :class: compact
+
+       - `Download the Motor Control Firmware </partnum/XM-000011-SW">`_
+       - `Download the XMOS Development Tools <http://www.xmos.com/tools>`_
+
   .. only:: latex
   
     The motor control firmware is available from:
@@ -183,7 +185,7 @@ Create a demo application
 	
     .. steps::
   
-      #. `Click here to to lanch the **New XDE Wizard** with the dual-axis motor control demo selected <http://www.xmos.com/automate?automate=ImportComponent&partnum=XM-000011-SW&template=Control Board Demo (Dual Axis FOC Motor Control)">`_.
+      #. `Click here to to lanch the **New XDE Wizard** with the dual-axis motor control demo selected </?automate=NewProject&boardid=0003011X&boardstring=L2 Control Board&amp&template=Control Board Demo (Dual Axis FOC Motor Control)">`_.
 
          If the XDE is unable to connect to the XMOS server, an error message is displayed. Check your network connection
          and click **Retry**.
