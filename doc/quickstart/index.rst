@@ -261,7 +261,7 @@ Application settings are configured by modifying the source code.
     ``USE_CAN`` and disable the macro ``USE_ETH``.
 
 The file ``src/dsc_config.h`` contains other compile-time configuration options. These options are described in more detail
-in the :ref:`sw_motor_control_software_guide <motor control software guide>`.
+in the :ref:`motor control software guide <sw_motor_control_software_guide>`.
 
 .. _motor_control_platform_qs_build_and_run_application:
 
