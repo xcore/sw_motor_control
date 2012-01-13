@@ -112,8 +112,8 @@ your PC.
   .. points::
     :class: compact
 
-     - `Download the GUI Interface </partnum/XM-001564-SM">`_
-     - `Download the LabView 8.1 runtime environment <http://joule.ni.com/nidu/cds/view/p/id/861/lang/en>`_
+    - `Download the GUI Interface </partnum/XM-001564-SM">`_
+    - `Download the LabView 8.1 runtime environment <http://joule.ni.com/nidu/cds/view/p/id/861/lang/en>`_
 
 .. only:: latex
 
@@ -155,8 +155,8 @@ build the project and load it onto your hardware using the XMOS Development Tool
     .. points::
       :class: compact
 
-       - `Download the Motor Control Firmware </partnum/XM-000011-SW">`_
-       - `Download the XMOS Development Tools <http://www.xmos.com/tools>`_
+      - `Download the Motor Control Firmware </partnum/XM-000011-SW">`_
+      - `Download the XMOS Development Tools <http://www.xmos.com/tools>`_
 
   .. only:: latex
   
@@ -185,7 +185,7 @@ Create a demo application
 	
     .. steps::
   
-      #. `Click here to to lanch the **New XDE Wizard** with the dual-axis motor control demo selected </?automate=NewProject&boardid=0003011X&boardstring=L2 Control Board&amp&template=Control Board Demo (Dual Axis FOC Motor Control)">`_.
+      #. `Click here to to lanch the **New XDE Project** wizard with L2 Control Board the Dual-Axis Motor Control demo selected </?automate=NewProject&boardid=0003011X&boardstring=L2 Control Board&amp&template=Control Board Demo (Dual Axis FOC Motor Control)">`_.
 
          If the XDE is unable to connect to the XMOS server, an error message is displayed. Check your network connection
          and click **Retry**.
@@ -291,7 +291,7 @@ Build and run your application
      .. |button build| image:: images/button-build.*
         :iconmargin:
 
-  #. Ensure that your XMOS XTAG-2 debug adaptor is connected to the the XSYS connector 
+  #. Ensure that your XMOS XTAG-2 debug adaptor is connected to the XSYS connector 
      on the control board, and use a USB cable (not provided) to connect the adapter to your PC.
 
   #. Choose :menuitem:`Run,Run Configurations`.
@@ -330,7 +330,7 @@ Build and run your application
        The tools build your application. If there are no errors, the tools create a
        binary in the sub-folder ``bin/Debug``.
 
-    #. Ensure that your XMOS XTAG-2 debug adaptor is connected to the the XSYS connector 
+    #. Ensure that your XMOS XTAG-2 debug adaptor is connected to the XSYS connector 
        on the control board, and use a USB cable (not provided) to connect the adapter to your PC.
 	   
     #. To run, enter the following command:
