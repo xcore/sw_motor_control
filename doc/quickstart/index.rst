@@ -14,7 +14,7 @@ multi-axis field orientated control of motors, fieldbus and industrial Ethernet.
 
 .. _motor_control_platform_boards:
 
-.. figure:: images/boards.*
+.. figure:: images/boards-wide.*
 
    Motor Control Platform
 
@@ -81,8 +81,8 @@ these steps:
 
   #. Connect the control board interface to the power board interface using the 50-wire ribbon cable.
 
-  #. Connect the green 8-wire cable on one of the motors to the MOTOR-1 connector, and
-     connect the white 4-wire cable to the MOT-1 connector. Connect the second motor
+  #. Connect the 8-wire cable on one of the motors to the MOTOR-1 connector, and
+     connect the 4-wire cable to the MOT-1 connector. Connect the second motor
      to the MOTOR-2 and MOT-2 connectors the same way.
   
   #. Connect the 24V supply to the power board, and use a power lead with an IEC 320-C13 connector (also known as a "Kettle Lead", not provided)
@@ -93,7 +93,7 @@ these steps:
        Do **not** connect the 24V power supply to the control board. The control board takes a 6V power
        supply and will be damaged by 24V. 
 
-On power-up, the motors should start spinning at a demand speed of 1000RPM. The LCD display
+On power-up, the motors should start spinning at a demand speed of 1000RPM. The LCD 
 shows the speed of each motor, and the demand speed of both. You can use buttons A and
 B to alter the demand speed for the system in steps of 100RPM.
 
@@ -356,7 +356,7 @@ For the default firmware to run correctly, jumpers J33 and J34 must be set as sh
 
 .. _sw_motor_control_board:
 
-.. figure:: images/control-jumpers.*
+.. figure:: images/control-jumpers-wide.*
 
    Control board jumper settings
 
@@ -376,7 +376,7 @@ FETs from being further engerized.
 
 .. _sw_motor_control_power:
 
-.. figure:: images/power-jumpers.*
+.. figure:: images/power-jumpers-wide.*
 
    Power board jumper settings
 
