@@ -112,7 +112,7 @@ your PC.
   .. points::
     :class: compact
 
-    - `Download the GUI Interface </partnum/XM-001564-SM">`_
+    - `Download the GUI Interface </partnum/XM-001564-SM>`_
     - `Download the LabView 8.1 runtime environment <http://joule.ni.com/nidu/cds/view/p/id/861/lang/en>`_
 
 .. only:: latex
@@ -185,7 +185,7 @@ Create a demo application
 	
     .. steps::
   
-      #. |new xde project button| `Click here to to lanch the **New XDE Project** wizard with L2 Control Board the Dual-Axis Motor Control demo selected </?automate=NewProject&boardid=0003011X&boardstring=L2 Control Board&amp&template=Control Board Demo (Dual Axis FOC Motor Control)">`_.
+      #. |new xde project button| `Click here to to launch the **New XDE Project** wizard with L2 Control Board the Dual-Axis Motor Control demo selected </?automate=NewProject&boardid=0003011X&boardstring=L2 Control Board&amp&template=Control Board Demo (Dual Axis FOC Motor Control)">`_.
 
          If the XDE is unable to connect to the XMOS server, an error message is displayed. Check your network connection
          and click **Retry**.
