@@ -185,7 +185,7 @@ Create a demo application
 	
     .. steps::
   
-      #. `Click here to to lanch the **New XDE Project** wizard with L2 Control Board the Dual-Axis Motor Control demo selected </?automate=NewProject&boardid=0003011X&boardstring=L2 Control Board&amp&template=Control Board Demo (Dual Axis FOC Motor Control)">`_.
+      #. |new xde project icon| `Click here to to lanch the **New XDE Project** wizard with L2 Control Board the Dual-Axis Motor Control demo selected </?automate=NewProject&boardid=0003011X&boardstring=L2 Control Board&amp&template=Control Board Demo (Dual Axis FOC Motor Control)">`_.
 
          If the XDE is unable to connect to the XMOS server, an error message is displayed. Check your network connection
          and click **Retry**.
@@ -261,7 +261,7 @@ Application settings are configured by modifying the source code.
     ``USE_CAN`` and disable the macro ``USE_ETH``.
 
 The file ``src/dsc_config.h`` contains other compile-time configuration options. These options are described in more detail
-in the :ref:`motor control software guide <sw_motor_control_software_guide>`.
+in the :ref:`motor control software guide <doc:7328>`.
 
 .. _motor_control_platform_qs_build_and_run_application:
 
@@ -400,6 +400,9 @@ Inserting the cable incorrectly may permanently damage your hardware.
   5-wire quadrature encoder connection
 	
 
+.. |new xde project icon| image:: images/ico-new-xde-project.png
+   :iconmargin:
+   
 .. |XDE icon| image:: images/ico-xde.*
    :iconmargin:
    :iconmarginheight: 2
