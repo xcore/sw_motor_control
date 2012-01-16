@@ -9,21 +9,21 @@
         <uri>git@github.com:xcore/sc_can.git</uri>
     </dependency>
     <dependency repo = "xcommon">
-        <githash>21ebacb89829e823aae0dc5c08abaa398b2b662a</githash>
+        <githash>9ba651b662905248f8aedd41001b7106fec064ad</githash>
         <uri>https://github.com/xcore/xcommon.git</uri>
     </dependency>
     <dependency repo = "sc_xtcp">
-        <githash>b1e4d744a6af8ac89b8d869303ea89d353eb7b8c</githash>
+        <githash>2b8a7f22ae553fbf9ae03dfa3d4aafcad567ce0a</githash>
         <uri>git@github.com:xcore/sc_xtcp.git</uri>
     </dependency>
     <dependency repo = "sc_ethernet">
-        <githash>2210776c0f329eb97d2ba009ee900a3f7c15778b</githash>
+        <githash>865cef764422457bbbf5d53c98c4a69910b6ee3e</githash>
         <uri>git@github.com:xcore/sc_ethernet.git</uri>
     </dependency>
     <description>XMOS motor control platform</description>
     <location>git@github.com:xcore/sw_motor_control.git</location>
-    <name>sw_motor_control</name>
     <maintainer>davidn@xmos.com</maintainer>
+    <name>sw_motor_control</name>
     <release parenthash = "64bbe710e38941a8207c125c069158aad92852d1" version = "1.0.0rc0" githash = "4ceb53cd470e0338d706286a4371bb1e4c1e06bb"></release>
     <release parenthash = "64bbe710e38941a8207c125c069158aad92852d1" version = "1.0.0" githash = "4ceb53cd470e0338d706286a4371bb1e4c1e06bb"></release>
     <release parenthash = "ad62da3233b3d55e4afc5d2e7b3016d45b64241a" version = "1.0.1rc0" githash = "6358b683101a871c871f1fb1a6d6cff6e8404b31"></release>
@@ -33,7 +33,7 @@
     <release parenthash = "39fc4492639533d56d5d3f59e7e19e89469ce0ca" version = "1.0.3rc0" githash = "1c53dbed9753ab2050a76827d8645ec0425c4ec4"></release>
     <release parenthash = "39fc4492639533d56d5d3f59e7e19e89469ce0ca" version = "1.0.3" githash = "1c53dbed9753ab2050a76827d8645ec0425c4ec4"></release>
     <release parenthash = "61fa8e2ae543b8aece4e88006685b925d12ec4e8" version = "1.0.4rc0" githash = "baf33bd8f6386768f68c16bbeb31e7e7c26a1a81"></release>
-    <release parenthash = "4c4b0039d1171fed09bebf46496ef7e4c238e269" version = "1.0.4rc1"></release>
+    <release parenthash = "4c4b0039d1171fed09bebf46496ef7e4c238e269" version = "1.0.4rc1" githash = "7f0a0588b820e30282ce459ffb5aa13ed692e5b4"></release>
     <vendor>XMOS</vendor>
     <xpd_version>1.0</xpd_version>
     <template name = "Control Board Demo Project (Standalone)">
@@ -73,4 +73,3 @@
         </dependencies>
     </template>
 </xpd>
-
