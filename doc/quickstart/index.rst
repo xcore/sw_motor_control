@@ -14,7 +14,7 @@ multi-axis field orientated control of motors, fieldbus and industrial Ethernet.
 
 .. _motor_control_platform_boards:
 
-.. figure:: images/boards.*
+.. figure:: images/boards-wide.*
 
    Motor Control Platform
 
@@ -41,8 +41,8 @@ control applications:
   .. points::
     :class: compact
 
-    - `10/100MBit Ethernet interface <http://www.xmos.com/published/can>`_ and `TCP/IP stack <http://www.xmos.com/published/tcpip-stack>`_
-    - `0.5Mbit CAN interface <http://www.xmos.com/published/can>`_
+    - `10/100MBit Ethernet interface </published/ethernet>`_ and `TCP/IP stack </published/tcpip-stack>`_
+    - `0.5Mbit CAN interface </published/can>`_
     - 2 Hall sensor inputs
     - 3-phase complementary symmetrical PWM with dead time insertion
 
@@ -81,8 +81,8 @@ these steps:
 
   #. Connect the control board interface to the power board interface using the 50-wire ribbon cable.
 
-  #. Connect the green 8-wire cable on one of the motors to the MOTOR-1 connector, and
-     connect the white 4-wire cable to the MOT-1 connector. Connect the second motor
+  #. Connect the 8-wire cable on one of the motors to the MOTOR-1 connector, and
+     connect the 4-wire cable to the MOT-1 connector. Connect the second motor
      to the MOTOR-2 and MOT-2 connectors the same way.
   
   #. Connect the 24V supply to the power board, and use a power lead with an IEC 320-C13 connector (also known as a "Kettle Lead", not provided)
@@ -93,7 +93,7 @@ these steps:
        Do **not** connect the 24V power supply to the control board. The control board takes a 6V power
        supply and will be damaged by 24V. 
 
-On power-up, the motors should start spinning at a demand speed of 1000RPM. The LCD display
+On power-up, the motors should start spinning at a demand speed of 1000RPM. The LCD 
 shows the speed of each motor, and the demand speed of both. You can use buttons A and
 B to alter the demand speed for the system in steps of 100RPM.
 
@@ -107,13 +107,14 @@ board from a host PC using either the Ethernet or CAN interface. The GUI applica
 available for Windows and requires the LabView 8.1 runtime environment to be installed on 
 your PC.
 
-.. raw:: html
+.. only:: html
   
-  <ul class="iconmenu">
-    <li><a href="http://www.xmos.com/partnum/XM-000XXX-SW">Download the GUI Interface</a></li>
-    <li><a href="http://joule.ni.com/nidu/cds/view/p/id/861/lang/en">Download the LabView 8.1 runtime environment</a></li>
-  </ul>
-  
+  .. points::
+    :class: compact
+
+    - `Download the GUI Interface </partnum/XM-001564-SM>`_
+    - `Download the LabView 8.1 runtime environment <http://joule.ni.com/nidu/cds/view/p/id/861/lang/en>`_
+
 .. only:: latex
 
   .. figure:: images/gui.png
@@ -149,13 +150,14 @@ build the project and load it onto your hardware using the XMOS Development Tool
 
 .. cssclass:: xde-outside
 
-  .. raw:: html
+  .. only:: html
   
-    <ul class="iconmenu">
-      <li><a href="http://www.xmos.com/partnum/XM-000011-SW">Download the Motor Control Firmware</a></li>
-	  <li><a href="http://www.xmos.com/tools">Download the XMOS Development Tools</a></li>
-    </ul>
-  
+    .. points::
+      :class: compact
+
+      - `Download the Motor Control Firmware </partnum/XM-000011-SW">`_
+      - `Download the XMOS Development Tools <http://www.xmos.com/tools>`_
+
   .. only:: latex
   
     The motor control firmware is available from:
@@ -183,7 +185,7 @@ Create a demo application
 	
     .. steps::
   
-      #. `Click here to to lanch the **New XDE Wizard** with the dual-axis motor control demo selected <http://www.xmos.com/automate?automate=ImportComponent&partnum=XM-000011-SW&template=Control Board Demo (Dual Axis FOC Motor Control)">`_.
+      #. |new xde project button| `Click here to to launch the **New XDE Project** wizard with L2 Control Board the Dual-Axis Motor Control demo selected </?automate=NewProject&boardid=0003011X&boardstring=L2 Control Board&amp&template=Control Board Demo (Dual Axis FOC Motor Control)">`_.
 
          If the XDE is unable to connect to the XMOS server, an error message is displayed. Check your network connection
          and click **Retry**.
@@ -259,7 +261,7 @@ Application settings are configured by modifying the source code.
     ``USE_CAN`` and disable the macro ``USE_ETH``.
 
 The file ``src/dsc_config.h`` contains other compile-time configuration options. These options are described in more detail
-in the :ref:`sw_motor_control_software_guide <motor control software guide>`.
+in the :ref:`motor control software guide <doc:7328>`.
 
 .. _motor_control_platform_qs_build_and_run_application:
 
@@ -289,7 +291,7 @@ Build and run your application
      .. |button build| image:: images/button-build.*
         :iconmargin:
 
-  #. Ensure that your XMOS XTAG-2 debug adaptor is connected to the the XSYS connector 
+  #. Ensure that your XMOS XTAG-2 debug adaptor is connected to the XSYS connector 
      on the control board, and use a USB cable (not provided) to connect the adapter to your PC.
 
   #. Choose :menuitem:`Run,Run Configurations`.
@@ -328,7 +330,7 @@ Build and run your application
        The tools build your application. If there are no errors, the tools create a
        binary in the sub-folder ``bin/Debug``.
 
-    #. Ensure that your XMOS XTAG-2 debug adaptor is connected to the the XSYS connector 
+    #. Ensure that your XMOS XTAG-2 debug adaptor is connected to the XSYS connector 
        on the control board, and use a USB cable (not provided) to connect the adapter to your PC.
 	   
     #. To run, enter the following command:
@@ -354,7 +356,7 @@ For the default firmware to run correctly, jumpers J33 and J34 must be set as sh
 
 .. _sw_motor_control_board:
 
-.. figure:: images/control-jumpers.*
+.. figure:: images/control-jumpers-wide.*
 
    Control board jumper settings
 
@@ -374,7 +376,7 @@ FETs from being further engerized.
 
 .. _sw_motor_control_power:
 
-.. figure:: images/power-jumpers.*
+.. figure:: images/power-jumpers-wide.*
 
    Power board jumper settings
 
@@ -398,6 +400,9 @@ Inserting the cable incorrectly may permanently damage your hardware.
   5-wire quadrature encoder connection
 	
 
+.. |new xde project button| image:: images/button-new-xde-project.png
+   :iconmargin:
+   
 .. |XDE icon| image:: images/ico-xde.*
    :iconmargin:
    :iconmarginheight: 2
