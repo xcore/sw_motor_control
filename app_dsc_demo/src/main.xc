@@ -125,7 +125,7 @@ void init_tcp_server(chanend c_mac_rx, chanend c_mac_tx, chanend c_xtcp[], chane
 #else
 	xtcp_ipconfig_t ipconfig =
 	{
-	  {192, 168, 0, 1},	// ip address
+	  {169,254,0,1},	// ip address
 	  {255,255,0,0},	// netmask
 	  {0,0,0,0}       	// gateway
 	};
