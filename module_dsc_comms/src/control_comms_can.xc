@@ -56,23 +56,9 @@ void do_comms_can( chanend c_commands[], chanend rxChan, chanend txChan)
 
 			// Check that it is the correct length (8 bytes)
 			if ( p.DLC == 8 ) {
+
 				// The first 2 bytes of the packet are the sender address
 				sender_address = (p.DATA[0] << 8) + p.DATA[1];
-				// Fields which are fixed
-				p.SOF = 0;
-				p.RB0 = 0;
-				p.CRC_DEL = 1;
-				p.ACK_DEL = 1;
-				p._EOF = 0x7F;
-				p.DLC = 8;
-				p.CRC = 0; // CRC is calculated by transmitter
-
-				// Create a normal packet
-				p.SRR = 0;
-				p.IEB = 0;
-				p.EID = 0;
-				p.RTR = 0;
-				p.RB1 = 0;
 
 				// Write the sender address, making sure that it is less than 127
 				p.ID  = sender_address & 0x7F;
