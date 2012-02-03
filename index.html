@@ -1,0 +1,229 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Motor Control Platform Software Guide &mdash; Motor Control Platform Software Guide v2.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/xdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '2.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://mathjax.connectmv.com/MathJax.js"></script>
+    <script type="text/javascript" src="_static/xcomment.js"></script>
+    <link rel="top" title="Motor Control Platform Software Guide v2.0.0 documentation" href="#" />
+    <link rel="next" title="Motor Control Platform Example Applications" href="apps.html" /> 
+
+<script>
+function setheight() {
+h1 = document.getElementById('d1').style.height;
+h2 = document.getElementById('d2').style.height;
+
+if (parseInt(h1) > parseInt(h2)) {
+document.getElementById('d2').style.height=h1 + "px";
+}
+else {
+document.getElementById('d1').style.height=h2 + "px";
+}
+
+}
+</script>
+</head>
+
+<body onload="setheight();">
+
+  
+
+    <div class="document" id='d1'>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+<div style="float: right">
+<a href="apps.html"
+                        title="next chapter"> &gt&gt </a></p>
+</div>
+
+            
+  <div class="section" id="motor-control-platform-software-guide">
+<span id="sw-motor-control-software-guide"></span><h1>Motor Control Platform Software Guide<a class="headerlink" href="#motor-control-platform-software-guide" title="Permalink to this headline">¶</a></h1>
+<p>The XMOS motor control development platform is provided with a software framework and example control loop. This document provides information relating to the structure, implementation and use of the software modules that are specific to the motor control development platform, and interfacing to associated peripheral modules such as the CAN component.</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="apps.html">Motor Control Platform Example Applications</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="apps.html#basic-bldc-speed-control-application-app-basic-bldc">Basic BLDC Speed Control Application <tt class="docutils literal"><span class="pre">app_basic_bldc</span></tt></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.html#motor-control-loop">Motor Control Loop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.html#speed-control-loop">Speed Control Loop</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="apps.html#foc-application-app-dsc-demo">FOC Application <tt class="docutils literal"><span class="pre">app_dsc_demo</span></tt></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="apps.html#control-loop">Control Loop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="apps.html#control-loop-customization">Control loop customization</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="blocks.html">Processing Blocks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="blocks.html#pid-calculation-routines">PID Calculation Routines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="blocks.html#clarke-park-transforms">Clarke &amp; Park Transforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="blocks.html#sine-cosine-lookup">Sine &amp; Cosine lookup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="display.html">Display and Shared IO Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="display.html#hardware-interface">Hardware Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="display.html#operation">Operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="display.html#lcd-communication">LCD Communication</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pwm.html">Pulse Width Modulation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pwm.html#configuration">Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pwm.html#pwm-modes">PWM Modes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pwm.html#dead-time">Dead Time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pwm.html#pwm-resolution">PWM Resolution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pwm.html#locking-the-adc-trigger-to-pwm">Locking the ADC trigger to PWM</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pwm.html#pwm-server-usage">PWM Server Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pwm.html#inverter-mode">Inverter Mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pwm.html#simple-commutation-mode">Simple commutation mode</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pwm.html#pwm-client-usage">PWM Client Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pwm.html#id1">Inverter Mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pwm.html#basic-bldc-commutation-mode">Basic BLDC commutation mode</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pwm.html#pwm-service-implementation">PWM Service Implementation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pwm.html#pwm-service-port-initialisation-pwm-service-inv-xc">PWM service port initialisation <tt class="docutils literal"><span class="pre">pwm_service_inv.xc</span></tt></a></li>
+<li class="toctree-l3"><a class="reference internal" href="pwm.html#pwm-service-main-loop-pwm-op-inv-s">PWM service main loop <tt class="docutils literal"><span class="pre">pwm_op_inv.S</span></tt></a></li>
+<li class="toctree-l3"><a class="reference internal" href="pwm.html#loop-modes">Loop modes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pwm.html#pwm-client-implementation">PWM Client Implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="adc.html">Analogue to Digital Converter (ADC) Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="adc.html#adc-server-usage">ADC Server Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adc.html#adc-client-usage">ADC Client Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="adc.html#adc-server-implementation">ADC Server Implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="comms-high.html">Application Level Communications Interfaces</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="comms-high.html#do-comms-eth">do_comms_eth</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="comms-high.html#customizing-the-tcp-ip-packet">Customizing the TCP/IP packet</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="comms-high.html#do-comms-can">do_comms_can</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="comms-high.html#customizing-the-can-communcation-module">Customizing the CAN communcation module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="comms-high.html#replacing-the-communications-module">Replacing the communications module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="hsi.html">Hall Sensor Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="hsi.html#hall-sensor-usage">Hall Sensor Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hsi.html#hall-sensor-client">Hall Sensor Client</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hsi.html#hall-sensor-server-implementation">Hall Sensor Server Implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="qei.html">Quadrature Encoder Input</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="qei.html#configuration">Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qei.html#qei-server-usage">QEI Server Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qei.html#qei-client-usage">QEI Client Usage</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api.html#configuration-defines">Configuration Defines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#external-modules">External modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#adc">ADC</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#client-functions">Client functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#server-functions">Server functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#qei">QEI</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#id1">Client functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#id2">Server functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#hall-sensors">Hall sensors</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#id3">Client functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#id4">Server functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#computational-blocks">Computational Blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#watchdog-timer">Watchdog Timer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#high-level-communications">High level communications</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#ethernet-control">Ethernet control</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api.html#can-control">CAN control</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="api.html#lcd-display-and-phy-reset">LCD display and PHY reset</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="api.html#lcd">LCD</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="resources.html">Resource usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="resources.html#mips">MIPS</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" id='d2'>
+        <div class="sphinxsidebarwrapper">
+<h3><a href="#">Motor Control Platform Software Guide (2.0.0)</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="apps.html">Motor Control Platform Example Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="blocks.html">Processing Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="display.html">Display and Shared IO Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pwm.html">Pulse Width Modulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adc.html">Analogue to Digital Converter (ADC) Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comms-high.html">Application Level Communications Interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hsi.html">Hall Sensor Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qei.html">Quadrature Encoder Input</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resources.html">Resource usage</a></li>
+</ul>
+
+<div id="searchbox" style="display: none;margin-bottom: 10px;">
+  <h3>Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+
+    <div class="footer">
+    </div>
+  </body>
+</html>
+
+
+

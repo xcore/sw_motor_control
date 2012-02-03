@@ -1,0 +1,276 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Motor Control Platform Example Applications &mdash; Motor Control Platform Software Guide v2.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/xdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '2.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://mathjax.connectmv.com/MathJax.js"></script>
+    <script type="text/javascript" src="_static/xcomment.js"></script>
+    <link rel="top" title="Motor Control Platform Software Guide v2.0.0 documentation" href="index.html" />
+    <link rel="next" title="Processing Blocks" href="blocks.html" />
+    <link rel="prev" title="Motor Control Platform Software Guide" href="index.html" /> 
+
+<script>
+function setheight() {
+h1 = document.getElementById('d1').style.height;
+h2 = document.getElementById('d2').style.height;
+
+if (parseInt(h1) > parseInt(h2)) {
+document.getElementById('d2').style.height=h1 + "px";
+}
+else {
+document.getElementById('d1').style.height=h2 + "px";
+}
+
+}
+</script>
+</head>
+
+<body onload="setheight();">
+
+  
+
+    <div class="document" id='d1'>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+<div style="float: right">
+<a href="index.html"
+                        title="previous chapter"> &lt&lt </a>
+<a href="blocks.html"
+                        title="next chapter"> &gt&gt </a></p>
+</div>
+
+            
+  <div class="section" id="motor-control-platform-example-applications">
+<h1>Motor Control Platform Example Applications<a class="headerlink" href="#motor-control-platform-example-applications" title="Permalink to this headline">¶</a></h1>
+<p>The current release package ships with two example applications.</p>
+<blockquote>
+<div><ul class="simple">
+<li>An application showing an example Field Oriented Control (FOC) control loop for two motors</li>
+<li>An application showing speed control of two motors using simple sector based commutation</li>
+</ul>
+</div></blockquote>
+<p>Each application is capable of spinning two motors at speeds between 500 and 3800 RPM.  The <em>A</em> and <em>B</em> buttons on the
+control board increase and decrease the speed. The display shows the demand speed, and the current speed of each of
+the two motors.</p>
+<p>If an over-current state is detected by the system, or if the motor spins in an unexpected direction, or stalls, then
+the motor will be shut down, and <em>FAULT</em> will appear by the motor in the display.</p>
+<div class="section" id="basic-bldc-speed-control-application-app-basic-bldc">
+<h2>Basic BLDC Speed Control Application <tt class="docutils literal"><span class="pre">app_basic_bldc</span></tt><a class="headerlink" href="#basic-bldc-speed-control-application-app-basic-bldc" title="Permalink to this headline">¶</a></h2>
+<p>This application makes use of the following functionality.</p>
+<blockquote>
+<div><ul class="simple">
+<li>PWM</li>
+<li>Hall Input</li>
+<li>Display</li>
+<li>Ethernet &amp; Communications</li>
+<li>Processing Blocks</li>
+</ul>
+</div></blockquote>
+<p></p>
+<div class="section" id="motor-control-loop">
+<h3>Motor Control Loop<a class="headerlink" href="#motor-control-loop" title="Permalink to this headline">¶</a></h3>
+<p>The main motor control code for this application can be found in the file <tt class="docutils literal"><span class="pre">src/motor/run_motor.xc</span></tt>. The motor control thread is
+launched using the following function.</p>
+<div class="highlight-none"><div class="highlight"><pre>void run_motor ( chanend c_wd,
+      chanend c_pwm,
+      chanend c_control,
+      port in p_hall,
+      port out p_pwm_lo[],
+      chanend? c_wd );
+</pre></div>
+</div>
+<p>The core of this function is a continuous loop that receives the position of the rotor as measured by the hall sensor, and
+selects which coil to energise based on that position.</p>
+<p>After initially pausing and starting the watchdog the main loop is entered. The main loop responds to two events. The first
+event is a change in hall sensor state. This will trigger an update to the low side of the inverters (p_pwm_lo) and also to
+the PWM side of the inverter based on the hall sensor state. The output states are defined by the lookup arrays declared at
+the start of the function.</p>
+<div class="highlight-none"><div class="highlight"><pre>/* sequence of low side of bridge */
+unsigned bldc_ph_a_lo[6] = {1,1,0,0,0,0};
+unsigned bldc_ph_b_lo[6] = {0,0,1,1,0,0};
+unsigned bldc_ph_c_lo[6] = {0,0,0,0,1,1};
+
+/* sequence of high side of bridge */
+const unsigned bldc_high_seq[6] = {1,2,2,0,0,1};
+</pre></div>
+</div>
+<p>The other event that can be responded to is a command from the c_control channel. This can take the form of two commands. The
+first command is a request to read the current speed value. The second command is a request to change the PWM value that is
+being sent to the PWM thread and subsequently the motor.</p>
+</div>
+<div class="section" id="speed-control-loop">
+<h3>Speed Control Loop<a class="headerlink" href="#speed-control-loop" title="Permalink to this headline">¶</a></h3>
+<p>The speed control loop for this application can be found in the file <tt class="docutils literal"><span class="pre">src/control/speed_control.xc</span></tt>. The thread is launched by calling
+the following function.</p>
+<div class="highlight-none"><div class="highlight"><pre>void speed_control(chanend c_control, chanend c_lcd, chanend c_can_eth_shared );
+</pre></div>
+</div>
+<p>This thread begins by initialising the PID data structure with the required coefficients. Following this a startup sequence is
+entered. This triggers open loop control to get the motor to begin rotating. After a sufficient time period the main speed loop
+is entered into.</p>
+<p>The main loop consists of a select statement that responds to three events. The first event is a timed event that triggers the
+PID control and an update to the motor control threads PWM value. This simply applies the calculated PID error to the set point
+that is requested.</p>
+<p>The second and third events are a request from the LCD and buttons thread or the communication I/O thread. This can either be a request
+from the display for updated speed, set point and PWM demand values or a change in set point.</p>
+</div>
+</div>
+<div class="section" id="foc-application-app-dsc-demo">
+<h2>FOC Application <tt class="docutils literal"><span class="pre">app_dsc_demo</span></tt><a class="headerlink" href="#foc-application-app-dsc-demo" title="Permalink to this headline">¶</a></h2>
+<p>This application makes use of the following functionality.</p>
+<blockquote>
+<div><ul class="simple">
+<li>PWM</li>
+<li>QEI</li>
+<li>ADC</li>
+<li>Display</li>
+<li>Ethernet &amp; Communications</li>
+<li>Processing Blocks</li>
+</ul>
+</div></blockquote>
+<div class="section" id="control-loop">
+<h3>Control Loop<a class="headerlink" href="#control-loop" title="Permalink to this headline">¶</a></h3>
+<p>The control loop can be found in the file <tt class="docutils literal"><span class="pre">src/motor/inner_loop.xc</span></tt>. The thread is launched by calling the following function.</p>
+<div class="highlight-none"><div class="highlight"><pre>void run_motor (
+  chanend? c_in,
+  chanend? c_out,
+  chanend c_pwm,
+  streaming chanend c_qei,
+  chanend c_adc,
+  chanend c_speed,
+  chanend? c_wd,
+  port in p_hall,
+  chanend c_can_eth_shared)
+</pre></div>
+</div>
+<p>The control loop takes input from the encoder, a set speed from the control modules and applies it via
+PWM. It contains two controllers in one loop, the speed controller and the current controller.  The
+speed controller uses the QEI input to measure the speed of the motor, in order to bring the motor to
+the correct demand speed.  The output of this controller is a tangential torque which is required to
+acheive that demand speed.  The torque is passed through the <tt class="docutils literal"><span class="pre">iq_set_point</span></tt> variable.  The
+<tt class="docutils literal"><span class="pre">id_set_point</span></tt> variable is always zero, as no force is required in the radial direction. The torque
+is a direct consequence of current flow in the coils, and therefore the <tt class="docutils literal"><span class="pre">iq_set_point</span></tt> is also a
+measure of the demand current.</p>
+<p>The second controller is the torque/current controller.  This uses the measured coil currents from the ADC,
+and tries to make them equal to the <tt class="docutils literal"><span class="pre">iq_set_point</span></tt> demand. The output of this controller is the extra
+current required to deliver the required torque.  This is used to set the PWM duty cycles for the three
+coils.</p>
+<p>Because the motor is spinning, and the mathematics for the algorithm is done in the frame of reference
+of the spinning rotor, the QEI is used to find the rotor angle. A Park transform is used to transform
+between the fixed coil frame of reference and the spinning rotor frame of reference.</p>
+<p>The Clarke transform is used to convert the three currents in the coils into a radial and tangential two
+component current. This is possible because the coil currents have only two degrees of freedom, the
+third coil current being the sum of the other two.</p>
+<p>This loop is a simple example of how a control loop may be implemented and the function calls that would be
+used to achieve this.</p>
+<p>The first two arguments, <tt class="docutils literal"><span class="pre">c_in</span></tt> and <tt class="docutils literal"><span class="pre">c_out</span></tt> are used to synchronize the PWMs for multiple motors so that they
+do not have their ADC dead time in exactly the same time.</p>
+<p>Further information on field oriented motor control can be found at:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="http://en.wikipedia.org/wiki/Field-Oriented_Control"><span>http://en.wikipedia.org/wiki/Field-Oriented_Control</span></a></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="control-loop-customization">
+<h3>Control loop customization<a class="headerlink" href="#control-loop-customization" title="Permalink to this headline">¶</a></h3>
+<p>As described, there are two distinct control loops in the FOC design, but they are both coded into a single
+loop.  Separating these into two loops, running in two different threads, may be necessary for designs that
+have a complex algorithm governing the speed.</p>
+<p>The speed control part of the loop uses measurements from the QEI to determine the speed, and a set point
+that is passed in on a channel from the display or comms threads.  To extract the speed control algorithm
+and put it into another thread, the following actions could be taken.</p>
+<blockquote>
+<div><ul class="simple">
+<li>Move the speed control PID calculation into a new thread (the speed control thread).</li>
+<li>Move the UI/comms channel processing into the new thread.</li>
+<li>Add a new channel to join the new thread to the torque control thread.</li>
+<li>On a regular timer, send a query to the torque control thread to retreive the rotor speed.
+Alternatively, the QEI thread could be adjusted to have an extra channel input so that the
+speed control thread could query the QEI.</li>
+<li>After the speed control thread has performed the algorithm to determine the new demand tangential
+torque, send the result to the torque control thread through the channel.</li>
+</ul>
+</div></blockquote>
+<p>In this way, the speed control thread can take advantage of a full 62.5 MIPS.  Speed ramping, damping,
+filtering, or predictive torque control could all be implemented.</p>
+</div>
+</div>
+</div>
+
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" id='d2'>
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Motor Control Platform Software Guide (2.0.0)</a></h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Motor Control Platform Example Applications</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#basic-bldc-speed-control-application-app-basic-bldc">Basic BLDC Speed Control Application <tt class="docutils literal"><span class="pre">app_basic_bldc</span></tt></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#motor-control-loop">Motor Control Loop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#speed-control-loop">Speed Control Loop</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#foc-application-app-dsc-demo">FOC Application <tt class="docutils literal"><span class="pre">app_dsc_demo</span></tt></a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#control-loop">Control Loop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#control-loop-customization">Control loop customization</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="blocks.html">Processing Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="display.html">Display and Shared IO Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pwm.html">Pulse Width Modulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adc.html">Analogue to Digital Converter (ADC) Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comms-high.html">Application Level Communications Interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hsi.html">Hall Sensor Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qei.html">Quadrature Encoder Input</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resources.html">Resource usage</a></li>
+</ul>
+
+<div id="searchbox" style="display: none;margin-bottom: 10px;">
+  <h3>Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+
+    <div class="footer">
+    </div>
+  </body>
+</html>
+
+
+

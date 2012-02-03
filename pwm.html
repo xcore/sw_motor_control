@@ -1,0 +1,489 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Pulse Width Modulation &mdash; Motor Control Platform Software Guide v2.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/xdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '2.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://mathjax.connectmv.com/MathJax.js"></script>
+    <script type="text/javascript" src="_static/xcomment.js"></script>
+    <link rel="top" title="Motor Control Platform Software Guide v2.0.0 documentation" href="index.html" />
+    <link rel="next" title="Analogue to Digital Converter (ADC) Interface" href="adc.html" />
+    <link rel="prev" title="Display and Shared IO Interface" href="display.html" /> 
+
+<script>
+function setheight() {
+h1 = document.getElementById('d1').style.height;
+h2 = document.getElementById('d2').style.height;
+
+if (parseInt(h1) > parseInt(h2)) {
+document.getElementById('d2').style.height=h1 + "px";
+}
+else {
+document.getElementById('d1').style.height=h2 + "px";
+}
+
+}
+</script>
+</head>
+
+<body onload="setheight();">
+
+  
+
+    <div class="document" id='d1'>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+<div style="float: right">
+<a href="display.html"
+                        title="previous chapter"> &lt&lt </a>
+<a href="adc.html"
+                        title="next chapter"> &gt&gt </a></p>
+</div>
+
+            
+  <div class="section" id="pulse-width-modulation">
+<h1>Pulse Width Modulation<a class="headerlink" href="#pulse-width-modulation" title="Permalink to this headline">¶</a></h1>
+<p>The PWM driver code is written using a <em>client server</em> model. The client functions are designed to be run from either the main
+control loop or a separate thread that sits between the control loop and the PWM server thread (dependant on timing constraints
+defined by the speed of the control loop).  The client and server communicate with each other through a channel and also some
+shared memory.  Consequently, the client and server threads must reside on the same core.</p>
+<p>The PWM implementation is centre synchronised. This means that the output is of the form shown in the figure. Having centrally
+synchronized PWM reduces the number of coincident edges, thus reducing switching noise as fewer FETs are switched simultaneously.</p>
+<blockquote>
+<div><img alt="_images/pwmFig.pdf" class="align-center" src="_images/pwmFig.pdf" />
+</div></blockquote>
+<div class="section" id="configuration">
+<h2>Configuration<a class="headerlink" href="#configuration" title="Permalink to this headline">¶</a></h2>
+<p>The PWM module has three modes of operation defined, plus a number of other options. The modes are defined in <tt class="docutils literal"><span class="pre">dsc_config.h</span></tt> that
+is part of the application code.</p>
+<div class="section" id="pwm-modes">
+<h3>PWM Modes<a class="headerlink" href="#pwm-modes" title="Permalink to this headline">¶</a></h3>
+<p>The PWM operation mode can be one of the following options:</p>
+<blockquote>
+<div><ul class="simple">
+<li>An inverted mode, whis operates a three leg 180 degree inverter by ensuring that the HI and LO sides of the inverter are switched
+in a complementary manner</li>
+<li>A simple mode, which operates a three leg inverter by switching the HI side and then applying PWM to the low side of the inverter
+to achieve simple commutation</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="dead-time">
+<h3>Dead Time<a class="headerlink" href="#dead-time" title="Permalink to this headline">¶</a></h3>
+<p>The dead time for the inverted mode is defined using the PWM_DEAD_TIME configuration. This is in units of 10ns when using the default reference
+clock of 100MHz.  The dead time is the short period of time between the non-inverted and the inverted PWM lines changing.  During this time,
+neither side of the H-bridge is connected to the motor. The two signals are staggered by the dead time so that the two sides of the H-bridge
+are never ON at the same time, and do not change simultaneously.</p>
+</div>
+<div class="section" id="pwm-resolution">
+<h3>PWM Resolution<a class="headerlink" href="#pwm-resolution" title="Permalink to this headline">¶</a></h3>
+<p>PWM resolution is defined using PWM_MAX_VALUE. The value defined here sets the frequency of the PWM. The relationship between PWM_MAX_VALUE,
+XS1_TIMER_HZ and PWM frequency ($PWM_FREQ$) is defined in the equation below. XS1_TIMER_HZ is defined at compile time by the ReferenceFrequency
+identifier in the project XN file. By default this reference frequency is 100MHz so XS1_TIMER_HZ would have a value of 100,000,000.</p>
+<p><tt class="docutils literal"><span class="pre">PWM_FREQ</span> <span class="pre">=</span> <span class="pre">XS1_TIMER_HZ</span> <span class="pre">/</span> <span class="pre">(PWM_MAX_VAL)</span></tt></p>
+<p>So with an example value of PWM_MAX_VALUE being 4096, the PWM_FREQ will be 24,414Hz.  Likewise, for a PWM frequency
+of 25Hz, the PWM_MAX_VAL would be 100000000 / 25 = 4000000.  The maximum value for the PWM_MAX_VAL is 0x3FFFFFFF-PWM_DEAD_TIME, because
+the timestamps used to calculate the triggering of the PWM need to be no more than half of a 32 bit word into the future.  This gives
+a minimum PWM period of around 0.1Hz.</p>
+<p>In the FOC example, the ReferenceFrequency is set to 250MHz.  This changes the calculation and gives the following:</p>
+<p><tt class="docutils literal"><span class="pre">PWM_FREQ</span> <span class="pre">=</span> <span class="pre">250000000</span> <span class="pre">/</span> <span class="pre">4096</span> <span class="pre">=</span> <span class="pre">61.035</span> <span class="pre">kHz</span></tt></p>
+<p>The PWM_MAX_VALUE is the total length of time which each PWM cycle occupies.  Because the PWM is symmetrical, there are only
+PWM_MAX_VALUE / 2 steps that are available for positioning the rising PWM edge, and likewise for the falling PWM edge.  Thus the
+number of bits available for a PWM_MAX_VALUE of 4096 is actually 11 bits.  Note however that the update_pwm client function will
+shift the input value down by one bit, so that the client function should still provide a duty cycle value in the range of
+0 to PWM_MAX_VALUE-1.</p>
+<p>The following table gives some values of associated resolution and period for 250MHz and 100MHz clock rates and symmetrical.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="33%" />
+<col width="32%" />
+<col width="35%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Clock / MHz</th>
+<th class="head">Period / Hz</th>
+<th class="head">Resolution / bits</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>250</td>
+<td>488,281</td>
+<td>8</td>
+</tr>
+<tr><td>250</td>
+<td>122,070</td>
+<td>10</td>
+</tr>
+<tr><td>250</td>
+<td>61,035</td>
+<td>11</td>
+</tr>
+<tr><td>250</td>
+<td>30,517</td>
+<td>12</td>
+</tr>
+<tr><td>250</td>
+<td>1,907</td>
+<td>16</td>
+</tr>
+<tr><td>100</td>
+<td>195,312</td>
+<td>8</td>
+</tr>
+<tr><td>100</td>
+<td>48,828</td>
+<td>10</td>
+</tr>
+<tr><td>100</td>
+<td>24,414</td>
+<td>11</td>
+</tr>
+<tr><td>100</td>
+<td>12,207</td>
+<td>12</td>
+</tr>
+<tr><td>100</td>
+<td>762</td>
+<td>16</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="locking-the-adc-trigger-to-pwm">
+<h3>Locking the ADC trigger to PWM<a class="headerlink" href="#locking-the-adc-trigger-to-pwm" title="Permalink to this headline">¶</a></h3>
+<p>In some implementations it is desirable to lock the ADC conversion trigger to the PWM. This allows the system to sample the ADC at a
+specific point in the PWM period (such as when the lower leg is guaranteed to be on). This is enabled using the LOCK_ADC_TO_PWM
+definition.  The PWM server thread function <tt class="docutils literal"><span class="pre">pwm_service_inv_triggered</span></tt> should be used, which has extra arguments to include a channel
+which signals the ADC module, and a dummy port which is used as a timing source for the ADC trigger action.  This port is not actually
+driven, and a port which is not pinned out of the device can be used.</p>
+</div>
+</div>
+<div class="section" id="pwm-server-usage">
+<h2>PWM Server Usage<a class="headerlink" href="#pwm-server-usage" title="Permalink to this headline">¶</a></h2>
+<p>The usage for each mode is described below. The PWM server needs to be instantiated on the same core as the PWM client. One of the following
+is required to be included.</p>
+<blockquote>
+<div><ul class="simple">
+<li><tt class="docutils literal"><span class="pre">pwm_service_simple.h</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">pwm_service_inv.h</span></tt></li>
+</ul>
+</div></blockquote>
+<p></p>
+<div class="section" id="inverter-mode">
+<h3>Inverter Mode<a class="headerlink" href="#inverter-mode" title="Permalink to this headline">¶</a></h3>
+<p>To instantiate the PWM service, one of the following function needs to be called.  The first is used when ADC synchronization is required,
+for which <tt class="docutils literal"><span class="pre">LOCK_ADC_TO_PWM</span></tt> must be defined.</p>
+<div class="highlight-none"><div class="highlight"><pre>void do_pwm_inv_triggered( chanend c_pwm,
+      chanend c_adc_trig,
+          in port dummy_port,
+          buffered out port:32 p_pwm[],
+          buffered out port:32 p_pwm_inv[],
+          clock clk);
+
+void do_pwm_inv( chanend c_pwm,
+      buffered out port:32 p_pwm[],
+      buffered out port:32 p_pwm_inv[],
+      clock clk);
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">chanend</span> <span class="pre">c_pwm</span></tt> is the channel used to communication with the client side.</p>
+<p><tt class="docutils literal"><span class="pre">chanend</span> <span class="pre">c_adc_trig</span></tt> is the channel used to communicate the triggering of the ADC conversion to the ADC thread.</p>
+<p><tt class="docutils literal"><span class="pre">in</span> <span class="pre">port</span> <span class="pre">dummy_port</span></tt> is an unused port that is used to consistently trigger the ADC conversion. This port can overlap other used
+ports at it is never written to and the input value is never used.</p>
+<p><tt class="docutils literal"><span class="pre">buffered</span> <span class="pre">out</span> <span class="pre">port:32</span> <span class="pre">p_pwm[]</span></tt> and <tt class="docutils literal"><span class="pre">buffered</span> <span class="pre">out</span> <span class="pre">port:32</span> <span class="pre">p_pwm_inv[]</span></tt> are arrays of 1 bit ports with an array length of 3 that
+are used for the HI and LO sides of inverter respectively.</p>
+<p><tt class="docutils literal"><span class="pre">clock</span> <span class="pre">clk</span></tt> is the clock block that the PWM thread uses for timing output.</p>
+</div>
+<div class="section" id="simple-commutation-mode">
+<h3>Simple commutation mode<a class="headerlink" href="#simple-commutation-mode" title="Permalink to this headline">¶</a></h3>
+<p>This mode is designed for simple commutation of a brushless DC motor. An example of the output of this mode is shown in the figure
+below.  Only the low sides of the three bridges is driven by the PWM service.  It is up to the associated application to drive
+the high sides of the bridges in conjunction.  The application must make sure that the low and high sides of the same bridge are
+never driven together.</p>
+<blockquote>
+<div><img alt="_images/bldcpwm.pdf" src="_images/bldcpwm.pdf" style="width: 100%;" />
+</div></blockquote>
+<p>To instantiate the PWM service in this mode the following function needs to be called.</p>
+<div class="highlight-none"><div class="highlight"><pre>void do_pwm_simple( chanend c_pwm,
+      buffered out port:32 p_pwm[],
+      clock clk);
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">chanend</span> <span class="pre">c_pwm</span></tt> is the channel used to communication with the client side.</p>
+<p><tt class="docutils literal"><span class="pre">buffered</span> <span class="pre">out</span> <span class="pre">port:32</span> <span class="pre">p_pwm[]</span></tt> is an array of 1 bit ports with an array length of 3 that are used for the HI or LO sides of the
+inverter respectively.</p>
+<p><tt class="docutils literal"><span class="pre">clock</span> <span class="pre">clk</span></tt> is the clock block that the PWM thread uses for timing output.</p>
+</div>
+</div>
+<div class="section" id="pwm-client-usage">
+<h2>PWM Client Usage<a class="headerlink" href="#pwm-client-usage" title="Permalink to this headline">¶</a></h2>
+<p>Because the client and server use shared memory to communicate, the PWM client functions must be operated on the same core as the
+server. The usage of the client functions in the various operational modes are described below. The following must be included to
+call the client functions, depending on the commutation mode chosen:</p>
+<blockquote>
+<div><ul class="simple">
+<li><tt class="docutils literal"><span class="pre">pwm_cli_simple.h</span></tt></li>
+<li><tt class="docutils literal"><span class="pre">pwm_cli_inv.h</span></tt></li>
+</ul>
+</div></blockquote>
+<div class="section" id="id1">
+<h3>Inverter Mode<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>The only call required to update the PWM values that are currently being output is listed below. It takes only two arguments, the
+channel to the PWM server and an array of size three containing unsigned integers that must be between 0 and PWM_MAX_VALUE.</p>
+<p><tt class="docutils literal"><span class="pre">void</span> <span class="pre">update_pwm_inv(</span> <span class="pre">chanend</span> <span class="pre">c,</span> <span class="pre">unsigned</span> <span class="pre">value[]);</span></tt></p>
+<p>This function will process the values and pass them to the PWM service thread.</p>
+</div>
+<div class="section" id="basic-bldc-commutation-mode">
+<h3>Basic BLDC commutation mode<a class="headerlink" href="#basic-bldc-commutation-mode" title="Permalink to this headline">¶</a></h3>
+<p>The basic BLDC commutation mode client operates slightly differently to achieve the waveform shown in the previous figure. The function
+call listed below must be utilised.</p>
+<p>Only a single output is active at any one time and this channel must be identified using the pwm_chan argument, this is a value between
+0 and 2. The corresponding inverted leg of the inverter needs to be switched manually in the control thread. Please refer to the
+app_basic_bldc application and associated documentation.</p>
+<div class="highlight-none"><div class="highlight"><pre>void update_pwm_simple( chanend c,
+      unsigned value,
+      unsigned pwm_chan );
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="pwm-service-implementation">
+<h2>PWM Service Implementation<a class="headerlink" href="#pwm-service-implementation" title="Permalink to this headline">¶</a></h2>
+<p>The PWM service is designed as a continuously running loop that cannot be blocked. This is important to ensure continuous output as stalling
+an output on an inverter in any application could result in serious failure of the appliance that is being driven.</p>
+<p>To achieve the behaviour needed the PWM services are all written in assembly language. This is done to achieve a fine grained control over
+the instruction sequences required to load up the buffers in the ports and also the port timers.</p>
+<p>The PWM service pulls the required data from a shared memory location. This is a <em>double buffered</em> scheme where the client will update the memory
+area that is not currently in use and then inform the service via a channel which memory location it should look at for the output data. The
+update sequence is looked at in more detail in the discussion of the client implementation.</p>
+<div class="section" id="pwm-service-port-initialisation-pwm-service-inv-xc">
+<h3>PWM service port initialisation <tt class="docutils literal"><span class="pre">pwm_service_inv.xc</span></tt><a class="headerlink" href="#pwm-service-port-initialisation-pwm-service-inv-xc" title="Permalink to this headline">¶</a></h3>
+<p>This file achieves a number of functions. The primary function is a wrapper that is called to start the PWM service running. This configures the
+port and then enters the main loop for the PWM service.</p>
+<p>Firstly three legs of the inverter drive are configured to be attached to the clock block and have an initial output of 0. This is deemed to be a
+safe start-up configuration as all drives are switched off.</p>
+<p>Then, in the loop, the <em>inverted</em> ports are configured to output the inverse or complementary of the data that is put into the buffers. This means
+that only a single data set need be maintained and removes the need for inverting the data using the instruction set as this is done by the
+port logic.</p>
+<p>Following the loop that sets up the individual PWM channels is the configuration for the ADC triggering port. This is an input port that is attached
+to the same clock block as the PWM output ports. An input port that overlaps other in use ports (as described in the usage section above) will not
+affect their operation. The dummy port is just used for timing synchronisation when signalling the ADC.</p>
+<p>Finally the clock block is started.</p>
+<p>Once the ports have been configured the output will remain in the initialised state until the thread receives notification from the client thread
+that data is available in the shared memory for output. It is important to wait for the first client update otherwise there is a risk of output
+uninitialised data which may damage the drive circuitry.</p>
+<p>Once this information is received the main loop is entered.</p>
+</div>
+<div class="section" id="pwm-service-main-loop-pwm-op-inv-s">
+<h3>PWM service main loop <tt class="docutils literal"><span class="pre">pwm_op_inv.S</span></tt><a class="headerlink" href="#pwm-service-main-loop-pwm-op-inv-s" title="Permalink to this headline">¶</a></h3>
+<p>The operation of the main loop is best described visually as in the flow chart shown in the figure. The entries in the flow chart relate directly
+to the labels within the main loop.  A brief overview of each part of the main loop are given below. These should be consulted alongside the
+comments that reside in the code itself.</p>
+<blockquote>
+<div><img alt="_images/pwm_loop.pdf" src="_images/pwm_loop.pdf" style="width: 100%;" />
+</div></blockquote>
+<p>The code begins at the pwm_op_inv entry point. This begins by running a standard callee save. This preserves any registers that we will clobber
+as part of the operation of this function. The arguments to the function are then stored on the stack itself in sp[8:11]. This ensures we have
+access to them later.</p>
+<p>Following this the registers are moved around into the configuration we require and data is read from the t_data_out structure after calculating
+the appropriate pointers. The port resource IDs are then loaded into registers and the <em>mode</em> of operation is read and the port timer read to
+initialise the synchronisation point.</p>
+<p>The code then branches to the appropriate mode according to the mode value that has been read from the data structure provided to
+it by the client.</p>
+</div>
+<div class="section" id="loop-modes">
+<h3>Loop modes<a class="headerlink" href="#loop-modes" title="Permalink to this headline">¶</a></h3>
+<p>By default, the PWM is configured to be unable to do the top and bottom 0.5% of the duty cycle range.  This prevents
+the system having to deal with the unusual cases where the output is a very short or very long pulse.  If the constant
+<em>PWM_CLIPPED_RANGE</em> is removed from the <em>dsc_pwm_common.h</em> file, then the PWM will be able to cope with the full
+duty cycle range.</p>
+<p>In this case, to achieve the required output, the port buffers are used to create the extremely short or long pulses as shown in
+the figure. The green boxes indicate a buffer of data that is output from the port.</p>
+<blockquote>
+<div><img alt="_images/bufferedPWM.pdf" src="_images/bufferedPWM.pdf" style="width: 100%;" />
+</div></blockquote>
+<p>This method of output requires a combination of one or two buffer outputs depending on the length of these pulses. Rather than calculate
+these during runtime the client will ascertain the particular combination of outputs required and then will define the mode. The different
+buffering output modes are individually implemented to reduce branching overhead within the loop.</p>
+<p>At the entrance to the loop mode (taking PWM_MODE_4 as the working example) the mode value is replaced with the channel end resource ID. We
+then enter the core of the PWM service loop. The loop will setup each of the ports in sequence, calculating the appropriate port timer
+value from the data set that is provided by the client.</p>
+<p>When the option to lock the ADC to PWM is required then the system will block on the in instruction while it waits for the timer on the dummy
+port. Once the port timer reaches the required value the thread will output the token to the ADC thread.</p>
+<p>If the ADC to PWM lock is not utilised then the thread will pause on the next setpt instruction until that particular port timer value is met
+and the data is output. The ports are loaded in reverse order to turn them off at the correct time. Once all of the channels are reloaded the
+thread will check for data on the update channel. If data is found then it will immediately enter GO_UPDATE_M1 otherwise it will continue through
+the loop calculating the next synchronisation point and looping back to the top of the output sequence.</p>
+<p>If the system branches to update then it will execute a sequence very similar to the entry of the function, reading the data out of the data
+structure and setting up the relevant memory pointers. The update for PWM_MODE_[1:6] loops are all the same. In the case of PWM_MODE_7 the
+update sequence is slightly different due to the fact that the event is likely to occur when one of the channels is high. This means that a
+further output is required before receiving the update from the client.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="31%" />
+<col width="69%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">MODE</th>
+<th class="head">PWM pulse pattern</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>1</td>
+<td>3 short</td>
+</tr>
+<tr><td>2</td>
+<td>2 short + 1 standard</td>
+</tr>
+<tr><td>3</td>
+<td>1 short + 2 standard</td>
+</tr>
+<tr><td>4</td>
+<td>3 standard</td>
+</tr>
+<tr><td>5</td>
+<td>1 short + 1 standard + 1 very long</td>
+</tr>
+<tr><td>6</td>
+<td>1 very long + 2 standard</td>
+</tr>
+<tr><td>7</td>
+<td>2 short + 1 very long</td>
+</tr>
+<tr><td>unused</td>
+<td>1 standard + 2 very long</td>
+</tr>
+<tr><td>unused</td>
+<td>1 short + 2 very long</td>
+</tr>
+<tr><td>unused</td>
+<td>3 very long</td>
+</tr>
+</tbody>
+</table>
+<p>To drive the ports, the PWM uses the 32 bit buffered ports. The <em>short</em> pulse, which is known as a <em>SINGLE</em> internally, is one where the duration of the
+pulse is shorter than 32 reference clock cycles, and the buffer is silled with an appropriate bit pattern to generate the pulse.  The <em>very long</em> pulses,
+known as <em>LONG_SINGLE</em>,  are within 31 reference clocks of the PWM_MAX_VALUE and are therefore similar to the <em>short</em> pulses.  The <em>standard</em> pulses, known
+as <em>DOUBLE</em>, output both the rising edge and falling edge as separate words, hence the name double.</p>
+<p>Note that the mode consisting of three very long pulses is not catered for.  The client clips the values if this case is attempted.</p>
+</div>
+</div>
+<div class="section" id="pwm-client-implementation">
+<h2>PWM Client Implementation<a class="headerlink" href="#pwm-client-implementation" title="Permalink to this headline">¶</a></h2>
+<p>Before a specific client for the inverting mode starts, it needs to let the server thread know where its shared memory control buffers are.  A call
+to <tt class="docutils literal"><span class="pre">pwm_share_control_buffer_address_with_server</span></tt> will pass this information to the server.  Each client can only talk to one server, but since
+multiple client/server components can co-exist, each must have its own memory buffer.</p>
+<p>The PWM client is required to do a number of functions to provide the correct data to the PWM service that outputs the correct values and timings
+to the ports. The PWM client must:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Calculate the output values</li>
+<li>Calculate the timing values (taking into account dead time)</li>
+<li>Sort the ports into time order</li>
+<li>Ascertain the loop mode required</li>
+<li>Maintain the shared data set, including which buffer is in use and which one can be updated</li>
+</ul>
+</div></blockquote>
+<p>Taking the inverter mode as our working example (located in <tt class="docutils literal"><span class="pre">module_dsc_pwm/src/dsc_pwm_cli/pwm_cli_inv</span></tt>) the
+function <tt class="docutils literal"><span class="pre">update_pwm_inv</span></tt> first
+saves the PWM values for later use and then initialises the channel ordering array to assume a sequential order
+of output.</p>
+<p>If the non-clipped PWM range is being used, then following this the calculation of the timings and output values
+are done for each of the channel. This is done by passing the relevant PWM value
+and data set references to <tt class="docutils literal"><span class="pre">calculate_data_out_ref</span></tt>. This function also ascertains the type of output which
+can be one of three values <tt class="docutils literal"><span class="pre">SINGLE</span></tt>, <tt class="docutils literal"><span class="pre">DOUBLE</span></tt> and <tt class="docutils literal"><span class="pre">LONG_SINGLE</span></tt>.</p>
+<p>Once the calculations for each of the PWM channels is completed they can be ordered. This is done using the
+<tt class="docutils literal"><span class="pre">order_pwm</span></tt> function. This orders the values in the channel ID buffer and also works out the loop mode that is required.</p>
+<p>When the values have been ordered and the loop mode calculated the buffer number is passed to the PWM service to indicate an update.</p>
+</div>
+</div>
+
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" id='d2'>
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Motor Control Platform Software Guide (2.0.0)</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="apps.html">Motor Control Platform Example Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="blocks.html">Processing Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="display.html">Display and Shared IO Interface</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Pulse Width Modulation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#configuration">Configuration</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pwm-modes">PWM Modes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dead-time">Dead Time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pwm-resolution">PWM Resolution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#locking-the-adc-trigger-to-pwm">Locking the ADC trigger to PWM</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pwm-server-usage">PWM Server Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#inverter-mode">Inverter Mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#simple-commutation-mode">Simple commutation mode</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pwm-client-usage">PWM Client Usage</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Inverter Mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-bldc-commutation-mode">Basic BLDC commutation mode</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pwm-service-implementation">PWM Service Implementation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#pwm-service-port-initialisation-pwm-service-inv-xc">PWM service port initialisation <tt class="docutils literal"><span class="pre">pwm_service_inv.xc</span></tt></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pwm-service-main-loop-pwm-op-inv-s">PWM service main loop <tt class="docutils literal"><span class="pre">pwm_op_inv.S</span></tt></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#loop-modes">Loop modes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#pwm-client-implementation">PWM Client Implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="adc.html">Analogue to Digital Converter (ADC) Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comms-high.html">Application Level Communications Interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hsi.html">Hall Sensor Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qei.html">Quadrature Encoder Input</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resources.html">Resource usage</a></li>
+</ul>
+
+<div id="searchbox" style="display: none;margin-bottom: 10px;">
+  <h3>Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+
+    <div class="footer">
+    </div>
+  </body>
+</html>
+
+
+

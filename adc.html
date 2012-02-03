@@ -1,0 +1,159 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Analogue to Digital Converter (ADC) Interface &mdash; Motor Control Platform Software Guide v2.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/xdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '2.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://mathjax.connectmv.com/MathJax.js"></script>
+    <script type="text/javascript" src="_static/xcomment.js"></script>
+    <link rel="top" title="Motor Control Platform Software Guide v2.0.0 documentation" href="index.html" />
+    <link rel="next" title="Application Level Communications Interfaces" href="comms-high.html" />
+    <link rel="prev" title="Pulse Width Modulation" href="pwm.html" /> 
+
+<script>
+function setheight() {
+h1 = document.getElementById('d1').style.height;
+h2 = document.getElementById('d2').style.height;
+
+if (parseInt(h1) > parseInt(h2)) {
+document.getElementById('d2').style.height=h1 + "px";
+}
+else {
+document.getElementById('d1').style.height=h2 + "px";
+}
+
+}
+</script>
+</head>
+
+<body onload="setheight();">
+
+  
+
+    <div class="document" id='d1'>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+<div style="float: right">
+<a href="pwm.html"
+                        title="previous chapter"> &lt&lt </a>
+<a href="comms-high.html"
+                        title="next chapter"> &gt&gt </a></p>
+</div>
+
+            
+  <div class="section" id="analogue-to-digital-converter-adc-interface">
+<h1>Analogue to Digital Converter (ADC) Interface<a class="headerlink" href="#analogue-to-digital-converter-adc-interface" title="Permalink to this headline">¶</a></h1>
+<p>The analogue to digital interface currently provided is written for the 7265. This provides a clocked serial output
+following a sample and hold conversion trigger signal. The physical interface of the ADC is not covered in detail
+as the interface for ADC&#8217;s will vary from manufacturer to manufacturer. Examples of the interfaces for the MAX1379
+and LTC1408 is also available in this module.</p>
+<p>Besides the client and server interfaces the key issue discussed in this section is the synchronisation of the ADC to
+the PWM and how this is achieved on the ADC side.</p>
+<p>The preprocessor define LOCK_ADC_TO_PWM must be 0 or 1 for off and on respectively. This defines whether the ADC readings
+are triggered by the PWM so that measurements can be taken at the appropriate point in the PWM cycle.</p>
+<div class="section" id="adc-server-usage">
+<h2>ADC Server Usage<a class="headerlink" href="#adc-server-usage" title="Permalink to this headline">¶</a></h2>
+<p>The header file <em>adc_7265.h</em> and function call <em>adc_7265_triggered</em> are required to operate the ADC software
+as a server. This server is utilised in the case where the ADC is locked to the PWM.</p>
+<p>See the API section for a full description of the function call.</p>
+</div>
+<div class="section" id="adc-client-usage">
+<h2>ADC Client Usage<a class="headerlink" href="#adc-client-usage" title="Permalink to this headline">¶</a></h2>
+<p>The functions below are the primary method of collecting ADC data from the ADC service.</p>
+<p>The client can be utilised as follows:</p>
+<div class="highlight-none"><div class="highlight"><pre>#include &quot;adc_client.h&quot;
+
+void do_adc_calibration(chanend c_adc);
+
+{int, int, int} get_adc_vals_calibrated_int16(chanend c_adc);
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">do_adc_calibration(...)</span></tt> is used to initialise the ADC and calibrate the 0 point. The server will enter a mode where the next
+512 samples are averaged, and the result is considered to be the zero point of further readings.</p>
+<p><tt class="docutils literal"><span class="pre">get_adc_vals_calibrated_int16(...)</span></tt> is used to get the three ADC values with the zero calibration, offset and scaling applied
+to get a signed 16 bit value. This is a multiple return function in channel order.</p>
+</div>
+<div class="section" id="adc-server-implementation">
+<h2>ADC Server Implementation<a class="headerlink" href="#adc-server-implementation" title="Permalink to this headline">¶</a></h2>
+<p>The ADC server implementation discussed here is the triggered variant of the ADC code.
+The ADC server first configures the ports as clocked inputs and outputs. Following this the main loop is entered.</p>
+<p>ADC readings are triggered by the receipt of a trigger control token over the channel. A token is used as this offers
+minimum latency for channel communication. Following the token being received the ADC values are read after a time
+constant that is calibrated to align with the appropriate measurement point.</p>
+<p>ADC values can be requested from the server at any point.</p>
+<p>The screenshot shows three PWM ports and the ADC conversion trigger port. It shows that the ADC trigger rising edge,
+where the sample hold is made, is directly centred in the PWM channel inter-cycle period.</p>
+<blockquote>
+<div><img alt="_images/pwm-adc-sync.png" src="_images/pwm-adc-sync.png" style="width: 100%;" />
+</div></blockquote>
+</div>
+</div>
+
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" id='d2'>
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Motor Control Platform Software Guide (2.0.0)</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="apps.html">Motor Control Platform Example Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="blocks.html">Processing Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="display.html">Display and Shared IO Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pwm.html">Pulse Width Modulation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Analogue to Digital Converter (ADC) Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#adc-server-usage">ADC Server Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adc-client-usage">ADC Client Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adc-server-implementation">ADC Server Implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="comms-high.html">Application Level Communications Interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hsi.html">Hall Sensor Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qei.html">Quadrature Encoder Input</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resources.html">Resource usage</a></li>
+</ul>
+
+<div id="searchbox" style="display: none;margin-bottom: 10px;">
+  <h3>Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+
+    <div class="footer">
+    </div>
+  </body>
+</html>
+
+
+

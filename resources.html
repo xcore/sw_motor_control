@@ -1,0 +1,231 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Resource usage &mdash; Motor Control Platform Software Guide v2.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/xdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '2.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://mathjax.connectmv.com/MathJax.js"></script>
+    <script type="text/javascript" src="_static/xcomment.js"></script>
+    <link rel="top" title="Motor Control Platform Software Guide v2.0.0 documentation" href="index.html" />
+    <link rel="prev" title="API" href="api.html" /> 
+
+<script>
+function setheight() {
+h1 = document.getElementById('d1').style.height;
+h2 = document.getElementById('d2').style.height;
+
+if (parseInt(h1) > parseInt(h2)) {
+document.getElementById('d2').style.height=h1 + "px";
+}
+else {
+document.getElementById('d1').style.height=h2 + "px";
+}
+
+}
+</script>
+</head>
+
+<body onload="setheight();">
+
+  
+
+    <div class="document" id='d1'>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+<div style="float: right">
+<a href="api.html"
+                        title="previous chapter"> &lt&lt </a>
+</div>
+
+            
+  <div class="section" id="resource-usage">
+<h1>Resource usage<a class="headerlink" href="#resource-usage" title="Permalink to this headline">¶</a></h1>
+<p>The table shows the resource usage for the main components in the system.  The
+transforms are a functional library and thus do not have a thread or port usage.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="16%" />
+<col width="17%" />
+<col width="20%" />
+<col width="16%" />
+<col width="14%" />
+</colgroup>
+<tbody valign="top">
+<tr><td>Component</td>
+<td>Threads</td>
+<td>Memory</td>
+<td>Channel Ends</td>
+<td>1b Ports</td>
+<td>4b ports</td>
+</tr>
+<tr><td>ADC</td>
+<td>1</td>
+<td>2.2KB</td>
+<td>2</td>
+<td>4</td>
+<td>1</td>
+</tr>
+<tr><td>PWM</td>
+<td>1</td>
+<td>2.8KB</td>
+<td>2</td>
+<td>6</td>
+<td>0</td>
+</tr>
+<tr><td>Transforms</td>
+<td>0</td>
+<td>264B</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr><td>QEI</td>
+<td>1</td>
+<td>400B</td>
+<td>1</td>
+<td>0</td>
+<td>1</td>
+</tr>
+<tr><td>Watchdog</td>
+<td>1</td>
+<td>120B</td>
+<td>1</td>
+<td>1</td>
+<td>0</td>
+</tr>
+<tr><td>PID</td>
+<td>0</td>
+<td>300B</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+</tbody>
+</table>
+<p>See the documentation for the ethernet and CAN software components for their
+resource usage.</p>
+<div class="section" id="mips">
+<h2>MIPS<a class="headerlink" href="#mips" title="Permalink to this headline">¶</a></h2>
+<p>This table shows the FOC control loop worst case timing, against the number of threads
+running in the motor control core. These values were measured on a 500MHz core.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="40%" />
+<col width="35%" />
+<col width="25%" />
+</colgroup>
+<tbody valign="top">
+<tr><td>Number of threads</td>
+<td>MIPS per thread</td>
+<td>Loop time</td>
+</tr>
+<tr><td>4</td>
+<td>125</td>
+<td>7.9 us</td>
+</tr>
+<tr><td>5</td>
+<td>100</td>
+<td>10 us</td>
+</tr>
+<tr><td>6</td>
+<td>83.3</td>
+<td>12 us</td>
+</tr>
+<tr><td>7</td>
+<td>71.4</td>
+<td>14 us</td>
+</tr>
+<tr><td>8</td>
+<td>62.5</td>
+<td>16 us</td>
+</tr>
+</tbody>
+</table>
+<p>For a single motor, using PWM, ADC, QEI and a control loop, only 4 threads are required on
+the motor core. Another core can be used to provide further functionality, or for a single
+motor, the remaining 4 threads in the motor core can be used for control and IO, giving a
+single core FOC motor control solution.</p>
+<p>A dual motor, single core FOC solution can be created, by using the dual-QEI mode of the
+QEI server.  The threads for such a solution would be:</p>
+<blockquote>
+<div><ul class="simple">
+<li>PWM for motor 1</li>
+<li>PWM for motor 2</li>
+<li>dual QEI</li>
+<li>Control loop for motor 1</li>
+<li>Control loop for motor 2</li>
+<li>ADC</li>
+<li>Watchdog and main application</li>
+<li>CAN PHY interface</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" id='d2'>
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Motor Control Platform Software Guide (2.0.0)</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="apps.html">Motor Control Platform Example Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="blocks.html">Processing Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="display.html">Display and Shared IO Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pwm.html">Pulse Width Modulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adc.html">Analogue to Digital Converter (ADC) Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comms-high.html">Application Level Communications Interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hsi.html">Hall Sensor Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qei.html">Quadrature Encoder Input</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Resource usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#mips">MIPS</a></li>
+</ul>
+</li>
+</ul>
+
+<div id="searchbox" style="display: none;margin-bottom: 10px;">
+  <h3>Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+
+    <div class="footer">
+    </div>
+  </body>
+</html>
+
+
+

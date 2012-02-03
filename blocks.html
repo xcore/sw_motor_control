@@ -1,0 +1,197 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Processing Blocks &mdash; Motor Control Platform Software Guide v2.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/xdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '2.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://mathjax.connectmv.com/MathJax.js"></script>
+    <script type="text/javascript" src="_static/xcomment.js"></script>
+    <link rel="top" title="Motor Control Platform Software Guide v2.0.0 documentation" href="index.html" />
+    <link rel="next" title="Display and Shared IO Interface" href="display.html" />
+    <link rel="prev" title="Motor Control Platform Example Applications" href="apps.html" /> 
+
+<script>
+function setheight() {
+h1 = document.getElementById('d1').style.height;
+h2 = document.getElementById('d2').style.height;
+
+if (parseInt(h1) > parseInt(h2)) {
+document.getElementById('d2').style.height=h1 + "px";
+}
+else {
+document.getElementById('d1').style.height=h2 + "px";
+}
+
+}
+</script>
+</head>
+
+<body onload="setheight();">
+
+  
+
+    <div class="document" id='d1'>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+<div style="float: right">
+<a href="apps.html"
+                        title="previous chapter"> &lt&lt </a>
+<a href="display.html"
+                        title="next chapter"> &gt&gt </a></p>
+</div>
+
+            
+  <div class="section" id="processing-blocks">
+<h1>Processing Blocks<a class="headerlink" href="#processing-blocks" title="Permalink to this headline">¶</a></h1>
+<p>This module provides a number of standard computation functions that are utilised in motor control. These are outlined below.</p>
+<blockquote>
+<div><ul class="simple">
+<li>PID Calculation Routines</li>
+<li>Clarke &amp; Park Transforms</li>
+<li>Sine &amp; Cosine lookup</li>
+</ul>
+</div></blockquote>
+<div class="section" id="pid-calculation-routines">
+<h2>PID Calculation Routines<a class="headerlink" href="#pid-calculation-routines" title="Permalink to this headline">¶</a></h2>
+<p>The processing blocks module provides the following PID calculation routines. The coefficients are signed 16 bit fixed point.</p>
+<div class="highlight-none"><div class="highlight"><pre>#include &quot;pid_regulator.h&quot;
+
+void init_pid( int Kp, int Ki, int Kd, pid_data *d );
+
+int pid_regulator( int set_point, int actual, pid_data *d );
+
+int pid_regulator_delta( int set_point, int actual, pid_data *d );
+
+int pid_regulator_delta_cust_error( int error, pid_data *d );
+
+int pid_regulator_delta_cust_error_speed( int error, pid_data &amp;d );
+
+int pid_regulator_delta_cust_error_Iq_control( int error, pid_data &amp;iq );
+
+int pid_regulator_delta_cust_error_Id_control( int error, pid_data &amp;id );
+</pre></div>
+</div>
+<p><tt class="docutils literal"><span class="pre">init_pid</span></tt> initialises the <tt class="docutils literal"><span class="pre">pid_data</span></tt> structure values with the coefficient values for <em>Kp</em>, <em>Ki</em> and <em>Kd</em>. These value are the proportional,
+integral and differential coefficients controlling the PID controller. The compile time constant <tt class="docutils literal"><span class="pre">PID_RESOLUTION</span></tt> determines how many fractional bits
+are present in these coefficients.</p>
+<p><tt class="docutils literal"><span class="pre">pid_regulator</span></tt> performs a standard PID calculation using the <tt class="docutils literal"><span class="pre">set_point</span></tt> and <tt class="docutils literal"><span class="pre">actual</span></tt> values. It calculates the error and applies the PID coefficients
+and then returns the result. The returned error will be applied to the <tt class="docutils literal"><span class="pre">set_point</span></tt> value.</p>
+<p><tt class="docutils literal"><span class="pre">pid_regulator_delta</span></tt> performs a standard PID calculation using the <tt class="docutils literal"><span class="pre">set_point</span></tt> and <tt class="docutils literal"><span class="pre">actual</span></tt> values. It calculates the error and applies the PID
+coefficients and then returns the resulting error.</p>
+<p><tt class="docutils literal"><span class="pre">pid_regulator_delta_cust_error</span></tt> performs a standard PID calculation using a previously calculated error value. It calculates the error and applies
+the PID coefficients and then returns the resulting error.</p>
+<p><tt class="docutils literal"><span class="pre">pid_regulator_delta_cust_error_speed</span></tt>, <tt class="docutils literal"><span class="pre">pid_regulator_delta_cust_error_Iq_control</span></tt> and <tt class="docutils literal"><span class="pre">pid_regulator_delta_cust_error_Id_control</span></tt> are
+customized control PIDs that limit the output to a specific range appropriate to the variable being controlled.</p>
+</div>
+<div class="section" id="clarke-park-transforms">
+<h2>Clarke &amp; Park Transforms<a class="headerlink" href="#clarke-park-transforms" title="Permalink to this headline">¶</a></h2>
+<p>The processing blocks module provides the following Clarke and park transforms. The internal coefficients are all fixed point values.</p>
+<div class="highlight-none"><div class="highlight"><pre>#include &quot;park.h&quot;
+void park_transform( int *Id, int *Iq,
+                     int I_alpha, int I_beta,
+                     unsigned theta );
+
+void inverse_park_transform( int *I_alpha, int *I_beta,
+                             int Id, int Iq,
+                             unsigned theta );
+
+
+#include &quot;clarke.h&quot;
+void clarke_transform( int *I_alpha, int *I_beta,
+                       int Ia, int Ib, int Ic );
+
+void inverse_clarke_transform( int *Ia, int *Ib, int *Ic,
+                               int alpha, int beta );
+</pre></div>
+</div>
+<p>Each function has the calculation outputs passed as references (e.g. as pointers in C) and the inputs
+passed as normal arguments. The Park transform moves the rotating frame of reference of values relative to the stator
+(and the QEI and ADCs) into the frame of reference of the rotor.
+The Clarke transform takes 3-vector values which are gathered by measurement of the three coils and
+transforms them into a 2-vector value.  This is possible because the 3-vectors have only 2 degrees of freedom, the current in
+one of the coils being the sum of the other two. See a description of Field Oriented Control for more information.</p>
+</div>
+<div class="section" id="sine-cosine-lookup">
+<h2>Sine &amp; Cosine lookup<a class="headerlink" href="#sine-cosine-lookup" title="Permalink to this headline">¶</a></h2>
+<p>The sine and cosine functions are largely provided for use in the Park transforms, but may be used by other
+functions if required. The sine table provided has a 256 entry lookup. This is convenient for a 1024 step full
+circle QEI on a 4 pole motor, since each angular increment in the QEI represents 4 times the electrical
+angle. Thus the 0-1023 range merely needs to be looked up in a 0-255 range, with the upper 2 bits truncated.</p>
+<p>The lookup functions provided are as follows.</p>
+<div class="highlight-none"><div class="highlight"><pre>#include &quot;sine_lookup.h&quot;
+
+inline long long sine( unsigned angle );
+inline long long cosine( unsigned angle );
+</pre></div>
+</div>
+</div>
+</div>
+
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" id='d2'>
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Motor Control Platform Software Guide (2.0.0)</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="apps.html">Motor Control Platform Example Applications</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Processing Blocks</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#pid-calculation-routines">PID Calculation Routines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#clarke-park-transforms">Clarke &amp; Park Transforms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#sine-cosine-lookup">Sine &amp; Cosine lookup</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="display.html">Display and Shared IO Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pwm.html">Pulse Width Modulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adc.html">Analogue to Digital Converter (ADC) Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comms-high.html">Application Level Communications Interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hsi.html">Hall Sensor Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qei.html">Quadrature Encoder Input</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resources.html">Resource usage</a></li>
+</ul>
+
+<div id="searchbox" style="display: none;margin-bottom: 10px;">
+  <h3>Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+
+    <div class="footer">
+    </div>
+  </body>
+</html>
+
+
+

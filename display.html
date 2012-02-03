@@ -1,0 +1,216 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Display and Shared IO Interface &mdash; Motor Control Platform Software Guide v2.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/xdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '2.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://mathjax.connectmv.com/MathJax.js"></script>
+    <script type="text/javascript" src="_static/xcomment.js"></script>
+    <link rel="top" title="Motor Control Platform Software Guide v2.0.0 documentation" href="index.html" />
+    <link rel="next" title="Pulse Width Modulation" href="pwm.html" />
+    <link rel="prev" title="Processing Blocks" href="blocks.html" /> 
+
+<script>
+function setheight() {
+h1 = document.getElementById('d1').style.height;
+h2 = document.getElementById('d2').style.height;
+
+if (parseInt(h1) > parseInt(h2)) {
+document.getElementById('d2').style.height=h1 + "px";
+}
+else {
+document.getElementById('d1').style.height=h2 + "px";
+}
+
+}
+</script>
+</head>
+
+<body onload="setheight();">
+
+  
+
+    <div class="document" id='d1'>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+<div style="float: right">
+<a href="blocks.html"
+                        title="previous chapter"> &lt&lt </a>
+<a href="pwm.html"
+                        title="next chapter"> &gt&gt </a></p>
+</div>
+
+            
+  <div class="section" id="display-and-shared-io-interface">
+<h1>Display and Shared IO Interface<a class="headerlink" href="#display-and-shared-io-interface" title="Permalink to this headline">¶</a></h1>
+<p>This module provides a details on the display interface and shared IO manager used in the XMOS Motor Control Development Platform.</p>
+<p>The shared IO manager interfaces to the following components on the board:</p>
+<blockquote>
+<div><ul class="simple">
+<li>A Newhaven Display NHD-C12832A1Z-FSW-FBW-3V3 128 x 32 pixel monochrome LCD display via a SPI like interface.</li>
+<li>The 4 push button surface mount switches (marked A-D).</li>
+</ul>
+</div></blockquote>
+<p>Provision could also be made in this thread to drive the 4 surface mount LEDs next to switches A-D.</p>
+<div class="section" id="hardware-interface">
+<h2>Hardware Interface<a class="headerlink" href="#hardware-interface" title="Permalink to this headline">¶</a></h2>
+<p>The interface is implemented using 11 pins in total, including:</p>
+<blockquote>
+<div><ul class="simple">
+<li>1 x 4 bit port to control the display address / data signal.</li>
+<li>3 x 1-bit ports for the display chip select, serial clock and data signals.</li>
+<li>1 x 4-bit ports for the buttons A-D.</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="operation">
+<h2>Operation<a class="headerlink" href="#operation" title="Permalink to this headline">¶</a></h2>
+<p>The following files are used for the display and shared IO manager.</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">lcd.h</span></tt></dt>
+<dd>Prototypes for LCD functions.</dd>
+<dt><tt class="docutils literal"><span class="pre">lcd.xc</span></tt></dt>
+<dd>LCD driver functions.</dd>
+<dt><tt class="docutils literal"><span class="pre">lcd_data.h</span></tt></dt>
+<dd>Contains the lcd driver font map.</dd>
+<dt><tt class="docutils literal"><span class="pre">lcd_logo.h</span></tt></dt>
+<dd>Contains the XMOS logo as a unsigned char array.</dd>
+<dt><tt class="docutils literal"><span class="pre">shared_io.h</span></tt></dt>
+<dd>Header for the  main shared IO server and defines commands this thread uses.</dd>
+<dt><tt class="docutils literal"><span class="pre">shared_io.xc</span></tt></dt>
+<dd>Contains the main shared IO server routine.</dd>
+</dl>
+<p>The shared IO manager that interacts with the hardware is a single thread with three channels connecting to it.
+The function is called from main with parameters passing a structure containing the appropriate ports into it.
+The server thread prototype is:</p>
+<div class="highlight-none"><div class="highlight"><pre>void display_shared_io_manager( chanend c_speed[],
+                                REFERENCE_PARAM(lcd_interface_t, p),
+                                in port btns,
+                                out port leds )
+</pre></div>
+</div>
+<p>The purpose of each argument is as follows:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">c_speed</span></tt></dt>
+<dd>An array of speed control channel for controlling the motors.</dd>
+<dt><tt class="docutils literal"><span class="pre">p</span></tt></dt>
+<dd>A reference to the control structure describing the LCD interface.</dd>
+<dt><tt class="docutils literal"><span class="pre">btns</span></tt></dt>
+<dd>A 4 bit input port attached to the buttons.</dd>
+<dt><tt class="docutils literal"><span class="pre">leds</span></tt></dt>
+<dd>A 4 bit output port attached to the leds.</dd>
+</dl>
+<p>The main shared IO manager is constructed from a <tt class="docutils literal"><span class="pre">select</span></tt> statement within a <tt class="docutils literal"><span class="pre">while(1)</span></tt> loop, so that it gets executed repeatedly.</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">case</span> <span class="pre">t</span> <span class="pre">when</span> <span class="pre">timerafter(time</span> <span class="pre">+</span> <span class="pre">10000000)</span> <span class="pre">:&gt;</span> <span class="pre">time</span> <span class="pre">:</span></tt></dt>
+<dd>Timer that executes at 10Hz. This gets the current speed, current Iq and speed setpoint from the motor control loops and updates the display with the new values. It also debounces the buttons.</dd>
+<dt><tt class="docutils literal"><span class="pre">case</span> <span class="pre">!btn_en</span> <span class="pre">=&gt;</span> <span class="pre">btns</span> <span class="pre">when</span> <span class="pre">pinsneq(value)</span> <span class="pre">:&gt;</span> <span class="pre">value:</span></tt></dt>
+<dd>Execute commands if a button is pressed.</dd>
+</dl>
+<p>The switches are debounced by setting the <tt class="docutils literal"><span class="pre">but_en</span></tt> guard signal to two whenever a button is pressed.
+The 10Hz timer in the select statement decrements the value by one, if the value is not 0, on each iteration though its loop.
+Therefore, after a minimum of 200ms and a maximum of 300ms the switch is re-enabled.</p>
+</div>
+<div class="section" id="lcd-communication">
+<h2>LCD Communication<a class="headerlink" href="#lcd-communication" title="Permalink to this headline">¶</a></h2>
+<p>Communication with the LCD is done using a <tt class="docutils literal"><span class="pre">lcd_byte_out</span></tt> function.
+This communicates directly with the ports to the display.
+The protocol is unidirectional SPI with a separate command / data pin which specifies if the current data transfer is a command or data word.</p>
+<p>The procedure for sending a byte to the display is:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Select the display using the CS_N signal.</li>
+<li>Set the address / data flag.</li>
+<li>Clock out the 8 bits of data MSB first by:
+- Setting the data pin to the bit value.
+- Setting clock high.
+- Setting clock low.</li>
+<li>Deselect the display using the CS_N signal.</li>
+</ul>
+</div></blockquote>
+<p>The following functions are provided that use the <tt class="docutils literal"><span class="pre">lcd_byte_out</span></tt> function to send data to the display:</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">lcd_clear</span></tt></dt>
+<dd>This wipes the display by writing blank characters into the displays output buffer.</dd>
+<dt><tt class="docutils literal"><span class="pre">lcd_draw_image</span></tt></dt>
+<dd>This takes an unsigned char array of size 512 bytes and writes it to the display. Hence, it can be used to display images on the display.</dd>
+<dt><tt class="docutils literal"><span class="pre">lcd_draw_text_row</span></tt></dt>
+<dd>Writes a row of 21 characters to the display on the row specified by lcd_row (0-3).</dd>
+</dl>
+<p>The display is configured as 128 columns x 4 byte rows, as the byte writes the data to 8 pixel rows in one transfer.
+A 5x7 pixel font map is provided for the characters A-z, a-z, 0-9 and standard punctuation.</p>
+<p>The command set for the display is defined in the datasheet.
+When sending data to the display it is best to try to send the data as fast as possible.
+This is because the display has to be turned off, whilst the data is being written to it.
+Therefore, writing large amounts of data on a regular basis can cause the display to flicker.</p>
+</div>
+</div>
+
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" id='d2'>
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Motor Control Platform Software Guide (2.0.0)</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="apps.html">Motor Control Platform Example Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="blocks.html">Processing Blocks</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Display and Shared IO Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#hardware-interface">Hardware Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#operation">Operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#lcd-communication">LCD Communication</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pwm.html">Pulse Width Modulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adc.html">Analogue to Digital Converter (ADC) Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comms-high.html">Application Level Communications Interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hsi.html">Hall Sensor Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qei.html">Quadrature Encoder Input</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resources.html">Resource usage</a></li>
+</ul>
+
+<div id="searchbox" style="display: none;margin-bottom: 10px;">
+  <h3>Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+
+    <div class="footer">
+    </div>
+  </body>
+</html>
+
+
+

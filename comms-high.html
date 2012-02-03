@@ -1,0 +1,256 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Application Level Communications Interfaces &mdash; Motor Control Platform Software Guide v2.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/xdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '2.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://mathjax.connectmv.com/MathJax.js"></script>
+    <script type="text/javascript" src="_static/xcomment.js"></script>
+    <link rel="top" title="Motor Control Platform Software Guide v2.0.0 documentation" href="index.html" />
+    <link rel="next" title="Hall Sensor Interface" href="hsi.html" />
+    <link rel="prev" title="Analogue to Digital Converter (ADC) Interface" href="adc.html" /> 
+
+<script>
+function setheight() {
+h1 = document.getElementById('d1').style.height;
+h2 = document.getElementById('d2').style.height;
+
+if (parseInt(h1) > parseInt(h2)) {
+document.getElementById('d2').style.height=h1 + "px";
+}
+else {
+document.getElementById('d1').style.height=h2 + "px";
+}
+
+}
+</script>
+</head>
+
+<body onload="setheight();">
+
+  
+
+    <div class="document" id='d1'>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+<div style="float: right">
+<a href="adc.html"
+                        title="previous chapter"> &lt&lt </a>
+<a href="hsi.html"
+                        title="next chapter"> &gt&gt </a></p>
+</div>
+
+            
+  <div class="section" id="application-level-communications-interfaces">
+<h1>Application Level Communications Interfaces<a class="headerlink" href="#application-level-communications-interfaces" title="Permalink to this headline">¶</a></h1>
+<p>This module provides a details on the higher application level communication interfaces used in the XMOS Motor Control
+Development Platform.</p>
+<p>The motor control platform has been written to take advantage of the XMOS Ethernet and XMOS CAN open source components.
+With suitable compile time options, the example applications will automatically contain ethernet or CAN control modules.
+A high level communication server has been written for each, and these interface to the standard MAC and PHY components
+for the two protocols.  These high level server threads are called <em>do_comms_eth</em> and <em>do_comms_can</em>.</p>
+<p>Documentation for the CAN, Ethernet and TCP/IP XMOS components can be found in the software guides for those components,
+either on the xmos.com website or from the relevent open source respositories.</p>
+<p>A LabView runtime based control application, suitable for both CAN and Ethernet control, is included with the software
+release, in the <em>gui</em> subdirectory.</p>
+<div class="section" id="do-comms-eth">
+<h2>do_comms_eth<a class="headerlink" href="#do-comms-eth" title="Permalink to this headline">¶</a></h2>
+<p>The thread do_comms_eth interfaces to the TCP/IP stack and provides a server interface on the TCP port defined by TCP_CONTROL_PORT
+(this is typically defined as 9595).  See the documentation for the <em>sc_xtcp</em> and <em>sc_ethernet</em> modules, which describe the use
+of the TCP/IP service and Ethernet services.</p>
+<p>After configuring the TCP port and TCP/IP stack interface, the thread sits in a while(1){} loop processing TCP/IP events.
+The following actions are performed based on the event type:</p>
+<blockquote>
+<div><ul class="simple">
+<li><tt class="docutils literal"><span class="pre">XTCP_NEW_CONNECTION</span></tt> - No action is taken.</li>
+<li><tt class="docutils literal"><span class="pre">XTCP_RECV_DATA</span></tt> - Main processing function, described below.</li>
+<li><tt class="docutils literal"><span class="pre">XTCP_SENT_DATA</span></tt> - Closes the send request by sending a 0 byte packet.</li>
+<li><tt class="docutils literal"><span class="pre">XTCP_REQUEST_DATA</span> <span class="pre">/</span> <span class="pre">XTCP_RESEND_DATA</span></tt> - Sends the data generated during the XTCP_RECV_DATA event to the client.</li>
+<li><tt class="docutils literal"><span class="pre">XTCP_CLOSED</span></tt> - Closes the connection.</li>
+</ul>
+</div></blockquote>
+<p>The main processing function receives a packet from the client and processes it, responding with data as appropriate. The
+format of the accepted packets are:</p>
+<p><tt class="docutils literal"><span class="pre">^1|xxxx</span></tt> - This sets the speed of the motors to the value given in the 4 digit number. The value is given as a hexadecimal
+number.</p>
+<p><tt class="docutils literal"><span class="pre">^2|</span></tt> - This requests the current state of the motor be sent to the remote client.  The server replies with the text string</p>
+<div class="highlight-none"><div class="highlight"><pre>^2|aaaa|bbbb|cccc|dddd|eeee|ffff|gggg|hhhh|iiii|jjjj|kkkk|llll|mmmm|nnnn|oo|pp
+
+aaaa - Speed of motor 1
+bbbb - Speed of motor 2
+cccc - Current Ia for motor 1
+dddd - Current Ib for motor 1
+eeee - Current Ic for motor 1
+ffff - Iq Set Point for motor 1
+gggg - Id output for motor 1
+hhhh - Iq output for motor 1
+iiii - Current Ia for motor 2
+jjjj - Current Ib for motor 2
+kkkk - Current Ic for motor 2
+llll - Iq Set Point for motor 2
+mmmm - Id output for motor 2
+nnnn - Iq output for motor 2
+oo   - Fault flag for motor 1
+pp   - Fault flag for motor 2
+</pre></div>
+</div>
+<p>The files for this thread are in <tt class="docutils literal"><span class="pre">control_comms_eth.xc</span></tt> and <tt class="docutils literal"><span class="pre">control_comms_eth.h</span></tt></p>
+<div class="section" id="customizing-the-tcp-ip-packet">
+<h3>Customizing the TCP/IP packet<a class="headerlink" href="#customizing-the-tcp-ip-packet" title="Permalink to this headline">¶</a></h3>
+<p>The ethernet and TCP/IP communications module is an example of a simple query and reply protocol using a fixed packet
+format.  Many alternatives exist for communication with the device through ethernet, and an incomplete list is given
+below.</p>
+<blockquote>
+<div><ul class="simple">
+<li>Remove TCP/IP altogether and send and receive ethernet layer 2 packets of a given fixed format</li>
+<li>Use UDP instead of TCP, with the same packet format</li>
+<li>Alter the packet format to a proprietory alternative</li>
+<li>Integrate an industry standard communication protocol on either Ethernet layer 2 or TCP/IP.  Modbus/IP is
+a good example of this.</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="do-comms-can">
+<h2>do_comms_can<a class="headerlink" href="#do-comms-can" title="Permalink to this headline">¶</a></h2>
+<p>XMOS provides an independent CAN component in the <em>sc_can</em> open source repository. See the documentation for that
+component for more details of the CAN PHY interface.</p>
+<p>This thread is similar in operation to the do_comms_eth thread, and provides the same interface to the speed_control_loop.</p>
+<p>It works by configuring the CAN interface and then sitting in a while(1){} loop receiving packets from the CAN interface.
+Once the thread receives a packet from the client, it looks at the command type, and processes it accordingly.</p>
+<blockquote>
+<div><ul class="simple">
+<li>If command type (byte 2) equals 1, then this command replies with the current speed and other measured data.</li>
+<li>If command type (byte 2) equals 2, then this command sets the desired speed from the data supplied in the packet.</li>
+</ul>
+</div></blockquote>
+<p>The format of a received CAN packet is:</p>
+<blockquote>
+<div><ul class="simple">
+<li>2 bytes - sender address - used to address the return packet if required.</li>
+<li>1 byte - command type</li>
+<li>4 bytes - desired speed in big-endian order if command equals 2.</li>
+</ul>
+</div></blockquote>
+<p>The format of a transmitted CAN packet is:</p>
+<blockquote>
+<div><ul class="simple">
+<li>4 bytes - current speed in big-endian order.</li>
+<li>2 bytes - the measured Ia for motor 1.</li>
+<li>2 bytes - the measured Ib for motor 1.</li>
+</ul>
+</div></blockquote>
+<p>The files for this thread are in <tt class="docutils literal"><span class="pre">control_comms_can.xc</span></tt> and <tt class="docutils literal"><span class="pre">control_comms_can.h</span></tt></p>
+<div class="section" id="customizing-the-can-communcation-module">
+<h3>Customizing the CAN communcation module<a class="headerlink" href="#customizing-the-can-communcation-module" title="Permalink to this headline">¶</a></h3>
+<p>The <em>sc_can</em> XMOS CAN component supports the CAN PHY, as used in the example communication
+system given.  Many alternative configurations exist, and an incomplete list is given below.</p>
+<blockquote>
+<div><ul class="simple">
+<li>Use the CAN LLC supported by the <em>sc_can</em> module to provide a set of CAN registers containing the
+read and write parameters of the application.</li>
+<li>Alter the CAN packet format.</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="replacing-the-communications-module">
+<h2>Replacing the communications module<a class="headerlink" href="#replacing-the-communications-module" title="Permalink to this headline">¶</a></h2>
+<p>The ethernet/TCP and CAN communications systems are only examples of the many alternatives that
+can be implemented using the flexible XMOS architecture.  Both of these communication modules are
+implemented as a collection of threads running in the device. They communicate with the motor
+control thread using channels.</p>
+<p>By replacing the threads with alternative physical interface and protocol threads, that communicate
+with the motor control thread using the same channel messages, it becomes easy to produce a different
+external control scheme.  If the messages which are currently sent on the channels are not flexible
+enough, then they too can be altered to provide additional functionality.</p>
+<p>An incomplete list of other external control schemes is given below.</p>
+<blockquote>
+<div><ul class="simple">
+<li>Simple GPIO control</li>
+<li>UART</li>
+<li>SPI</li>
+<li>I2C</li>
+<li>Clocked parallel port</li>
+<li>Bluetooth</li>
+<li>EtherCAT</li>
+<li>RS485</li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" id='d2'>
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Motor Control Platform Software Guide (2.0.0)</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="apps.html">Motor Control Platform Example Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="blocks.html">Processing Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="display.html">Display and Shared IO Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pwm.html">Pulse Width Modulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adc.html">Analogue to Digital Converter (ADC) Interface</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Application Level Communications Interfaces</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#do-comms-eth">do_comms_eth</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#customizing-the-tcp-ip-packet">Customizing the TCP/IP packet</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#do-comms-can">do_comms_can</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#customizing-the-can-communcation-module">Customizing the CAN communcation module</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#replacing-the-communications-module">Replacing the communications module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="hsi.html">Hall Sensor Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qei.html">Quadrature Encoder Input</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="resources.html">Resource usage</a></li>
+</ul>
+
+<div id="searchbox" style="display: none;margin-bottom: 10px;">
+  <h3>Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+
+    <div class="footer">
+    </div>
+  </body>
+</html>
+
+
+

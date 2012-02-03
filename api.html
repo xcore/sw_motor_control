@@ -1,0 +1,884 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>API &mdash; Motor Control Platform Software Guide v2.0.0 documentation</title>
+    <link rel="stylesheet" href="_static/xdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '2.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://mathjax.connectmv.com/MathJax.js"></script>
+    <script type="text/javascript" src="_static/xcomment.js"></script>
+    <link rel="top" title="Motor Control Platform Software Guide v2.0.0 documentation" href="index.html" />
+    <link rel="next" title="Resource usage" href="resources.html" />
+    <link rel="prev" title="Quadrature Encoder Input" href="qei.html" /> 
+
+<script>
+function setheight() {
+h1 = document.getElementById('d1').style.height;
+h2 = document.getElementById('d2').style.height;
+
+if (parseInt(h1) > parseInt(h2)) {
+document.getElementById('d2').style.height=h1 + "px";
+}
+else {
+document.getElementById('d1').style.height=h2 + "px";
+}
+
+}
+</script>
+</head>
+
+<body onload="setheight();">
+
+  
+
+    <div class="document" id='d1'>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+<div style="float: right">
+<a href="qei.html"
+                        title="previous chapter"> &lt&lt </a>
+<a href="resources.html"
+                        title="next chapter"> &gt&gt </a></p>
+</div>
+
+            
+  <div class="section" id="api">
+<span id="sec-api"></span><h1>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="configuration-defines">
+<span id="sec-conf-defines"></span><h2>Configuration Defines<a class="headerlink" href="#configuration-defines" title="Permalink to this headline">¶</a></h2>
+<p>The file dsc_config.h must be provided in the application source
+code. This file can set the following defines:</p>
+<p><strong>PWM_DEAD_TIME</strong></p>
+<blockquote>
+<div>This is the period, in 10ns intervals, which is not counted towards the PWM
+time as the PWM is output.</div></blockquote>
+<p><strong>PWM_MAX_VALUE</strong></p>
+<blockquote>
+<div>The PWM input is clamped to this value</div></blockquote>
+<p><strong>LOCK_ADC_TO_PWM</strong></p>
+<blockquote>
+<div>If this is defined, the PWM outputs synchronization information to a channel
+and dummy port, allowing the ADC module to synchronize the ADC measurement
+to the dead time when all PWM channels are off.</div></blockquote>
+<p><strong>NUMBER_OF_POLES</strong></p>
+<blockquote>
+<div>This is the number of poles in the motor.  It is therefore ratio of the number of
+electrical rotations to each physical rotation. If a motor has a single winding per
+coil, then it is called a 2 pole motor. Two sets of windings per coil makes a
+four pole motor, and so on.</div></blockquote>
+<p><strong>USE_CAN</strong></p>
+<blockquote>
+<div>When defined, the CAN controller in included in the executable. This option is
+mutually exclusive with Ethernet.</div></blockquote>
+<p><strong>USE_ETH</strong></p>
+<blockquote>
+<div>When defined, the Ethernet controller is included in the executable.  This option is
+mutually exclusive with CAN.</div></blockquote>
+<p><strong>TCP_CONTROL_PORT</strong></p>
+<blockquote>
+<div>When the Ethernet controller is included, this is the TCP port that the server
+listens on, for receiving control information.</div></blockquote>
+<p><strong>MIN_RPM</strong></p>
+<blockquote>
+<div>The minimum RPM that the controllers can set.</div></blockquote>
+<p><strong>MAX_RPM</strong></p>
+<blockquote>
+<div>The maximum RPM that the controllers can set.</div></blockquote>
+</div>
+<div class="section" id="external-modules">
+<h2>External modules<a class="headerlink" href="#external-modules" title="Permalink to this headline">¶</a></h2>
+<p>For documentation on the Ethernet, CAN and PWM modules, see the relevent XMOS software module documentation.</p>
+</div>
+<div class="section" id="adc">
+<h2>ADC<a class="headerlink" href="#adc" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="client-functions">
+<h3>Client functions<a class="headerlink" href="#client-functions" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="do_adc_calibration">
+void <tt class="descname">do_adc_calibration</tt><big>(</big>streaming chanend<em>&nbsp;c_adc</em><big>)</big><a class="headerlink" href="#do_adc_calibration" title="Permalink to this definition">¶</a></dt>
+<dd><p>ADC calibration sequence.</p>
+<p>This switches the ADC server into calibration mode. After a number (512) of samples the server reverts to non-calibration mode, and subsequent calls to the function get_adc_vals_calibrated_int16 will take the measured average of the calibration period as an offset</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>c_adc</strong> &#8211; the control channel to the ADC server</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="get_adc_vals_calibrated_int16">
+{int, int, int} g <tt class="descname">get_adc_vals_calibrated_int16</tt><big>(</big>streaming chanend<em>&nbsp;c_adc</em><big>)</big><a class="headerlink" href="#get_adc_vals_calibrated_int16" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get values converted from 14 bit unsigned to 16 bit signed and calibrated.</p>
+<p>Read a set of current values from the motor, and convert them into a standardized 16 bit scale</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>c_adc</strong> &#8211; the control channel to the ADC server</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="server-functions">
+<h3>Server functions<a class="headerlink" href="#server-functions" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="adc_7265_triggered">
+void <tt class="descname">adc_7265_triggered</tt><big>(</big>streaming chanend<em>&nbsp;c_adc[ADC_NUMBER_OF_TRIGGERS]</em>, chanend<em>&nbsp;c_trig[ADC_NUMBER_OF_TRIGGERS]</em>, clock<em>&nbsp;clk</em>, out port<em>&nbsp;SCLK</em>, port<em>&nbsp;CNVST</em>, in buffered port:32<em>&nbsp;DATA_A</em>, in buffered port:32<em>&nbsp;DATA_B</em>, port out<em>&nbsp;MUX</em><big>)</big><a class="headerlink" href="#adc_7265_triggered" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implements the AD7265 triggered ADC service.</p>
+<p>This implements the AD hardware interface to the 7265 ADC device. It has two ports to allow reading two simultaneous current readings for a single motor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>c_adc</strong> &#8211; the array of ADC server control channels</li>
+<li><strong>c_trig</strong> &#8211; the array of channels to recieve triggers from the PWM modules</li>
+<li><strong>clk</strong> &#8211; an XCORE clock to provide clocking to the ADC</li>
+<li><strong>SCLK</strong> &#8211; the external clock pin on the ADC</li>
+<li><strong>CNVST</strong> &#8211; the convert strobe on the ADC</li>
+<li><strong>DATA_A</strong> &#8211; the first data port on the ADC</li>
+<li><strong>DATA_B</strong> &#8211; the second data port on the ADC</li>
+<li><strong>MUX</strong> &#8211; a port to allow the selection of the analogue MUX input</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="adc_ltc1408_triggered">
+void <tt class="descname">adc_ltc1408_triggered</tt><big>(</big>chanend<em>&nbsp;c_adc[]</em>, chanend<em>&nbsp;c_trig[]</em>, clock<em>&nbsp;clk</em>, port out<em>&nbsp;SCLK</em>, buffered out port:32<em>&nbsp;CNVST</em>, in buffered port:32<em>&nbsp;DATA</em><big>)</big><a class="headerlink" href="#adc_ltc1408_triggered" title="Permalink to this definition">¶</a></dt>
+<dd><p>Execute the triggered ADC server.</p>
+<p>This is the server thread implementation for the LTC1408 ADC device.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>c_adc</strong> &#8211; the array of ADC control channels</li>
+<li><strong>c_trig</strong> &#8211; the array of channels to receive triggers from the PWM modules</li>
+<li><strong>clk</strong> &#8211; the clock for the ADC device serial port</li>
+<li><strong>SCLK</strong> &#8211; the port which feeds the ADC serial clock</li>
+<li><strong>CNVST</strong> &#8211; the ADC convert strobe</li>
+<li><strong>DATA</strong> &#8211; the ADC data port</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="run_adc_max1379">
+void <tt class="descname">run_adc_max1379</tt><big>(</big>chanend<em>&nbsp;c_adc[]</em>, clock<em>&nbsp;clk</em>, port out<em>&nbsp;SCLK</em>, port out<em>&nbsp;CNVST</em>, port out<em>&nbsp;SEL</em>, in buffered port:32<em>&nbsp;DATA</em><big>)</big><a class="headerlink" href="#run_adc_max1379" title="Permalink to this definition">¶</a></dt>
+<dd><p>The server thread for the MAX1379 ADC device.</p>
+<p>Implements the server thread for the MAX1379 ADC device</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>c_adc</strong> &#8211; the array of ADC control channels</li>
+<li><strong>clk</strong> &#8211; the clock for the ADC device serial port</li>
+<li><strong>SCLK</strong> &#8211; the port which feeds the ADC serial clock</li>
+<li><strong>CNVST</strong> &#8211; the ADC convert strobe</li>
+<li><strong>SEL</strong> &#8211; the chip select for the ADC device</li>
+<li><strong>DATA</strong> &#8211; the ADC data port</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="qei">
+<h2>QEI<a class="headerlink" href="#qei" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3>Client functions<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="get_qei_data">
+{ unsigned, unsigned, unsigned } g <tt class="descname">get_qei_data</tt><big>(</big>streaming chanend<em>&nbsp;c_qei</em><big>)</big><a class="headerlink" href="#get_qei_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the position from the QEI server.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>c_qei</strong> &#8211; The control channel for the QEI server</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the speed, position and valid state</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="id2">
+<h3>Server functions<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="do_qei">
+void <tt class="descname">do_qei</tt><big>(</big>streaming chanend<em>&nbsp;c_qei</em>, port in<em>&nbsp;p_qei</em><big>)</big><a class="headerlink" href="#do_qei" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implementation of the QEI server thread.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>c_qei</strong> &#8211; The control channel used by the client</li>
+<li><strong>p_qei</strong> &#8211; The hardware port where the quadrature encoder is located</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="do_multiple_qei">
+void <tt class="descname">do_multiple_qei</tt><big>(</big>streaming chanend<em>&nbsp;c_qei[]</em>, port in<em>&nbsp;p_qei[]</em><big>)</big><a class="headerlink" href="#do_multiple_qei" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implementation of the QEI server thread that services multiple QEI devices.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>c_qei</strong> &#8211; The control channels used by the client</li>
+<li><strong>p_qei</strong> &#8211; The hardware ports where the quadrature encoder is located</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="hall-sensors">
+<h2>Hall sensors<a class="headerlink" href="#hall-sensors" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id3">
+<h3>Client functions<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="get_hall_pos_speed_delta">
+{unsigned, unsigned, unsigned} g <tt class="descname">get_hall_pos_speed_delta</tt><big>(</big>chanend<em>&nbsp;c_hall</em><big>)</big><a class="headerlink" href="#get_hall_pos_speed_delta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get position, speed and delta from a hall server.</p>
+<p>The client library function for a hall sensor server</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>c_hall</strong> &#8211; the channel for communicating with the hall server</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="do_hall">
+void <tt class="descname">do_hall</tt><big>(</big>unsigned<em>&nbsp;&amp;hall_state</em>, unsigned<em>&nbsp;&amp;cur_pin_state</em>, port in<em>&nbsp;p_hall</em><big>)</big><a class="headerlink" href="#do_hall" title="Permalink to this definition">¶</a></dt>
+<dd><p>A blocking read of the hall port.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>hall_state</strong> &#8211; the output hall state</li>
+<li><strong>cur_pin_state</strong> &#8211; the last value read from the hall encoder port</li>
+<li><strong>p_hall</strong> &#8211; the hall port</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="do_hall_select">
+select <tt class="descname">do_hall_select</tt><big>(</big>unsigned<em>&nbsp;&amp;hall_state</em>, unsigned<em>&nbsp;&amp;cur_pin_state</em>, port in<em>&nbsp;p_hall</em><big>)</big><a class="headerlink" href="#do_hall_select" title="Permalink to this definition">¶</a></dt>
+<dd><p>A selectable read of the hall pins.</p>
+<p>This selectable function becomes ready when the hall pins change state</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>hall_state</strong> &#8211; the output hall state</li>
+<li><strong>cur_pin_state</strong> &#8211; the last value read from the hall encoder port</li>
+<li><strong>p_hall</strong> &#8211; the hall port</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="id4">
+<h3>Server functions<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="run_hall">
+void <tt class="descname">run_hall</tt><big>(</big>chanend<em>&nbsp;c_hall</em>, port in<em>&nbsp;p_hall</em><big>)</big><a class="headerlink" href="#run_hall" title="Permalink to this definition">¶</a></dt>
+<dd><p>A basic hall encoder server.</p>
+<p>This implements the basic hall sensor server</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>c_hall</strong> &#8211; the control channel for reading hall position</li>
+<li><strong>p_hall</strong> &#8211; the port for reading the hall sensor data</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="run_hall_speed">
+void <tt class="descname">run_hall_speed</tt><big>(</big>chanend<em>&nbsp;c_hall</em>, chanend<em>&nbsp;c_speed</em>, port in<em>&nbsp;p_hall</em><big>)</big><a class="headerlink" href="#run_hall_speed" title="Permalink to this definition">¶</a></dt>
+<dd><p>A hall encoder server that also calculates motor speed.</p>
+<p>This implements the hall sensor server</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>c_hall</strong> &#8211; the control channel for reading hall position</li>
+<li><strong>c_speed</strong> &#8211; the control channel for reading the rotor speed</li>
+<li><strong>p_hall</strong> &#8211; the port for reading the hall sensor data</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="run_hall_speed_timed_avg">
+void <tt class="descname">run_hall_speed_timed_avg</tt><big>(</big>chanend<em>&nbsp;c_hall</em>, chanend<em>&nbsp;c_speed</em>, port in<em>&nbsp;p_hall</em><big>)</big><a class="headerlink" href="#run_hall_speed_timed_avg" title="Permalink to this definition">¶</a></dt>
+<dd><p>A hall encoder server that also calculates motor speed.</p>
+<p>This implements the hall sensor server, where the speed is calculated using a timed average of many values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>c_hall</strong> &#8211; the control channel for reading hall position</li>
+<li><strong>c_speed</strong> &#8211; the control channel for reading the rotor speed</li>
+<li><strong>p_hall</strong> &#8211; the port for reading the hall sensor data</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="run_hall_speed_timed">
+void <tt class="descname">run_hall_speed_timed</tt><big>(</big>chanend<em>&nbsp;c_hall</em>, chanend<em>&nbsp;c_speed</em>, port in<em>&nbsp;p_hall</em>, chanend<em>&nbsp;?c_logging_0</em>, chanend<em>&nbsp;?c_logging_1</em><big>)</big><a class="headerlink" href="#run_hall_speed_timed" title="Permalink to this definition">¶</a></dt>
+<dd><p>A hall encoder server that also calculates motor speed.</p>
+<p>This implements the hall sensor server, where the speed is calculated using a timed average of many values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>c_hall</strong> &#8211; the control channel for reading hall position</li>
+<li><strong>c_speed</strong> &#8211; the control channel for reading the rotor speed</li>
+<li><strong>p_hall</strong> &#8211; the port for reading the hall sensor data</li>
+<li><strong>c_logging_0</strong> &#8211; an optional channel for logging the hall data on port 0</li>
+<li><strong>c_logging_1</strong> &#8211; an optional channel for logging the hall data on port 1</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="computational-blocks">
+<h2>Computational Blocks<a class="headerlink" href="#computational-blocks" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="park_transform">
+void <tt class="descname">park_transform</tt><big>(</big>int<em>&nbsp;&amp;Id</em>, int<em>&nbsp;&amp;Iq</em>, int<em>&nbsp;I_alpha</em>, int<em>&nbsp;I_beta</em>, unsigned<em>&nbsp;theta</em><big>)</big><a class="headerlink" href="#park_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a Park transform.</p>
+<p>A Park transform is a 2D to 2D transform which takes the radial and tangential components of a measurement (for instance the magnetic flux or total coil currents) and converts them to a rotating frame of reference. Typically this is the rotating frame of reference attached to the spinning rotor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>Id</strong> &#8211; the output tangential component</li>
+<li><strong>Iq</strong> &#8211; the output radial component</li>
+<li><strong>I_alpha</strong> &#8211; the input tangential component</li>
+<li><strong>I_beta</strong> &#8211; the input radial component</li>
+<li><strong>theta</strong> &#8211; the angle between the fixed and rotating frames of reference</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="inverse_park_transform">
+void <tt class="descname">inverse_park_transform</tt><big>(</big>int<em>&nbsp;&amp;I_alpha</em>, int<em>&nbsp;&amp;I_beta</em>, int<em>&nbsp;Id</em>, int<em>&nbsp;Iq</em>, unsigned<em>&nbsp;theta</em><big>)</big><a class="headerlink" href="#inverse_park_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform an inverse Park transform.</p>
+<p>A Park transform is a 2D to 2D transform which takes the radial and tangential components of a measurement (for instance the magnetic flux or total coil currents) and converts them to a rotating frame of reference. Typically this is the rotating frame of reference attached to the spinning rotor.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>I_alpha</strong> &#8211; the output tangential component</li>
+<li><strong>I_beta</strong> &#8211; the output radial component</li>
+<li><strong>Id</strong> &#8211; the input tangential component</li>
+<li><strong>Iq</strong> &#8211; the intput radial component</li>
+<li><strong>theta</strong> &#8211; the angle between the fixed and rotating frames of reference</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="clarke_transform">
+void <tt class="descname">clarke_transform</tt><big>(</big>int<em>&nbsp;Ia</em>, int<em>&nbsp;Ib</em>, int<em>&nbsp;Ic</em>, int<em>&nbsp;&amp;I_alpha</em>, int<em>&nbsp;&amp;I_beta</em><big>)</big><a class="headerlink" href="#clarke_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform a clarke transform.</p>
+<p>A Clarke transform is a 3D to 2D transformation where the 3D components have only 2 degrees of freedom. It is used to convert the three current values in the 120 degree separation coils into a radial and tangential component values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>Ia</strong> &#8211; the parameter from coil A</li>
+<li><strong>Ib</strong> &#8211; the parameter from coil B</li>
+<li><strong>Ic</strong> &#8211; the parameter from coil C</li>
+<li><strong>I_alpha</strong> &#8211; the output tangential component</li>
+<li><strong>I_beta</strong> &#8211; the output radial component</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="inverse_clarke_transform">
+void <tt class="descname">inverse_clarke_transform</tt><big>(</big>int<em>&nbsp;&amp;Ia</em>, int<em>&nbsp;&amp;Ib</em>, int<em>&nbsp;&amp;Ic</em>, int<em>&nbsp;alpha</em>, int<em>&nbsp;beta</em><big>)</big><a class="headerlink" href="#inverse_clarke_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform an inverse clarke transform.</p>
+<p>The inverse Clarke transform is a 2D to 3D transformation where the 3D components have only 2 degrees of freedom. It is used to convert radial and tangential components of the current vector into the three coil currents.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>Ia</strong> &#8211; the output parameter for coil A</li>
+<li><strong>Ib</strong> &#8211; the output parameter for coil B</li>
+<li><strong>Ic</strong> &#8211; the output parameter for coil C</li>
+<li><strong>alpha</strong> &#8211; the input tangential component</li>
+<li><strong>beta</strong> &#8211; the input radial component</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="sine">
+int <tt class="descname">sine</tt><big>(</big>unsigned<em>&nbsp;angle</em><big>)</big><a class="headerlink" href="#sine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Look up the fixed point sine value.</p>
+<p>This looks up the sine of a value. The value is the index into the sine table, rather than a particular angular measurement. The sine table has 256 entries, so each index is 1.4 degrees.</p>
+<p>A table of 256 entries is suitable for an encoder angle measured in 1024 steps, attached to a 4 pole motor. Each encoder step is 360/1024 = 0.35 physical degrees, but this is worth 4 times as many electrical degrees, or 1.4 electrical degrees.</p>
+<p>The result is in fixed point 18.14 format.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>angle</strong> &#8211; the index of the sine value to look up</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the 18.14 fixed point sine value</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cosine">
+int <tt class="descname">cosine</tt><big>(</big>unsigned<em>&nbsp;angle</em><big>)</big><a class="headerlink" href="#cosine" title="Permalink to this definition">¶</a></dt>
+<dd><p>Look up the fixed point cosine value.</p>
+<p>This looks up the cosine of a value. The value is the index into the sine table, rather than a particular angular measurement.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>angle</strong> &#8211; the index of the cosine value to look up</li>
+</ul>
+</td>
+</tr>
+<tr class="field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">the 18.14 fixed point cosine value</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="watchdog-timer">
+<h2>Watchdog Timer<a class="headerlink" href="#watchdog-timer" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="do_wd">
+void <tt class="descname">do_wd</tt><big>(</big>chanend<em>&nbsp;c_wd</em>, out port<em>&nbsp;wd</em><big>)</big><a class="headerlink" href="#do_wd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run the watchdog timer server.</p>
+<p>The watchdog timer needs a constant stream of pulses to prevent it from shutting down the motor. This is a thread server which implements the watchdog timer output.</p>
+<p>The watchdog control port should have two bits attached to the watchdog circuitry. Bit zero will get a rising edge whenever the watchdog is to be reset, and bit one will have the pulse train.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>c_wd</strong> &#8211; the control channel for controlling the watchdog</li>
+<li><strong>wd</strong> &#8211; the control port for the watchdog device</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="high-level-communications">
+<h2>High level communications<a class="headerlink" href="#high-level-communications" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="ethernet-control">
+<h3>Ethernet control<a class="headerlink" href="#ethernet-control" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="do_comms_eth">
+void <tt class="descname">do_comms_eth</tt><big>(</big>chanend<em>&nbsp;c_commands[]</em>, chanend<em>&nbsp;tcp_svr</em><big>)</big><a class="headerlink" href="#do_comms_eth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Implement the high level Ethernet control server.</p>
+<p>This control the motors based on commands from the ethernet/TCP stack</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>c_commands</strong> &#8211; Array of command channels for motors</li>
+<li><strong>tcp_svr</strong> &#8211; channel to the TCP/IP thread</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="can-control">
+<h3>CAN control<a class="headerlink" href="#can-control" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="do_comms_can">
+void <tt class="descname">do_comms_can</tt><big>(</big>chanend<em>&nbsp;c_commands[]</em>, chanend<em>&nbsp;rxChan</em>, chanend<em>&nbsp;txChan</em><big>)</big><a class="headerlink" href="#do_comms_can" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a thread which performs the higher level control for the CAN interface.</p>
+<p>Use it in conjunction with the thread &#8216;canPhyRxTx&#8217; from the module module_can.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>c_commands</strong> &#8211; Channel array for interfacing to the motors</li>
+<li><strong>rxChan</strong> &#8211; Connect to the rxChan port on the canPhyRxTx</li>
+<li><strong>txChan</strong> &#8211; Connect to the txChan port on the canPhyRxTx</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+<div class="section" id="lcd-display-and-phy-reset">
+<h2>LCD display and PHY reset<a class="headerlink" href="#lcd-display-and-phy-reset" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="lcd">
+<h3>LCD<a class="headerlink" href="#lcd" title="Permalink to this headline">¶</a></h3>
+<dl class="type">
+<dt id="lcd_interface_t">
+<tt class="descname">lcd_interface_t</tt><a class="headerlink" href="#lcd_interface_t" title="Permalink to this definition">¶</a></dt>
+<dd><p>The control structure for the LCD ports.</p>
+<p>The display uses an I2C interface with an extra control signal to support selection between a data read/write and a control read/write. This extra signal is bit zero of the p_core1_shared member - which contains no other signals despite the name.</p>
+<p><strong>Structure Members:</strong></p>
+<dl class="member">
+<dt id="lcd_interface_t.p_lcd_sclk">
+out port <tt class="descname">p_lcd_sclk</tt><a class="headerlink" href="#lcd_interface_t.p_lcd_sclk" title="Permalink to this definition">¶</a></dt>
+<dd><p>i2c serial clock</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="lcd_interface_t.p_lcd_mosi">
+out port <tt class="descname">p_lcd_mosi</tt><a class="headerlink" href="#lcd_interface_t.p_lcd_mosi" title="Permalink to this definition">¶</a></dt>
+<dd><p>i2c serial data</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="lcd_interface_t.p_lcd_cs_n">
+out port <tt class="descname">p_lcd_cs_n</tt><a class="headerlink" href="#lcd_interface_t.p_lcd_cs_n" title="Permalink to this definition">¶</a></dt>
+<dd><p>i2c chip select</p>
+</dd></dl>
+
+<dl class="member">
+<dt id="lcd_interface_t.p_core1_shared">
+out port <tt class="descname">p_core1_shared</tt><a class="headerlink" href="#lcd_interface_t.p_core1_shared" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display data/control select.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="reverse">
+void <tt class="descname">reverse</tt><big>(</big>char<em>&nbsp;s[]</em><big>)</big><a class="headerlink" href="#reverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reverse the order of bytes in the array.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>s</strong> &#8211; the byte array to reverse</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="itoa">
+void <tt class="descname">itoa</tt><big>(</big>int<em>&nbsp;n</em>, char<em>&nbsp;s[]</em><big>)</big><a class="headerlink" href="#itoa" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert an integer into a base 10 ASCII string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>n</strong> &#8211; the integer to represent in string form</li>
+<li><strong>s</strong> &#8211; the output byte array to contain the number</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lcd_ports_init">
+void <tt class="descname">lcd_ports_init</tt><big>(</big><a class="reference internal" href="#lcd_interface_t" title="lcd_interface_t"><span>lcd_interface_t</span></a><em>&nbsp;&amp;p</em><big>)</big><a class="headerlink" href="#lcd_ports_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialise the LCD device.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>p</strong> &#8211; the LCD interface description</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lcd_byte_out">
+void <tt class="descname">lcd_byte_out</tt><big>(</big><a class="reference internal" href="#lcd_interface_t" title="lcd_interface_t"><span>lcd_interface_t</span></a><em>&nbsp;&amp;p</em>, unsigned char<em>&nbsp;i</em>, int<em>&nbsp;is_data</em><big>)</big><a class="headerlink" href="#lcd_byte_out" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a byte to the LCD.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>p</strong> &#8211; the LCD interface description</li>
+<li><strong>i</strong> &#8211; the byte to write</li>
+<li><strong>is_data</strong> &#8211; a boolean indicating if the write is data or control information</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lcd_clear">
+void <tt class="descname">lcd_clear</tt><big>(</big><a class="reference internal" href="#lcd_interface_t" title="lcd_interface_t"><span>lcd_interface_t</span></a><em>&nbsp;&amp;p</em><big>)</big><a class="headerlink" href="#lcd_clear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear the LCD.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>p</strong> &#8211; the LCD interface description</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lcd_draw_image">
+void <tt class="descname">lcd_draw_image</tt><big>(</big>const unsigned char<em>&nbsp;image[]</em>, <a class="reference internal" href="#lcd_interface_t" title="lcd_interface_t"><span>lcd_interface_t</span></a><em>&nbsp;&amp;p</em><big>)</big><a class="headerlink" href="#lcd_draw_image" title="Permalink to this definition">¶</a></dt>
+<dd><p>Draw an image on the LCD.</p>
+<p>Draw an image on the LCD. The image is assumed to cover the complete LCD. The size of the LCD is 128 wide by 32 high.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>image</strong> &#8211; a byte array containing the image data.</li>
+<li><strong>p</strong> &#8211; the LCD interface description</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="lcd_draw_text_row">
+void <tt class="descname">lcd_draw_text_row</tt><big>(</big>const char<em>&nbsp;string[]</em>, int<em>&nbsp;lcd_row</em>, <a class="reference internal" href="#lcd_interface_t" title="lcd_interface_t"><span>lcd_interface_t</span></a><em>&nbsp;&amp;p</em><big>)</big><a class="headerlink" href="#lcd_draw_text_row" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write text to a row on the LCD.</p>
+<p>Display a row of text. The LCD columns beyond the end of the string will be cleared.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>string</strong> &#8211; the ASCII string to display on the LCD</li>
+<li><strong>lcd_row</strong> &#8211; the character row on which to display the string</li>
+<li><strong>p</strong> &#8211; the LCD interface description</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" id='d2'>
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">Motor Control Platform Software Guide (2.0.0)</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="apps.html">Motor Control Platform Example Applications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="blocks.html">Processing Blocks</a></li>
+<li class="toctree-l1"><a class="reference internal" href="display.html">Display and Shared IO Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pwm.html">Pulse Width Modulation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="adc.html">Analogue to Digital Converter (ADC) Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="comms-high.html">Application Level Communications Interfaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hsi.html">Hall Sensor Interface</a></li>
+<li class="toctree-l1"><a class="reference internal" href="qei.html">Quadrature Encoder Input</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#configuration-defines">Configuration Defines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#external-modules">External modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#adc">ADC</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#client-functions">Client functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#server-functions">Server functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#qei">QEI</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id1">Client functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id2">Server functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#hall-sensors">Hall sensors</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#id3">Client functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id4">Server functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#computational-blocks">Computational Blocks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#watchdog-timer">Watchdog Timer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#high-level-communications">High level communications</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#ethernet-control">Ethernet control</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#can-control">CAN control</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#lcd-display-and-phy-reset">LCD display and PHY reset</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#lcd">LCD</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="resources.html">Resource usage</a></li>
+</ul>
+
+<div id="searchbox" style="display: none;margin-bottom: 10px;">
+  <h3>Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+
+    <div class="footer">
+    </div>
+  </body>
+</html>
+
+
+
