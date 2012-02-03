@@ -63,6 +63,11 @@ Known Issues
 
 See CHANGELOG.rst
 
+Documentation
+=============
+
+http://github.xcore.com/sw_motor_control
+
 Getting Started and Installation
 ================================
 
