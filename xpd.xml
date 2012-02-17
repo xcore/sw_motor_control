@@ -1,29 +1,29 @@
 <?xml version="1.0" ?>
 <xpd>
     <dependency repo = "sc_pwm">
-        <githash>9313d718e447aecd188695c8b75f2fed8bd0e5a7</githash>
+        <githash>d03a7e4f543b0e40f4831cf5a73c96933d339b03</githash>
         <uri>git@github.com:xcore/sc_pwm.git</uri>
     </dependency>
     <dependency repo = "sc_can">
-        <githash>367d56956161555b9582a7709b4ad7935409b7eb</githash>
+        <githash>9f3beaf37592e383b2baa1ef13c9d33e0c304132</githash>
         <uri>git@github.com:xcore/sc_can.git</uri>
     </dependency>
     <dependency repo = "xcommon">
-        <githash>9ba651b662905248f8aedd41001b7106fec064ad</githash>
+        <githash>f035daf04c248b398925a9ac74a60719d9f194c3</githash>
         <uri>https://github.com/xcore/xcommon.git</uri>
     </dependency>
     <dependency repo = "sc_xtcp">
-        <githash>2b8a7f22ae553fbf9ae03dfa3d4aafcad567ce0a</githash>
+        <githash>cd8a8417e8bd30cdb78ff9d88cfb5a9cb2cd7ac2</githash>
         <uri>git@github.com:xcore/sc_xtcp.git</uri>
     </dependency>
     <dependency repo = "sc_ethernet">
-        <githash>865cef764422457bbbf5d53c98c4a69910b6ee3e</githash>
+        <githash>9877bf0ed9e707853c553e241825cbc6a5ee51e8</githash>
         <uri>git@github.com:xcore/sc_ethernet.git</uri>
     </dependency>
     <description>XMOS motor control platform</description>
     <location>git@github.com:xcore/sw_motor_control.git</location>
-    <maintainer>davidn@xmos.com</maintainer>
     <name>sw_motor_control</name>
+    <maintainer>davidn@xmos.com</maintainer>
     <release parenthash = "64bbe710e38941a8207c125c069158aad92852d1" version = "1.0.0rc0" githash = "4ceb53cd470e0338d706286a4371bb1e4c1e06bb"></release>
     <release parenthash = "64bbe710e38941a8207c125c069158aad92852d1" version = "1.0.0" githash = "4ceb53cd470e0338d706286a4371bb1e4c1e06bb"></release>
     <release parenthash = "ad62da3233b3d55e4afc5d2e7b3016d45b64241a" version = "1.0.1rc0" githash = "6358b683101a871c871f1fb1a6d6cff6e8404b31"></release>
