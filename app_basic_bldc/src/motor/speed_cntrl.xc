@@ -43,12 +43,11 @@ void speed_control(chanend c_control, chanend c_speed, chanend c_can_eth_shared 
 	unsigned req_speed = 1000; // Requested speed
 	unsigned meas_speed = 0; // Measured speed
 	unsigned ts, uPwm = 0, direction, cmd, startup = 1, error_flag1=0;
-	unsigned ts, req_speed = 1000, meas_speed = 0, uPwm = 0, direction, cmd, startup = 1, error_flag1=0;
 	int pwm = 0, calced_pwm = 0 ;
-	/* 32 bit timer declaration */
-	timer t;
-	/* pid variables */
-	pid_data pid ;
+	timer t; // 32 bit timer declaration
+	pid_data pid;	// pid variables
+
+
 	/* initialise PID settings */
 	init_pid( Kp, Ki, Kd, pid );
 	/* taking current timer value */

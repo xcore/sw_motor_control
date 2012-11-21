@@ -27,11 +27,11 @@
 #include "shared_io.h"
 #include "watchdog.h"
 #include "qei_server.h"
-#include "control_comms_eth.h"
 
 #ifdef USE_ETH
 #include "xtcp.h"
 #include "ethernet_board_support.h"
+#include "control_comms_eth.h"
 #endif
 
 #ifdef USE_CAN
