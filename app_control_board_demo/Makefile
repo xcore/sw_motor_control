@@ -19,7 +19,7 @@ APP_NAME =
 # xcc for the final link (mapping) stage.
 
 XCC_FLAGS = -O3 -g -report -Wno-timing
-#-lxscope
+#-fxscope
 
 
 # The USED_MODULES variable lists other module used by the application. 

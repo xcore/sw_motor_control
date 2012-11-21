@@ -2,7 +2,7 @@
 # compiled for. It either refers to an XN file in the source directories
 # or a valid argument for the --target option when compiling.
 
-TARGET = XS1-L2A-QF124
+TARGET = XP-MC-CTRL-L2
 
 # The APP_NAME variable determines the name of the final .xe file. It should
 # not include the .xe postfix. If left blank the name will default to 
@@ -18,14 +18,18 @@ APP_NAME =
 # If the variable XCC_MAP_FLAGS is set it overrides the flags passed to 
 # xcc for the final link (mapping) stage.
 
-XCC_FLAGS = -O3 -g -report -Wno-timing -lxscope
+XCC_FLAGS = -O3 -g -report -Wno-timing -fxscope
 
 
 # The USED_MODULES variable lists other module used by the application. 
 
 USED_MODULES = module_dsc_hall module_dsc_display module_dsc_blocks module_can
-USED_MODULES += module_ethernet module_locks module_xtcp module_dsc_comms
+USED_MODULES += module_ethernet module_ethernet_smi module_locks module_xtcp module_dsc_comms
 USED_MODULES += module_dsc_qei module_dsc_adc module_pwm_symmetrical module_pwm_common
+USED_MODULES += module_ethernet_board_support
+
+# USED_MODULES += module_ethernet_board_support module_otp_board_info module_slicekit_support
+
 
 USE_XTCP_MAC_CUSTOM_FILTER = 1
 

@@ -170,7 +170,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 
 	// Pause to allow the rest of the system to settle
 	{
-		unsigned thread_id = get_thread_id();
+		unsigned thread_id = get_logical_core_id();
 		t :> ts1;
 		t when timerafter(ts1+2*SEC+256*thread_id) :> void;
 	}
@@ -185,7 +185,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 
 	// Pause to allow the rest of the system to settle
 	{
-		unsigned thread_id = get_thread_id();
+		unsigned thread_id = get_logical_core_id();
 		t :> ts1;
 		t when timerafter(ts1+1*SEC) :> void;
 	}

@@ -54,7 +54,8 @@ const unsigned bldc_high_seq1[6] = {2,0,0,1,1,2};
 void run_motor(chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_lo[], chanend? c_wd)
 {
 	unsigned high_chan, hall_state = 0, pin_state = 0, pwm_val = 240, dir_flag=1;
-	unsigned ts, ts0, delta_t, speed = 0, hall_flg = 1, cmd;
+	unsigned meas_speed = 0; // Measured speed
+	unsigned ts, ts0, delta_t, hall_flg = 1, cmd;
 	unsigned state0 = 0, statenot0 =0 ;
 	t_pwm_control pwm_ctrl;
 	timer t;
@@ -78,73 +79,73 @@ void run_motor(chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_
 	{
 		select
 		{
-		/* wait for a change in the hall sensor - this is what this update loop is locked to */
-		case do_hall_select( hall_state, pin_state, p_hall );
+			/* wait for a change in the hall sensor - this is what this update loop is locked to */
+			case do_hall_select( hall_state, pin_state, p_hall );
 
-		case c_control :> cmd:
-			switch (cmd)
-			{
-			/* updates speed changes between threads */
-				case 1:
-					c_control <: speed;
+			case c_control :> cmd:
+				switch (cmd)
+				{
+					/* updates speed changes between threads */
+					case 1:
+						c_control <: meas_speed;
 					break;
 
-				/* upadates pwm values between threads*/
-				case 2:
-					c_control :> pwm_val;
+					/* upadates pwm values between threads*/
+					case 2:
+						c_control :> pwm_val;
 					break;
-
-				/* upadates direction changes of motor rotation based on Button C */
-				case 4:
-					c_control :> dir_flag;
+	
+					/* upadates direction changes of motor rotation based on Button C */
+					case 4:
+						c_control :> dir_flag;
 					break;
-
-				default:
+	
+					default:
 					break;
-			}
-			break;
-		}
-
+				} // switch (cmd)
+			break; // case c_control :> cmd:
+		} // select
+	
 		/* handling hall states */
-		if (hall_state == HALL_INV)
-			hall_state = 0;
+		if (hall_state == HALL_INV) hall_state = 0;
 
 		/* this loop calculates speed */
 		if (hall_flg == 1 && hall_state == 0)
 		{
-		/* get time and calculate RPM */
+			/* get time and calculate RPM */
 			ts0 = ts;
 			t :> ts;
 			delta_t = ts - ts0;
-		/*caculate speed using equation below */
-			speed = SPEED_COUNT / ( delta_t );
+
+			/*caculate speed using equation below */
+			meas_speed = SPEED_COUNT / ( delta_t );
 			hall_flg = 0;
 			state0 = 0;
 			statenot0 =0;
-		}
+		} // if (hall_flg == 1 && hall_state == 0)
 
-		if (hall_flg == 0 && hall_state != 0 )
-			hall_flg = 1;
+		if (hall_flg == 0 && hall_state != 0 ) hall_flg = 1;
 
-		/* Check for motor1 halt state */
-		if(hall_flg !=0 )
+		/* NB if motor almost stopped, it may 'tremble' between 2 non-zero hall states. 
+			We need to check for this */
+		if (hall_flg !=0 )
 		{
 			state0++;
 			if(state0 >= STATE_LIMIT)
 			{
-				speed = 0;
+				meas_speed = 0;
 				state0 =0;
 			}
-		}
-		else if(hall_flg == 0 )
+		} // if (hall_flg !=0 )
+		else if (hall_flg == 0 )  //MB~ Remove redundant branch
 		{
 			statenot0++;
 			if(statenot0 >= STATE_LIMIT)
 			{
-				speed = 0;
+				meas_speed = 0;
 				statenot0 =0;
 			}
-		}
+		} // else !(hall_flg !=0 )
 
 		/* Identifies the direction flag and sends commutation sequence to spin the
 		 * motor CW or CCW */
@@ -168,5 +169,6 @@ void run_motor(chanend c_pwm, chanend c_control, port in p_hall, port out p_pwm_
 		/* updates pwm_val */
 		update_pwm_simple( pwm_ctrl, c_pwm, pwm_val, high_chan );
 
-	}
-}
+	} // while (1)
+} // run_motor
+

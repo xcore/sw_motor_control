@@ -25,7 +25,8 @@
 #include "dsc_config.h"
 #include <print.h>
 
-/* Hall lookup table 							Hall      => Sector  */
+/* Hall lookup table 							Hall      => Sector
+	NB These are in "grey-code order" */
 const unsigned hall_pos[8] = { 	HALL_INV,	/* 0bx000 = 0 => INVALID */
 								2,			/* 0bx001 = 1 => 0 */
 								4,			/* 0bx010 = 2 => 4 */

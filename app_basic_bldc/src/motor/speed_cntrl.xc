@@ -38,9 +38,12 @@ static int Kp=1*8000, Ki=40, Kd=0;
 
 /* speed_control1() function updates pwm value based on pid regulator values
  * and sends the updated values to other threads using channels for motor 1*/
-void speed_control(chanend c_control, chanend c_lcd,chanend c_can_eth_shared )
+void speed_control(chanend c_control, chanend c_speed, chanend c_can_eth_shared )
 {
-	unsigned ts, set_speed = 1000, speed = 0, uPwm = 0, temp, cmd, startup = 1, error_flag1=0;
+	unsigned req_speed = 1000; // Requested speed
+	unsigned meas_speed = 0; // Measured speed
+	unsigned ts, uPwm = 0, direction, cmd, startup = 1, error_flag1=0;
+	unsigned ts, req_speed = 1000, meas_speed = 0, uPwm = 0, direction, cmd, startup = 1, error_flag1=0;
 	int pwm = 0, calced_pwm = 0 ;
 	/* 32 bit timer declaration */
 	timer t;
@@ -71,13 +74,13 @@ void speed_control(chanend c_control, chanend c_lcd,chanend c_can_eth_shared )
 		case t when timerafter (ts + MSEC_2) :> ts:
 			/* to get updated speed value from runmotor function */
 			c_control <: 1;
-			c_control :> speed;
+			c_control :> meas_speed;
 
 			/* 304 rpm/V - assume 24V maps to PWM_MAX_VALUE */
-			calced_pwm =  (set_speed * PWM_MAX_VALUE) / (PER_UNIT*24);
+			calced_pwm =  (req_speed * PWM_MAX_VALUE) / (PER_UNIT*24);
 
 			/* Updating pwm as per speed feedback and speed reference */
-			pwm = calced_pwm  + pid_regulator_delta_cust_error((int)(set_speed - speed), pid );
+			pwm = calced_pwm  + pid_regulator_delta_cust_error((int)(req_speed - meas_speed), pid );
 			/* Maximum and Minimum PWM limits */
 
 			if (pwm > 4000)
@@ -94,32 +97,32 @@ void speed_control(chanend c_control, chanend c_lcd,chanend c_can_eth_shared )
 #endif
 			break;
 
-		case c_lcd :> cmd: /* Process a command received from the display */
+		case c_speed :> cmd: /* Process a command received from the display */
 			if (cmd == CMD_GET_IQ)
 			{
-				c_lcd <: speed;
-				c_lcd <: set_speed;
+				c_speed <: meas_speed;
+				c_speed <: req_speed;
 #ifdef USE_XSCOPE
-				xscope_probe_data(2, speed);
-				xscope_probe_data(4, set_speed);
+				xscope_probe_data(2, meas_speed);
+				xscope_probe_data(4, req_speed);
 #endif
 			}
 			else if (cmd == CMD_SET_SPEED)
 			{
-				c_lcd :> set_speed;
+				c_speed :> req_speed;
 			}
 			else if(cmd == CMD_DIR)
 			{
-				c_lcd :> temp;
+				c_speed :> direction;
 				c_control <: 4;
-				c_control <: temp;
+				c_control <: direction;
 			}
 			break;
 		case c_can_eth_shared :> cmd: /* Process a command received from the CAN or ETHERNET*/
 			 if (cmd == CMD_GET_VALS)
 			 {
-				 c_can_eth_shared <: speed;
-				 c_can_eth_shared <: set_speed;
+				 c_can_eth_shared <: meas_speed;
+				 c_can_eth_shared <: req_speed;
 				 c_can_eth_shared <: error_flag1;
 			 }
 			 else if (cmd == CMD_GET_VALS2)
@@ -132,7 +135,7 @@ void speed_control(chanend c_control, chanend c_lcd,chanend c_can_eth_shared )
 			 }
 			 else if (cmd == CMD_SET_SPEED)
 			 {
-				 c_can_eth_shared :> set_speed;
+				 c_can_eth_shared :> req_speed;
 			 }
 			 else
 			 {

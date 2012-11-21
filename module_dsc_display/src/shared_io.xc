@@ -37,10 +37,17 @@
 #define MAX_RPM 3000
 #endif
 
-/* Manages the display, buttons and shared ports. */
-void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface_t, p), in port btns, out port leds )
+/*****************************************************************************/
+void display_shared_io_manager( // Manages the display, buttons and shared ports.
+	chanend c_speed[], 
+	REFERENCE_PARAM(lcd_interface_t, p), 
+	in port btns, 
+	out port leds
+)
 {
-	unsigned int time, MIN_VAL=0, speed[2]={0,0}, set_speed = 1000;
+	unsigned int old_meas_speed[2]={0,0}; // Array containing old measured speeds
+	unsigned int old_req_speed = 1000; // old requested speed
+	unsigned int time, MIN_VAL=0;
 	unsigned int btn_en = 0;
 	unsigned toggle = 1,  value;
 	char my_string[50];
@@ -66,22 +73,22 @@ void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface
 		/* Timer event at 10Hz */
 			case timer_1 when timerafter(time + 10000000) :> time:
 			{
-				unsigned new_speed[2], new_set_speed, fault[2];
+				unsigned new_meas_speed[2], new_req_speed, fault[2];
 
 				/* Get the motor 1 speed and motor 2 speed */
 				for (int m=0; m<NUMBER_OF_MOTORS; m++) {
 					c_speed[m] <: CMD_GET_IQ;
-					c_speed[m] :> new_speed[m];
-					c_speed[m] :> new_set_speed;
+					c_speed[m] :> new_meas_speed[m];
+					c_speed[m] :> new_req_speed;
 
 					c_speed[m] <: CMD_GET_FAULT;
 					c_speed[m] :> fault[m];
 				}
 
-				if (new_speed[0] != speed[0] || new_speed[1] != speed[1] || new_set_speed != set_speed) {
-					speed[0] = (speed[0] + new_speed[0]) / 2;
-					speed[1] = (speed[1] + new_speed[1]) / 2;
-					set_speed = new_set_speed;
+				if (new_meas_speed[0] != old_meas_speed[0] || new_meas_speed[1] != old_meas_speed[1] || new_req_speed != old_req_speed) {
+					old_meas_speed[0] = (old_meas_speed[0] + new_meas_speed[0]) / 2;
+					old_meas_speed[1] = (old_meas_speed[1] + new_meas_speed[1]) / 2;
+					old_req_speed = new_req_speed;
 
 					/* Calculate the strings here */
 					/* Now update the display */
@@ -91,20 +98,20 @@ void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface
 #ifdef USE_ETH
 					lcd_draw_text_row( "  XMOS Demo 2011: ETH\n", 0, p );
 #endif
-					sprintf(my_string, "  Set Speed: %04d RPM\n", set_speed );
+					sprintf(my_string, "  Set Speed: %04d RPM\n", old_req_speed );
 					lcd_draw_text_row( my_string, 1, p );
 
 					if (fault[0]) {
 						sprintf(my_string, "  Motor 1: FAULT" );
 					} else {
-						sprintf(my_string, "  Speed1: %04d RPM\n", speed[0]);
+						sprintf(my_string, "  Speed1: %04d RPM\n", old_meas_speed[0]);
 					}
 					lcd_draw_text_row( my_string, 2, p );
 
 					if (fault[1]) {
 						sprintf(my_string, "  Motor 2: FAULT" );
 					} else {
-						sprintf(my_string, "  Speed2: %04d RPM\n", speed[1]);
+						sprintf(my_string, "  Speed2: %04d RPM\n", old_meas_speed[1]);
 					}
 					lcd_draw_text_row( my_string, 3, p );
 				}
@@ -126,14 +133,14 @@ void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface
 					leds <: 1;
 
 					/* Increase the speed, by the increment */
-					set_speed += 100;
-					if (set_speed > MAX_RPM)
-						set_speed = MAX_RPM;
+					old_req_speed += 100;
+					if (old_req_speed > MAX_RPM)
+						old_req_speed = MAX_RPM;
 
 					/* Update the speed control loop */
 					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
 						c_speed[m] <: CMD_SET_SPEED;
-						c_speed[m] <: set_speed;
+						c_speed[m] <: old_req_speed;
 					}
 
 					/* Increment the debouncer */
@@ -144,17 +151,17 @@ void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface
 				{
 					leds <: 2;
 
-					set_speed -= 100;
+					old_req_speed -= 100;
 					/* Limit the speed to the minimum value */
-					if (set_speed < MIN_RPM)
+					if (old_req_speed < MIN_RPM)
 					{
-						set_speed = MIN_RPM;
-						MIN_VAL = set_speed;
+						old_req_speed = MIN_RPM;
+						MIN_VAL = old_req_speed;
 					}
 					/* Update the speed control loop */
 					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
 						c_speed[m] <: CMD_SET_SPEED;
-						c_speed[m] <: set_speed;
+						c_speed[m] <: old_req_speed;
 					}
 
 					/* Increment the debouncer */
@@ -166,24 +173,24 @@ void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface
 					leds <: 4;
 
 					toggle = !toggle;
-					temp = set_speed;
+					temp = old_req_speed;
 					/* to avoid jerks during the direction change*/
-					while(set_speed > MIN_RPM)
+					while(old_req_speed > MIN_RPM)
 					{
-						set_speed -= STEP_SPEED;
+						old_req_speed -= STEP_SPEED;
 						/* Update the speed control loop */
 						for (int m=0; m<NUMBER_OF_MOTORS; m++) {
 							c_speed[m] <: CMD_SET_SPEED;
-							c_speed[m] <: set_speed;
+							c_speed[m] <: old_req_speed;
 						}
 						timer_2 :> ts;
 						timer_2 when timerafter(ts + _30_Msec) :> ts;
 					}
-					set_speed  =0;
+					old_req_speed  =0;
 					/* Update the speed control loop */
 					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
 						c_speed[m] <: CMD_SET_SPEED;
-						c_speed[m] <: set_speed;
+						c_speed[m] <: old_req_speed;
 					}
 					/* Update the direction change */
 					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
@@ -193,22 +200,22 @@ void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface
 					}
 
 					/* to avoid jerks during the direction change*/
-					while(set_speed < temp)
+					while(old_req_speed < temp)
 					{
-						set_speed += STEP_SPEED;
+						old_req_speed += STEP_SPEED;
 						for (int m=0; m<NUMBER_OF_MOTORS; m++) {
 							c_speed[m] <: CMD_SET_SPEED;
-							c_speed[m] <: set_speed;
+							c_speed[m] <: old_req_speed;
 						}
 
 						timer_2 :> ts;
 						timer_2 when timerafter(ts + _30_Msec) :> ts;
 					}
-					set_speed  = temp;
+					old_req_speed  = temp;
 					/* Update the speed control loop */
 					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
 						c_speed[m] <: CMD_SET_SPEED;
-						c_speed[m] <: set_speed;
+						c_speed[m] <: old_req_speed;
 					}
 
 					/* Increment the debouncer */
@@ -216,9 +223,13 @@ void display_shared_io_manager( chanend c_speed[], REFERENCE_PARAM(lcd_interface
 				}
 			break;
 
-			default:
-			break;
-		}
-	}
-}
+/* JMB 21-NOV-2012  NOT required: Also improves response to push buttons!-)
+ *		default:
+ *		break;
+ */
+		} // select
+	} // while (1)
+} // display_shared_io_manager
+/*****************************************************************************/
+// shared_io.sc 
 

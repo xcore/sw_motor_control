@@ -44,7 +44,7 @@
 #include "xtcp_client.h"
 #include "uip_server.h"
 #include "ethernet_server.h"
-#include "getmac.h"
+#include "otp_board_info.h"
 #endif
 
 #ifdef USE_XSCOPE
@@ -112,7 +112,7 @@ void init_can_phy( chanend c_rxChan, chanend c_txChan, clock p_can_clk, buffered
 #ifdef USE_ETH
 
 #include "ethernet_server.h"
-#include "getmac.h"
+#include "otp_board_info.h"
 #include "uip_server.h"
 
 int mac_address[2];

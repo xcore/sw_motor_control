@@ -44,7 +44,7 @@
 #include "xtcp_client.h"
 #include "uip_server.h"
 #include "ethernet_server.h"
-#include "getmac.h"
+#include "otp_board_info.h"
 
 #ifdef USE_XSCOPE
 #include <xscope.h>
