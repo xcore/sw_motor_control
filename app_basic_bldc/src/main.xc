@@ -144,9 +144,17 @@ int main ( void )
 		/* L2 */
 		on tile[INTERFACE_CORE]: do_wd(c_wd, i2c_wd);
 
-		on tile[MOTOR_CORE]: speed_control( c_control[0], c_speed[0], c_commands[0]);
-		on tile[MOTOR_CORE]: speed_control( c_control[1], c_speed[1], c_commands[1]);
+		on tile[INTERFACE_CORE] : display_shared_io_manager( c_speed, lcd_ports, p_btns, p_leds);
 
+		on tile[MOTOR_CORE]: speed_control( c_control[0], c_speed[0], c_commands[0]);
+		on tile[MOTOR_CORE]: run_motor(c_pwm[0], c_control[0], p_hall1, p_motor_lo1, c_wd );
+		on tile[MOTOR_CORE]: do_pwm_simple(c_pwm[0], p_pwm_hi1, pwm_clk);
+
+		on tile[MOTOR_CORE]: speed_control( c_control[1], c_speed[1], c_commands[1]);
+		on tile[MOTOR_CORE]: run_motor(c_pwm[1], c_control[1], p_hall2, p_motor_lo2, null );
+		on tile[MOTOR_CORE]: do_pwm_simple(c_pwm[1], p_pwm_hi2, pwm_clk2);
+
+#ifdef MB
 		on tile[INTERFACE_CORE]: {
 #ifdef USE_XSCOPE
 			xscope_register(5,
@@ -165,6 +173,7 @@ int main ( void )
 		on tile[MOTOR_CORE]: run_motor(c_pwm[0], c_control[0], p_hall1, p_motor_lo1, c_wd );
 		on tile[MOTOR_CORE]: do_pwm_simple(c_pwm[1], p_pwm_hi2, pwm_clk2);
 		on tile[MOTOR_CORE]: run_motor(c_pwm[1], c_control[1], p_hall2, p_motor_lo2, null );
+#endif //MB~
 
 	} // par
 	return 0;

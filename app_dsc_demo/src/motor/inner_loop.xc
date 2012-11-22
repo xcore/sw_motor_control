@@ -106,7 +106,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 	int id_set_point = 0;
 
 	/* Speed PID control structure */
-	pid_data pid;
+	pid_data pid_speed;
 
 	/* Id PID control structure */
 	pid_data pid_d;
@@ -136,11 +136,11 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 	unsigned start_up = 0;
 
 	/* Position and speed as measured by the QEI */
-	unsigned theta = 0, valid = 0;
-	int speed = 1000;
+	unsigned meas_theta = 0, valid = 0;
+	int meas_speed = 1000;
 
-	// Demand speed set by the user/comms interface
-	int set_speed = 1000;
+	unsigned set_theta = 0;	// Demand theta set after calculating error
+	int set_speed = 1000;	// Demand speed set by the user/comms interface
 
 	// Phase difference between the QEI and the coils
 	unsigned theta_offset = -1;
@@ -193,10 +193,10 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 	/* PID control initialisation... */
 	init_pid( MOTOR_P, MOTOR_I, MOTOR_D, pid_d);
 	init_pid( MOTOR_P, MOTOR_I, MOTOR_D, pid_q);
-	init_pid( Kp, Ki, Kd, pid );
+	init_pid( Kp, Ki, Kd, pid_speed );
 
 	// Initially - pretend that the speed and the set speed are the same
-	speed = set_speed;
+	meas_speed = set_speed;
 
 	/* Main loop */
 	while (1)
@@ -204,12 +204,11 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 #pragma xta endpoint "foc_loop"
 		select
 		{
-		/* This case responds to speed control through shared I/O */
-		case c_speed :> command:
+		case c_speed :> command:		/* This case responds to speed control through shared I/O */
 #pragma xta label "foc_loop_speed_comms"
 			if(command == CMD_GET_IQ)
 			{
-				c_speed <: speed;
+				c_speed <: meas_speed;
 				c_speed <: set_speed;
 			}
 			else if (command == CMD_SET_SPEED)
@@ -221,14 +220,13 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 				c_speed <: error_flags;
 			}
 
-			break;
+		break; // case c_speed :> command:
 
-		//This case responds to CAN or ETHERNET commands
-		case c_can_eth_shared :> command:
+		case c_can_eth_shared :> command:		//This case responds to CAN or ETHERNET commands
 #pragma xta label "foc_loop_shared_comms"
 			if(command == CMD_GET_VALS)
 			{
-				c_can_eth_shared <: speed;
+				c_can_eth_shared <: meas_speed;
 				c_can_eth_shared <: Ia_in;
 				c_can_eth_shared <: Ib_in;
 			}
@@ -249,11 +247,10 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 				c_can_eth_shared <: error_flags;
 			}
 
-			break;
+		break; // case c_can_eth_shared :> command:
 
-		/* Initially the below case runs in open loop with the hall sensor responses and then reverts
-		 * back to main FOC algorithem */
-		default:
+
+		default:	/* Initially the below case runs in open loop with the hall sensor responses and then reverts back to main FOC algorithem */
 			if(stop_motor==0)
 			{
 
@@ -262,7 +259,8 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 				p_hall :> hall;
 
 				/* Check error status */
-				if(!(hall & 0b1000)) {
+				if(!(hall & 0b1000)) 
+				{
 					error_flags |= ERROR_OVERCURRENT;
 				}
 
@@ -271,32 +269,36 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 				{
 #pragma xta label "foc_loop_startup"
 
-					{speed, theta, valid } = get_qei_data( c_qei );
+					{meas_speed, meas_theta, valid } = get_qei_data( c_qei );
 
-					if (valid && (last_hall&0x7)==0b011 && (hall&0x7)==0b010) {
+					if (valid && (last_hall&0x7)==0b011 && (hall&0x7)==0b010) 
+					{
 						// We are spinning in the wrong direction
 						pwm[0]=-1;
 						pwm[1]=-1;
 						pwm[2]=-1;
 						stop_motor=1;
-					} else {
+					} // if (valid && (last_hall&0x7)==0b011 && (hall&0x7)==0b010)
+					else 
+					{
 						// Find the offset between the rotor and the QEI
-						if (valid && (last_hall&0x7)==0b011 && (hall&0x7)==0b001 && theta_offset==-1 && theta < (QEI_COUNT_MAX/NUMBER_OF_POLES)) {
-							theta_offset = (THETA_HALF_PHASE + theta);
+						if (valid && (last_hall&0x7)==0b011 && (hall&0x7)==0b001 && theta_offset==-1 && meas_theta < (QEI_COUNT_MAX/NUMBER_OF_POLES)) 
+						{
+							theta_offset = (THETA_HALF_PHASE + meas_theta);
 						}
 
 						/* Spin the magnetic field around regardless of the encoder */
 #if PLATFORM_REFERENCE_MHZ == 100
-						theta = (start_up >> 2) & (QEI_COUNT_MAX-1);
+						set_theta = (start_up >> 2) & (QEI_COUNT_MAX-1);
 #else
-						theta = (start_up >> 4) & (QEI_COUNT_MAX-1);
+						set_theta = (start_up >> 4) & (QEI_COUNT_MAX-1);
 #endif
 
 						iq_out = 2000;
 						id_out = 0;
 
 						/* Inverse park  [d,q] to [alpha, beta] */
-						inverse_park_transform( alpha_out, beta_out, id_out, iq_out, theta  );
+						inverse_park_transform( alpha_out, beta_out, id_out, iq_out, set_theta  );
 
 						/* Final voltages applied */
 						inverse_clarke_transform( Ia_out, Ib_out, Ic_out, alpha_out, beta_out );
@@ -311,13 +313,13 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 						pwm[2] = (Ic_out + OFFSET_14) >> 3;
 						if (pwm[2] > PWM_MAX_LIMIT) pwm[2] = PWM_MAX_LIMIT;
 						else if (pwm[2] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
-					}
+					} // else !(valid && (last_hall&0x7)==0b011 && (hall&0x7)==0b010)
 
 					/* Update the PWM values */
 					update_pwm_inv( pwm_ctrl, c_pwm, pwm );
 
 					start_up++;
-				}
+				} // if (valid==0 || theta_offset==-1 )
 				else
 				{
 					cycle_count++;
@@ -327,22 +329,28 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					/* ---	FOC ALGORITHM	--- */
 
 					/* Get the position from encoder module */
-					{speed, theta, valid } = get_qei_data( c_qei );
+					{meas_speed, meas_theta, valid } = get_qei_data( c_qei );
 
 					// Check for a stall
-					if (speed < STALL_SPEED) {
-						if (stall_count > STALL_TRIP_COUNT) {
+					if (meas_speed < STALL_SPEED) 
+					{
+						if (stall_count > STALL_TRIP_COUNT) 
+						{
 							error_flags |= ERROR_STALL;
-						} else {
+						}
+						else 
+						{
 							stall_count++;
 						}
-					} else {
+					} // if (meas_speed < STALL_SPEED) 
+					else 
+					{
 						stall_count=0;
-					}
+					} // else !(meas_speed < STALL_SPEED) 
 
 					// Bring theta into the correct phase (adjustment between QEI and motor windings)
-					theta = theta - theta_offset;
-					theta &= (QEI_COUNT_MAX-1);
+					set_theta = meas_theta - theta_offset;
+					set_theta &= (QEI_COUNT_MAX-1);
 
 #pragma xta label "foc_loop_clarke"
 
@@ -355,12 +363,12 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 #pragma xta label "foc_loop_park"
 
 					/* Id and Iq outputs derived from park transform */
-					park_transform( Id_in, Iq_in, alpha_in, beta_in, theta  );
+					park_transform( Id_in, Iq_in, alpha_in, beta_in, set_theta  );
 
 #pragma xta label "foc_loop_speed_pid"
 
 					/* Applying Speed PID */
-					iq_set_point = pid_regulator_delta_cust_error_speed((int)(set_speed - speed), pid );
+					iq_set_point = pid_regulator_delta_cust_error_speed((int)(set_speed - meas_speed), pid_speed );
 					if (iq_set_point <0) iq_set_point = 0;
 
 					/* Apply PID control to Iq and Id */
@@ -375,7 +383,7 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 #pragma xta label "foc_loop_inverse_park"
 
 					/* Inverse park  [d,q] to [alpha, beta] */
-					inverse_park_transform( alpha_out, beta_out, id_out, iq_out, theta  );
+					inverse_park_transform( alpha_out, beta_out, id_out, iq_out, set_theta  );
 
 #pragma xta label "foc_loop_inverse_clarke"
 
@@ -396,32 +404,39 @@ void run_motor ( chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend
 					else if (pwm[2] < PWM_MIN_LIMIT) pwm[2] = PWM_MIN_LIMIT;
 
 
-					if(error_flags) {
+					if(error_flags) 
+					{
 #pragma xta label "foc_loop_motor_fault"
 						pwm[0]=-1;
 						pwm[1]=-1;
 						pwm[2]=-1;
 						stop_motor=1;
-					}
+					} // if(error_flags) 
 
 					/* Update the PWM values */
 					update_pwm_inv( pwm_ctrl, c_pwm, pwm );
 
 #ifdef USE_XSCOPE
-					if ((cycle_count & 0x1) == 0) {
-					        if (isnull(c_in)) {
-					        	xscope_probe_data(0, speed);
-					        	xscope_probe_data(1, iq_set_point);
-					        	xscope_probe_data(2, pwm[0]);
-					        	xscope_probe_data(3, pwm[1]);
-					        	xscope_probe_data(4, Ia_in);
-					        	xscope_probe_data(5, Ib_in);
-					        }
-					}
+					if ((cycle_count & 0x1) == 0) 
+					{
+						if (isnull(c_in)) 
+						{
+							xscope_probe_data(0, meas_speed);
+					    xscope_probe_data(1, iq_set_point);
+					    xscope_probe_data(2, pwm[0]);
+					    xscope_probe_data(3, pwm[1]);
+					    xscope_probe_data(4, Ia_in);
+					    xscope_probe_data(5, Ib_in);
+					  } // if (isnull(c_in)) 
+					} // if ((cycle_count & 0x1) == 0) 
 #endif
-				}
-			}
-			break;
-		}
-	}
-}
+				} // else ! (valid==0 || theta_offset==-1 )
+			} // if(stop_motor==0)
+		break; // default:
+
+
+		}	// select
+	}	// while (1)
+} // run_motor
+/*****************************************************************************/
+// inner_loop.xc
