@@ -64,8 +64,8 @@ void do_comms_can( chanend c_commands[], chanend rxChan, chanend txChan)
 				p.ID  = sender_address & 0x7F;
 
 				//Select what to do based on the command send
-				switch ( p.DATA[2] ) {
-
+				switch ( p.DATA[2] ) 
+				{
 					case 1 : //Send CAN frame 1
 
 						// Get the speed ,Ia,Ib of motor1
@@ -208,8 +208,8 @@ void do_comms_can( chanend c_commands[], chanend rxChan, chanend txChan)
 					break;
 
 			    default :// Unknown command - ignore it.
-			    	break;
-			   }
+			    break;
+			  } // switch ( p.DATA[2] ) 
 			}
 		}
 	}

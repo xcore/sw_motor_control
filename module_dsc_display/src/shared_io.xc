@@ -17,6 +17,7 @@
 
 #include "xs1.h"
 #include <stdio.h>
+#include <assert.h>
 
 #ifdef __dsc_config_h_exists__
 #include "dsc_config.h"
@@ -37,6 +38,24 @@
 #define MAX_RPM 3000
 #endif
 
+#define ERR_LIM 10 // No. of consecutive button value errors allowed
+
+/*****************************************************************************/
+void update_speed_control( // Updates the speed control loop
+	chanend c_speed[], // speed channel
+	unsigned int cmd_id, // Command identifier
+	unsigned int cmd_val // Command value
+)
+{
+	int motor_cnt; // motor counter
+
+	// Loop through motors
+	for (motor_cnt=0; motor_cnt<NUMBER_OF_MOTORS; motor_cnt++) 
+	{
+		c_speed[motor_cnt] <: cmd_id;
+		c_speed[motor_cnt] <: cmd_val;
+	} // for motor_cnt
+} // update_speed_control 
 /*****************************************************************************/
 void display_shared_io_manager( // Manages the display, buttons and shared ports.
 	chanend c_speed[], 
@@ -45,14 +64,31 @@ void display_shared_io_manager( // Manages the display, buttons and shared ports
 	out port leds
 )
 {
-	unsigned int old_meas_speed[2]={0,0}; // Array containing old measured speeds
+	char my_string[50]; // array of display characters
+	unsigned int new_meas_speed[NUMBER_OF_MOTORS]; // Array containing new measured speeds
+	unsigned int old_meas_speed[NUMBER_OF_MOTORS]; // Array containing old measured speeds
+	unsigned int fault[NUMBER_OF_MOTORS]; // Array containing motor fault ids
+	unsigned int new_req_speed; // new requested speed
 	unsigned int old_req_speed = 1000; // old requested speed
-	unsigned int time, MIN_VAL=0;
-	unsigned int btn_en = 0;
-	unsigned toggle = 1,  value;
-	char my_string[50];
-	unsigned ts,temp=0;
-	timer timer_1,timer_2;
+	int speed_change; // flag set when new speed parameters differ from old
+	unsigned cur_speed; // current speed
+	unsigned int btn_en = 0; // button debounce counter
+	int motor_cnt; // motor counter
+	unsigned toggle = 1; // indicates motor spin direction 
+	unsigned btns_val; // value that encodes state of buttons
+	int err_cnt; // error counter
+
+	timer timer_10Hz; // 10Hz timer
+	timer timer_30ms; // 30ms timer
+	unsigned int time_10Hz_val; // 10Hz timer value
+	unsigned int time_30ms_val; // 30ms timer value
+
+
+	// Initialise array of old measured speeds
+	for (motor_cnt=0; motor_cnt<NUMBER_OF_MOTORS; motor_cnt++)
+	{
+		old_meas_speed[motor_cnt]=0;
+	} // for motor_cnt
 
 	leds <: 0;
 
@@ -63,7 +99,7 @@ void display_shared_io_manager( // Manages the display, buttons and shared ports
 	p.p_core1_shared <:0;
 
 	/* Get the initial time value */
-	timer_1 :> time;
+	timer_10Hz :> time_10Hz_val;
 
 	/* Loop forever processing commands */
 	while (1)
@@ -71,157 +107,154 @@ void display_shared_io_manager( // Manages the display, buttons and shared ports
 		select
 		{
 		/* Timer event at 10Hz */
-			case timer_1 when timerafter(time + 10000000) :> time:
+			case timer_10Hz when timerafter(time_10Hz_val + 10000000) :> time_10Hz_val:
 			{
-				unsigned new_meas_speed[2], new_req_speed, fault[2];
+				/* Get the motor speeds from channels. NB Do this as quickly as possible */
+				for (motor_cnt=0; motor_cnt<NUMBER_OF_MOTORS; motor_cnt++) 
+				{
+					c_speed[motor_cnt] <: CMD_GET_IQ;
+					c_speed[motor_cnt] :> new_meas_speed[motor_cnt];
+					c_speed[motor_cnt] :> new_req_speed;
 
-				/* Get the motor 1 speed and motor 2 speed */
-				for (int m=0; m<NUMBER_OF_MOTORS; m++) {
-					c_speed[m] <: CMD_GET_IQ;
-					c_speed[m] :> new_meas_speed[m];
-					c_speed[m] :> new_req_speed;
+					c_speed[motor_cnt] <: CMD_GET_FAULT;
+					c_speed[motor_cnt] :> fault[motor_cnt];
+				} // for motor_cnt
 
-					c_speed[m] <: CMD_GET_FAULT;
-					c_speed[m] :> fault[m];
-				}
+				// Check for speed change
+				if (new_req_speed != old_req_speed)
+				{ 
+					speed_change = 1; // flag speed change
+				} // if (new_req_speed != old_req_speed)
+				else
+				{ 
+					speed_change = 0; // no speed change (so far)
 
-				if (new_meas_speed[0] != old_meas_speed[0] || new_meas_speed[1] != old_meas_speed[1] || new_req_speed != old_req_speed) {
-					old_meas_speed[0] = (old_meas_speed[0] + new_meas_speed[0]) / 2;
-					old_meas_speed[1] = (old_meas_speed[1] + new_meas_speed[1]) / 2;
-					old_req_speed = new_req_speed;
+					for (motor_cnt=0; motor_cnt<NUMBER_OF_MOTORS; motor_cnt++) 
+					{
+						if (new_meas_speed[motor_cnt] != old_meas_speed[motor_cnt])
+						{
+							speed_change = 1; // flag speed change
+							break; // Early loop exit
+						} // if (new_meas_speed[motor_cnt] != old_meas_speed[motor_cnt])
+					} // for motor_cnt
+				} // if (new_req_speed != old_req_speed)
 
-					/* Calculate the strings here */
-					/* Now update the display */
+				if (speed_change) 
+				{
 #ifdef USE_CAN
 					lcd_draw_text_row( "  XMOS Demo 2011: CAN\n", 0, p );
 #endif
 #ifdef USE_ETH
 					lcd_draw_text_row( "  XMOS Demo 2011: ETH\n", 0, p );
 #endif
+					// update old speed parameters ...
+
+					old_req_speed = new_req_speed;
 					sprintf(my_string, "  Set Speed: %04d RPM\n", old_req_speed );
 					lcd_draw_text_row( my_string, 1, p );
 
-					if (fault[0]) {
-						sprintf(my_string, "  Motor 1: FAULT" );
-					} else {
-						sprintf(my_string, "  Speed1: %04d RPM\n", old_meas_speed[0]);
-					}
-					lcd_draw_text_row( my_string, 2, p );
+					for (motor_cnt=0; motor_cnt<NUMBER_OF_MOTORS; motor_cnt++) 
+					{
+						old_meas_speed[motor_cnt] = (old_meas_speed[motor_cnt] + new_meas_speed[motor_cnt]) >> 1;
 
-					if (fault[1]) {
-						sprintf(my_string, "  Motor 2: FAULT" );
-					} else {
-						sprintf(my_string, "  Speed2: %04d RPM\n", old_meas_speed[1]);
-					}
-					lcd_draw_text_row( my_string, 3, p );
-				}
+						if (fault[motor_cnt]) 
+						{
+							sprintf(my_string, "  Motor%1d: FAULT = %02d\n" ,(motor_cnt + 1) ,fault[motor_cnt] );
+						} 
+						else 
+						{
+							sprintf(my_string, "  Speed%1d: %04d RPM\n" ,(motor_cnt + 1) ,old_meas_speed[motor_cnt] );
+						}
 
-				/* Switch debouncing - run through and decrement debouncer */
-				if ( btn_en > 0)
-					btn_en--;
+						lcd_draw_text_row( my_string ,(motor_cnt + 2) ,p );
+					} // for motor_cnt
+				} // if (speed_change)
+
+				if ( btn_en > 0) btn_en--; // decrement switch debouncer
 			}
-			break;
+			break; // case timer_10Hz when timerafter(time_10Hz_val + 10000000) :> time_10Hz_val:
 
-			case !btn_en => btns when pinsneq(value) :> value:
-				value = (~value & 0x0000000F);
+			case !btn_en => btns when pinsneq(btns_val) :> btns_val:
+				btns_val = (~btns_val & 0x0000000F); // Invert and mask out 4 most LS (active) bits
 
-				if (value == 0) {
+				// check for button change
+				if (btns_val)
+				{
+					// Decode buttons value
+					switch( btns_val )
+					{
+						case 1 : // Increase the speed, by the increment
+							err_cnt = 0; // Valid button value so clear error count
+							leds <: 1;
+			
+							old_req_speed += 100;
+							if (old_req_speed > MAX_RPM) old_req_speed = MAX_RPM;
+						break; // case 1
+	
+						case 2 : // Decrease the speed, by the increment
+							err_cnt = 0; // Valid button value so clear error count
+							leds <: 2;
+			
+							old_req_speed -= 100;
+							/* Limit the speed to the minimum value */
+							if (old_req_speed < MIN_RPM)
+							{
+								old_req_speed = MIN_RPM;
+							}
+						break; // case 2
+	
+						case 8 : // Change direction of spin
+							err_cnt = 0; // Valid button value so clear error count
+							leds <: 4;
+			
+							toggle = !toggle;
+							cur_speed = old_req_speed;
+			
+							/* to avoid jerks during the direction change*/
+							while(cur_speed > MIN_RPM)
+							{
+								cur_speed -= STEP_SPEED;
+			
+								update_speed_control( c_speed ,CMD_SET_SPEED ,cur_speed ); // Decrease speed
+			
+								timer_30ms :> time_30ms_val;
+								timer_30ms when timerafter(time_30ms_val + _30_Msec) :> time_30ms_val;
+							}
+			
+							update_speed_control( c_speed ,CMD_SET_SPEED ,0 ); // Set speed to zero
+			
+							update_speed_control( c_speed ,CMD_DIR ,toggle ); // Change direction
+			
+							/* to avoid jerks during the direction change*/
+							while(cur_speed < old_req_speed )
+							{
+								cur_speed += STEP_SPEED;
+			
+								update_speed_control( c_speed ,CMD_SET_SPEED ,cur_speed ); // Increase speed
+			
+								timer_30ms :> time_30ms_val;
+								timer_30ms when timerafter(time_30ms_val + _30_Msec) :> time_30ms_val;
+							} // while(old_req_speed < temp)
+						break; // case 8
+	
+				    default: // btns_val unsupported
+							assert(err_cnt < ERR_LIM); // Check for persistant error
+
+							err_cnt++; // Increment error count
+				    break;
+					} // switch( btns_val )
+
+					update_speed_control( c_speed ,CMD_SET_SPEED ,old_req_speed ); // Update the speed control loop
+			
+					btn_en = 2;	// Set the debouncer
+				} // if (btns_val)
+				else
+				{	// No change
+					err_cnt = 0; // Valid button value so clear error count
 					leds <: 0;
-				}
-				else if(value == 1)
-				{
-					leds <: 1;
+				} // else !(btns_val)
 
-					/* Increase the speed, by the increment */
-					old_req_speed += 100;
-					if (old_req_speed > MAX_RPM)
-						old_req_speed = MAX_RPM;
-
-					/* Update the speed control loop */
-					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
-						c_speed[m] <: CMD_SET_SPEED;
-						c_speed[m] <: old_req_speed;
-					}
-
-					/* Increment the debouncer */
-					btn_en = 2;
-				}
-
-				else if(value == 2)
-				{
-					leds <: 2;
-
-					old_req_speed -= 100;
-					/* Limit the speed to the minimum value */
-					if (old_req_speed < MIN_RPM)
-					{
-						old_req_speed = MIN_RPM;
-						MIN_VAL = old_req_speed;
-					}
-					/* Update the speed control loop */
-					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
-						c_speed[m] <: CMD_SET_SPEED;
-						c_speed[m] <: old_req_speed;
-					}
-
-					/* Increment the debouncer */
-					btn_en = 2;
-				}
-
-				else if(value == 8)
-				{
-					leds <: 4;
-
-					toggle = !toggle;
-					temp = old_req_speed;
-					/* to avoid jerks during the direction change*/
-					while(old_req_speed > MIN_RPM)
-					{
-						old_req_speed -= STEP_SPEED;
-						/* Update the speed control loop */
-						for (int m=0; m<NUMBER_OF_MOTORS; m++) {
-							c_speed[m] <: CMD_SET_SPEED;
-							c_speed[m] <: old_req_speed;
-						}
-						timer_2 :> ts;
-						timer_2 when timerafter(ts + _30_Msec) :> ts;
-					}
-					old_req_speed  =0;
-					/* Update the speed control loop */
-					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
-						c_speed[m] <: CMD_SET_SPEED;
-						c_speed[m] <: old_req_speed;
-					}
-					/* Update the direction change */
-					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
-						c_speed[m] <: CMD_DIR;
-						c_speed[m] <: toggle;
-
-					}
-
-					/* to avoid jerks during the direction change*/
-					while(old_req_speed < temp)
-					{
-						old_req_speed += STEP_SPEED;
-						for (int m=0; m<NUMBER_OF_MOTORS; m++) {
-							c_speed[m] <: CMD_SET_SPEED;
-							c_speed[m] <: old_req_speed;
-						}
-
-						timer_2 :> ts;
-						timer_2 when timerafter(ts + _30_Msec) :> ts;
-					}
-					old_req_speed  = temp;
-					/* Update the speed control loop */
-					for (int m=0; m<NUMBER_OF_MOTORS; m++) {
-						c_speed[m] <: CMD_SET_SPEED;
-						c_speed[m] <: old_req_speed;
-					}
-
-					/* Increment the debouncer */
-					btn_en = 2;
-				}
-			break;
+			break; // case !btn_en => btns when pinsneq(btns_val) :> btns_val:
 
 /* JMB 21-NOV-2012  NOT required: Also improves response to push buttons!-)
  *		default:
