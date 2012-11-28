@@ -1,23 +1,25 @@
 <?xml version="1.0" ?>
 <xpd>
+    <components></components>
     <dependency repo = "sc_pwm">
-        <githash>d03a7e4f543b0e40f4831cf5a73c96933d339b03</githash>
+        <githash>53f275204764669c9d8ae10378453aa279a5bc47</githash>
         <uri>git@github.com:xcore/sc_pwm.git</uri>
+        <version>1.0.0rc0</version>
     </dependency>
     <dependency repo = "sc_can">
-        <githash>9f3beaf37592e383b2baa1ef13c9d33e0c304132</githash>
+        <githash>3ec6bf50a5de2b5e9dbd57400b69439f30ee7e02</githash>
         <uri>git@github.com:xcore/sc_can.git</uri>
     </dependency>
     <dependency repo = "xcommon">
-        <githash>f035daf04c248b398925a9ac74a60719d9f194c3</githash>
+        <githash>9078e1a092a5ddebbc32148b5ea6e0fc52bb9923</githash>
         <uri>https://github.com/xcore/xcommon.git</uri>
     </dependency>
     <dependency repo = "sc_xtcp">
-        <githash>cd8a8417e8bd30cdb78ff9d88cfb5a9cb2cd7ac2</githash>
+        <githash>a9e68fadfd28eb79294cd9239dd3ddc8bb0712d4</githash>
         <uri>git@github.com:xcore/sc_xtcp.git</uri>
     </dependency>
     <dependency repo = "sc_ethernet">
-        <githash>9877bf0ed9e707853c553e241825cbc6a5ee51e8</githash>
+        <githash>d015584d5ad4c01a5dec769b932464eafc6c5aaf</githash>
         <uri>git@github.com:xcore/sc_ethernet.git</uri>
     </dependency>
     <description>XMOS motor control platform</description>
@@ -34,8 +36,9 @@
     <release parenthash = "39fc4492639533d56d5d3f59e7e19e89469ce0ca" version = "1.0.3" githash = "1c53dbed9753ab2050a76827d8645ec0425c4ec4"></release>
     <release parenthash = "61fa8e2ae543b8aece4e88006685b925d12ec4e8" version = "1.0.4rc0" githash = "baf33bd8f6386768f68c16bbeb31e7e7c26a1a81"></release>
     <release parenthash = "4c4b0039d1171fed09bebf46496ef7e4c238e269" version = "1.0.4rc1" githash = "7f0a0588b820e30282ce459ffb5aa13ed692e5b4"></release>
-    <release parenthash = "77135c7a3eacc42b5f16d9809fa8c1403f8f0c05" version = "1.1.0rc0"></release>
+    <release parenthash = "77135c7a3eacc42b5f16d9809fa8c1403f8f0c05" version = "1.1.0rc0" githash = "073ff50221cd0a1d9111c4c65c6b329dfe4a9b4c"></release>
     <vendor>XMOS</vendor>
+    <xcore_repo>sw_motor_control.git</xcore_repo>
     <xpd_version>1.0</xpd_version>
     <template name = "Control Board Demo Project (Standalone)">
         <board>XP-MC-CTRL-L2</board>

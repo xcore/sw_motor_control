@@ -31,6 +31,7 @@ USED_MODULES += module_pwm_symmetrical module_pwm_common
 XCC_FLAGS_Debug = $(XCC_FLAGS)
 XCC_FLAGS_Release = $(XCC_FLAGS)
 
+
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure
 # for compiling XMOS applications. You should not need to edit below here.

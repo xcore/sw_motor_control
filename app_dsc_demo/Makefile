@@ -36,6 +36,7 @@ USE_XTCP_MAC_CUSTOM_FILTER = 1
 XCC_FLAGS_Debug = $(XCC_FLAGS)
 XCC_FLAGS_Release = $(XCC_FLAGS)
 
+
 #=============================================================================
 # The following part of the Makefile includes the common build infrastructure
 # for compiling XMOS applications. You should not need to edit below here.
