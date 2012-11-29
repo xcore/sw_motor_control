@@ -161,13 +161,13 @@ int main ( void ) // Program Entry Point
 //					XSCOPE_CONTINUOUS, "PWM[0]", XSCOPE_UINT , "n"
 			); // xscope_register 
 #endif
-			run_motor( null, c_motor_comms, c_pwm[0], c_qei[0], c_adc[0], c_speed[0], c_wd, p_hall1, c_commands[0]);
+			run_motor( 0, null, c_motor_comms, c_pwm[0], c_qei[0], c_adc[0], c_speed[0], c_wd, p_hall1, c_commands[0]);
 		} // on tile[MOTOR_CORE]
 
 		on tile[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[0], c_adc_trig[0], ADC_SYNC_PORT1, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
 
 #if NUMBER_OF_MOTORS > 1
-		on tile[MOTOR_CORE] : run_motor( c_motor_comms, null, c_pwm[1], c_qei[1], c_adc[1], c_speed[1], null, p_hall2, c_commands[1]);
+		on tile[MOTOR_CORE] : run_motor( 1, c_motor_comms, null, c_pwm[1], c_qei[1], c_adc[1], c_speed[1], null, p_hall2, c_commands[1]);
 		on tile[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[1], c_adc_trig[1], ADC_SYNC_PORT2, p_pwm_hi2, p_pwm_lo2, pwm_clk2 );
 
 #ifdef USE_SEPARATE_QEI_THREADS

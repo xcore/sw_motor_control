@@ -36,6 +36,9 @@
  *   therefore we want to have theta=0 aligned with the centre of the '001' state of hall effect
  *   detector.
  **/
+#include <stdlib.h>
+#include <safestring.h>
+
 #include <xs1.h>
 #include <print.h>
 #include <assert.h>
@@ -49,12 +52,6 @@
 #include "watchdog.h"
 #include "shared_io.h"
 #include "inner_loop.h"
-
-#ifdef MB
-#include "hall_input.h"
-#include "adc_filter.h"
-#include "hall_client.h"
-#endif //MB~
 
 #ifdef USE_XSCOPE
 #include <xscope.h>
@@ -74,10 +71,6 @@
 #define STALL_SPEED 100
 #define STALL_TRIP_COUNT 5000
 
-#define ERROR_OVERCURRENT 0x1
-#define ERROR_UNDERVOLTAGE 0x2
-#define ERROR_STALL 0x4
-#define ERROR_DIRECTION 0x8
 
 // This is half of the coil sector angle (6 sectors = 60 degrees per sector, 30 degrees per half sector)
 #define THETA_HALF_PHASE (QEI_COUNT_MAX * 30 / 360 / NUMBER_OF_POLES)
@@ -87,6 +80,14 @@
 #define INIT_HALL 0 // Initial Hall state
 #define INIT_THETA 0 // Initial start-up angle
 #define INIT_SPEED 1000 // Initial start-up speed
+#define DEMO_LIMIT 1000000 // Demo. terminated after this number of FOC iterations
+
+#define STR_LEN 80 // String Length
+
+#define ERROR_OVERCURRENT 0x1 //MB~
+#define ERROR_UNDERVOLTAGE 0x2
+#define ERROR_STALL 0x4
+#define ERROR_DIRECTION 0x8
 
 #pragma xta command "add exclusion foc_loop_motor_fault"
 #pragma xta command "add exclusion foc_loop_speed_comms"
@@ -115,14 +116,32 @@ typedef enum MOTOR_STATE_TAG
   NUM_MOTOR_STATES	// Handy Value!-)
 } MOTOR_STATE_TYP;
 
+// WARNING: If altering Error types. Also update error-message in init_motor()
+/** Different Motor Phases */
+typedef enum ERROR_TAG
+{
+	OVERCURRENT = 0,
+	UNDERVOLTAGE,
+	STALLED,
+	DIRECTION,
+  NUM_ERR_TYPS	// Handy Value!-)
+} ERROR_TYP;
+
+typedef struct STRING_TAG // Structure containing string
+{
+	char str[STR_LEN]; // Array of characters
+} STRING_TYP;
+
 typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 {
+	STRING_TYP err_strs[NUM_ERR_TYPS]; // Array of error messages
 	pid_data pid_speed;	/* Speed PID control structure */
 	pid_data pid_d;	/* Id PID control structure */
 	pid_data pid_q;	/* Iq PID control structure */
 	t_pwm_control pwm_ctrl;	// structure containing PWM data, (written to shared memory)
 	int meas_Is[NUM_PHASES]; // Array of measured coil currents from ADC
 	int cnts[NUM_MOTOR_STATES]; // array of counters for each motor state	
+	unsigned id; // Unique Motor identifier e.g. 0 or 1
 	MOTOR_STATE_TYP state; // Current motor state
 	unsigned prev_hall; // previous hall state value
 	int set_theta;	// theta value
@@ -130,6 +149,7 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	int set_id;	// Ideal current producing radial magnetic field.
 	int set_iq;	// Ideal current producing tangential magnetic field
 	int start_theta; // Theta start position during warm-up (START and SEARCH states)
+	unsigned err_flgs;	// Fault detection flags
 
 	int out_id;	// Output radial current value
 	int out_iq;	// Output measured tangential current value
@@ -143,12 +163,15 @@ static int dbg = 0; // Debug variable
 
 /*****************************************************************************/
 void init_motor( // initialise data structure for one motor
-	MOTOR_DATA_TYP &motor_s // reference to structure containing motor data
+	MOTOR_DATA_TYP &motor_s, // reference to structure containing motor data
+	unsigned motor_id // Unique Motor identifier e.g. 0 or 1
 )
 {
 	int phase_cnt; // phase counter
+	int err_cnt; // phase counter
 
 
+	motor_s.id = motor_id; // Unique Motor identifier e.g. 0 or 1
 	motor_s.cnts[START] = 0;
 	motor_s.state = START;
 	motor_s.prev_hall = INIT_HALL;
@@ -157,6 +180,18 @@ void init_motor( // initialise data structure for one motor
 	motor_s.start_theta = 0; // Theta start position during warm-up (START and SEARCH states)
 	motor_s.set_id = 0;	// Ideal current producing radial magnetic field (NB never update as no radial force is required)
 	motor_s.set_iq = 0;	// Ideal current producing tangential magnetic field. (NB Updated based on the speed error)
+	motor_s.err_flgs = 0; 	// Clear fault detection flags
+
+	// Initialise error strings
+	for (err_cnt=0; err_cnt<NUM_ERR_TYPS; err_cnt++)
+	{
+		safestrcpy( motor_s.err_strs[err_cnt].str ,"No Message! Please add in function init_motor()" );
+	} // for err_cnt
+
+	safestrcpy( motor_s.err_strs[OVERCURRENT].str ,"Over-Current Detected" );
+	safestrcpy( motor_s.err_strs[UNDERVOLTAGE].str ,"Under-Voltage Detected" );
+	safestrcpy( motor_s.err_strs[STALLED].str ,"Motor Stalled Persistently" );
+	safestrcpy( motor_s.err_strs[DIRECTION].str ,"Motor Spinning In Wrong Direction!" );
 
 	// NB Display will require following variables, before we have measured them! ...
 
@@ -304,7 +339,6 @@ unsigned update_motor_state( // Update state of motor based on motor sensor data
  */
 {
 	unsigned stop_motor;	/* Fault detection */
-	unsigned error_flags = 0;	/* Fault detection */
 
 
 	inp_hall &= 0x7; // Mask out LS 3 hall-bits
@@ -328,7 +362,7 @@ if (dbg) { printstr( "SA: " ); printintln( motor_s.cnts[START] ); }
 				// Check for correct spin direction
 				if (inp_hall == 0b010)
 				{ // We are spinning in the wrong direction!-(
-					error_flags |= ERROR_DIRECTION;
+					motor_s.err_flgs |= ERROR_DIRECTION;
 					motor_s.state = STOP; // Switch to stop state
 					motor_s.cnts[STOP] = 0; // Initialise stop-state counter 
 if (dbg) { printstr( "SE- " ); printintln( motor_s.cnts[SEARCH] ); } 
@@ -356,7 +390,16 @@ if (dbg) { printstr( "SE: " ); printintln( motor_s.cnts[SEARCH] ); }
 				motor_s.state = STALL; // Switch to stall state
 				motor_s.cnts[STALL] = 0; // Initialise stall-state counter 
 if (dbg) { printstr( "FO: " ); printintln( motor_s.cnts[FOC] ); } 
-			} // if (motor_s.meas_speed < STALL_SPEED) 
+			} // if (motor_s.meas_speed < STALL_SPEED)
+			else
+			{
+				// Check if it is time to stop demo
+				if (motor_s.cnts[FOC] > DEMO_LIMIT)
+				{
+					motor_s.state = STOP; // Switch to stop state
+					motor_s.cnts[STOP] = 0; // Initialise stop-state counter 
+				} // if (motor_s.cnts[FOC] > DEMO_LIMIT)
+			} // else !(motor_s.meas_speed < STALL_SPEED)
 		break; // case FOC
 	
 		case STALL : // state where motor stalled
@@ -366,7 +409,7 @@ if (dbg) { printstr( "FO: " ); printintln( motor_s.cnts[FOC] ); }
 				// Check if too many stalled states
 				if (motor_s.cnts[STALL] > STALL_TRIP_COUNT) 
 				{
-					error_flags |= ERROR_STALL;
+					motor_s.err_flgs |= ERROR_STALL;
 					motor_s.state = STOP; // Switch to stop state
 					motor_s.cnts[STOP] = 0; // Initialise stop-state counter 
 if (dbg) { printstr( "SL- " ); printintln( motor_s.cnts[STALL] ); } 
@@ -449,7 +492,6 @@ void use_motor ( // Start motor, and run step through different motor states
 	unsigned command;	// Command received from the control interface
 	unsigned new_hall;	// New Hall state
 
-	unsigned error_flags = 0;	/* Fault detection */
 	unsigned stop_motor = 0;	/* Fault detection */
 
 
@@ -461,7 +503,7 @@ void use_motor ( // Start motor, and run step through different motor states
 	} // for phase_cnt
 
 	/* Main loop */
-	while (1)
+	while (0 == stop_motor)
 	{
 #pragma xta endpoint "foc_loop"
 		select
@@ -479,7 +521,7 @@ void use_motor ( // Start motor, and run step through different motor states
 			}
 			else if(command == CMD_GET_FAULT)
 			{
-				c_speed <: error_flags;
+				c_speed <: motor_s.err_flgs;
 			}
 
 		break; // case c_speed :> command:
@@ -506,7 +548,7 @@ void use_motor ( // Start motor, and run step through different motor states
 			}
 			else if (command == CMD_GET_FAULT)
 			{
-				c_can_eth_shared <: error_flags;
+				c_can_eth_shared <: motor_s.err_flgs;
 			}
 
 		break; // case c_can_eth_shared :> command:
@@ -519,7 +561,7 @@ void use_motor ( // Start motor, and run step through different motor states
 				// Check error status
 				if (!(new_hall & 0b1000))
 				{
-					error_flags |= ERROR_OVERCURRENT;
+					motor_s.err_flgs |= ERROR_OVERCURRENT;
 					stop_motor = 1; // Switch to stop state
 				} // if (!(new_hall & 0b1000))
 				else
@@ -563,11 +605,34 @@ void use_motor ( // Start motor, and run step through different motor states
 		break; // default:
 
 		}	// select
-	}	// while (1)
+	}	// while (0 == stop_motor)
+
 } // use_motor
+/*****************************************************************************/
+void error_handling( // Prints out error messages
+	MOTOR_DATA_TYP &motor_s // Reference to structure containing motor data
+)
+{
+	int err_cnt; // counter for different error types 
+	unsigned cur_flgs = motor_s.err_flgs; // local copy of error flags
+
+	// Loop through error types
+	for (err_cnt=0; err_cnt<NUM_ERR_TYPS; err_cnt++)
+	{
+		// Test LS-bit for active flag
+		if (cur_flgs & 1)
+		{
+			printstrln( motor_s.err_strs[err_cnt].str );
+		} // if (cur_flgs & 1)
+
+		cur_flgs >>= 1; // Discard flag
+	} // for err_cnt
+
+} // error_handling
 /*****************************************************************************/
 #pragma unsafe arrays
 void run_motor ( 
+	unsigned motor_id,
 	chanend? c_in, 
 	chanend? c_out, 
 	chanend c_pwm, 
@@ -617,10 +682,25 @@ void run_motor (
 	init_pid( MOTOR_P, MOTOR_I, MOTOR_D, motor_s.pid_q );
 	init_pid( Kp, Ki, Kd, motor_s.pid_speed );
 
-	init_motor( motor_s );	// Initialise motor data
+	init_motor( motor_s ,motor_id );	// Initialise motor data
+
+	if (0 == motor_id) printstrln( "Demo Starts" ); // NB Prevent duplicate display lines
 
 	// start-and-run motor
 	use_motor( motor_s ,c_in ,c_pwm ,c_qei ,c_adc ,c_speed ,c_wd ,p_hall ,c_can_eth_shared );
+
+	// NB First Motor to finish displays
+	if (motor_s.err_flgs)
+	{
+		printstrln( "Demo Ended Due to Following Errors:-" );
+		error_handling( motor_s );
+	} // if (motor_s.err_flgs)
+	else
+	{
+		printstrln( "Demo Ended Normally" );
+	} // else !(motor_s.err_flgs)
+
+	_Exit(1); // Exit without flushing buffers
 } // run_motor
 /*****************************************************************************/
 // inner_loop.xc
