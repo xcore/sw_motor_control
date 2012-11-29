@@ -26,7 +26,7 @@
 #define NUMBER_OF_POLES	4
 
 // Define this to enable the CAN interface
-//#define USE_CAN
+//	#define USE_CAN
 
 // Define this to enable the Ethernet interface
 #define USE_ETH

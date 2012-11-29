@@ -40,18 +40,21 @@
 #include <print.h>
 #include <assert.h>
 
-#include "inner_loop.h"
-#include "hall_input.h"
+#include "pid_regulator.h"
+#include "qei_client.h"
+#include "adc_client.h"
 #include "pwm_cli_inv.h"
 #include "clarke.h"
 #include "park.h"
-#include "pid_regulator.h"
-#include "adc_filter.h"
-#include "adc_client.h"
-#include "hall_client.h"
-#include "qei_client.h"
-#include "shared_io.h"
 #include "watchdog.h"
+#include "shared_io.h"
+#include "inner_loop.h"
+
+#ifdef MB
+#include "hall_input.h"
+#include "adc_filter.h"
+#include "hall_client.h"
+#endif //MB~
 
 #ifdef USE_XSCOPE
 #include <xscope.h>

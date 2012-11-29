@@ -23,13 +23,9 @@ XCC_FLAGS = -O3 -g -report -Wno-timing -fxscope
 
 # The USED_MODULES variable lists other module used by the application. 
 
-USED_MODULES = module_dsc_hall module_dsc_display module_dsc_blocks module_can
-USED_MODULES += module_ethernet module_ethernet_smi module_locks module_xtcp module_dsc_comms
-USED_MODULES += module_dsc_qei module_dsc_adc module_pwm_symmetrical module_pwm_common
-USED_MODULES += module_ethernet_board_support
-
-# USED_MODULES += module_ethernet_board_support module_otp_board_info module_slicekit_support
-
+USED_MODULES = module_dsc_display module_dsc_blocks 
+USED_MODULES += module_pwm_symmetrical module_dsc_qei module_dsc_adc 
+USED_MODULES += module_xtcp module_dsc_comms module_ethernet_board_support module_can
 
 USE_XTCP_MAC_CUSTOM_FILTER = 1
 

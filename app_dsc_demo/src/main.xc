@@ -15,23 +15,19 @@
  **/                                   
 #include <xs1.h>
 #include <platform.h>
-#include <print.h>
 
-#include "adc_7265.h"
 #include "dsc_config.h"
-#include "hall_input.h"
-#include "inner_loop.h"
-#include "pos_estimator.h"
-#include "pwm_cli_inv.h"
-#include "pwm_service_inv.h"
 #include "shared_io.h"
 #include "watchdog.h"
+#include "inner_loop.h"
+#include "pwm_service_inv.h"
 #include "qei_server.h"
+#include "adc_7265.h"
 
 #ifdef USE_ETH
-#include "xtcp.h"
-#include "ethernet_board_support.h"
 #include "control_comms_eth.h"
+#include "ethernet_xtcp_server.h"
+#include "ethernet_board_support.h"
 #endif
 
 #ifdef USE_CAN
@@ -42,7 +38,6 @@
 #ifdef USE_XSCOPE
 #include <xscope.h>
 #endif
-
 
 // Define where everything is
 #define INTERFACE_CORE 0
