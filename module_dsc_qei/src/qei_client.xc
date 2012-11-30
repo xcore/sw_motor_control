@@ -19,10 +19,13 @@
 #include "qei_client.h"
 
 {unsigned, unsigned, unsigned } get_qei_data( streaming chanend c_qei )
+//MB~ {unsigned, unsigned, unsigned, unsigned } get_qei_data( streaming chanend c_qei ) //MB~ DBG
 {
 	unsigned p, s, ts1, ts2, v;
+//MB~	unsigned new_pins; // MB~ dbg
 
 	c_qei <: QEI_CMD_POS_REQ;
+//MB~	c_qei :> new_pins; // MB~ dbg
 	c_qei :> p;
 	c_qei :> ts1;
 	c_qei :> ts2;
@@ -46,4 +49,5 @@
 	}
 
 	return {s, p, v};
+//MB~		return {s, p, v, new_pins}; //MB~ dbg
 }

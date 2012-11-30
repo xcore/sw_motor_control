@@ -122,6 +122,7 @@ int main ( void ) // Program Entry Point
 	chan c_adc_trig[NUMBER_OF_MOTORS];
 	streaming chan c_adc[NUMBER_OF_MOTORS];
 	streaming chan c_qei[NUMBER_OF_MOTORS];
+	streaming chan c_dbg[NUMBER_OF_MOTORS];
 
 #ifdef USE_ETH
 	chan c_ethernet[1]; // NB Need to declare an array of 1 element, because ethernet_xtcp_server() expects array reference 
@@ -150,12 +151,12 @@ int main ( void ) // Program Entry Point
 		{
 #ifdef USE_XSCOPE
 			xscope_register( 6,
-					XSCOPE_CONTINUOUS, "speed", XSCOPE_INT , "n",
-					XSCOPE_CONTINUOUS, "iq", XSCOPE_INT , "n",
-					XSCOPE_CONTINUOUS, "va", XSCOPE_INT , "n",
-					XSCOPE_CONTINUOUS, "vb", XSCOPE_INT , "n",
-					XSCOPE_CONTINUOUS, "ia", XSCOPE_INT , "n",
-					XSCOPE_CONTINUOUS, "ib", XSCOPE_INT , "n"
+					XSCOPE_CONTINUOUS, "meas_speed", XSCOPE_INT , "n",
+					XSCOPE_CONTINUOUS, "set_iq", XSCOPE_INT , "n",
+					XSCOPE_CONTINUOUS, "pwm_A", XSCOPE_INT , "n",
+					XSCOPE_CONTINUOUS, "pwm_B", XSCOPE_INT , "n",
+					XSCOPE_CONTINUOUS, "meas_Ia", XSCOPE_INT , "n",
+					XSCOPE_CONTINUOUS, "meas_Ib", XSCOPE_INT , "n"
 //					XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT , "n",
 //					XSCOPE_CONTINUOUS, "Theta", XSCOPE_UINT , "n"
 //					XSCOPE_CONTINUOUS, "PWM[0]", XSCOPE_UINT , "n"

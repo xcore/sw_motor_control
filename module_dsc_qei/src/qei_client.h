@@ -30,6 +30,7 @@
  *  \return the speed, position and valid state
  */
 { unsigned, unsigned, unsigned } get_qei_data( streaming chanend c_qei );
+//MB~ { unsigned, unsigned, unsigned, unsigned } get_qei_data( streaming chanend c_qei ); //MB~ dbg
 
 
 #endif /* __QEI_CLIENT_H__ */

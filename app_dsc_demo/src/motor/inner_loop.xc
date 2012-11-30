@@ -157,6 +157,8 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	int meas_speed;	// speed as measured by the QEI
 	int valid;	// Status flag returned by the QEI */
 	int theta_offset;	// Phase difference between the QEI and the coils
+
+	unsigned tmp; // Debug variable
 } MOTOR_DATA_TYP;
 
 static int dbg = 0; // Debug variable
@@ -568,6 +570,7 @@ void use_motor ( // Start motor, and run step through different motor states
 				{
 					/* Get the position from encoder module. NB returns valid=0 at start-up  */
 					{ motor_s.meas_speed ,motor_s.meas_theta ,motor_s.valid } = get_qei_data( c_qei );
+//MB~			{ motor_s.meas_speed ,motor_s.meas_theta ,motor_s.valid ,motor_s.tmp } = get_qei_data( c_qei ); //MB~ dbg
 
 					/* Get ADC readings */
 					{motor_s.meas_Is[PHASE_A], motor_s.meas_Is[PHASE_B], motor_s.meas_Is[PHASE_C]} = get_adc_vals_calibrated_int16( c_adc );
@@ -596,7 +599,8 @@ void use_motor ( // Start motor, and run step through different motor states
 	    			xscope_probe_data(2, pwm_vals[PHASE_A]);
 	    			xscope_probe_data(3, pwm_vals[PHASE_B]);
 	    			xscope_probe_data(4, motor_s.meas_Is[PHASE_A]);
-	    			xscope_probe_data(5, motor_s.meas_Is[PHASE_B]);
+						xscope_probe_data(5, motor_s.meas_Is[PHASE_B]);
+//MB~	    	xscope_probe_data(5, motor_s.tmp ); //MB~ dbg
 	  			} // if (isnull(c_in)) 
 				} // if ((motor_s.cnts[FOC] & 0x1) == 0) 
 #endif
