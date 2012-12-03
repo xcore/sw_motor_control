@@ -20,6 +20,29 @@
 #include <xs1.h>
 #include "dsc_config.h"
 
+#ifndef NUMBER_OF_MOTORS
+#define NUMBER_OF_MOTORS 1
+#endif
+
+#define QEI_PHASES 4 // 4 combinatations of Phases_B & Phases_A  E.g. [ 00 01 11 10 ]
+
+/** Structure containing QEI parameters for one motor */
+typedef struct QEI_PARAM_TAG // 
+{
+	unsigned inp_pins; // Raw data values on input port pins
+	unsigned prev_phases; // Previous phase values
+	unsigned inp_time; // Input time stamp
+	unsigned prev_time; // Previous time stamp
+	unsigned orig_found; // Flag set when motor origin (index) found
+	unsigned ang_pos; // Angular position of motor (from origin)
+} QEI_PARAM_S;
+
+/** Structure containing array of QEI parameters for all motors */
+typedef struct ALL_QEI_TAG // 
+{
+	QEI_PARAM_S qei_data[NUMBER_OF_MOTORS]; // Array of QEI parameters for all motors */
+} ALL_QEI_S;
+
 /** \brief Implementation of the QEI server thread
  *
  *  \param c_qei The control channel used by the client

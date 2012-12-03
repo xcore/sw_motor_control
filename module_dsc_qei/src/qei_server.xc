@@ -37,17 +37,18 @@
   at the position origin. 
 	NB When the motor starts, it is NOT normally at the origin
 
-	A look-up table is used to decode the above 3 input bits, into 3 output bits
-	with the following meanings:
+	A look-up table is used to decode the 2 phase bits, into a spin direction
+	with the following meanings: 
+		 1: Anit-Clocwise, 
+		 0: Unknown    (The motor has either stopped, or jumped one or more phases)
+		-1: Clocwise, 
 
-	  bit_2      bit_1     bit_0
-	---------  ----------  -----
-  Not-Index  Anit-Clock  Error
+	The timer is read every time the phase bits change. I.E. 1024 times per revolution
 
-	Bit_2 is Zero, when Index detected
-  Bit_1 is Zero, for Clockwise direction
-	Bit_0 is Zero, for normal sequence of BA bits
- 
+	The angular postion is incremented/decremented (with the spin value) if the 
+	motor is NOT at the origin. 
+	If the motor is at the origin, the angular position is reset to zero.
+
 \*****************************************************************************/
 
 #include <stdio.h>
@@ -58,165 +59,160 @@
 #include "qei_commands.h"
 #include "dsc_config.h"
 
-#ifndef NUMBER_OF_MOTORS
-#define NUMBER_OF_MOTORS 1
-#endif
-
 // This is the loop time for 4000RPM on a 1024 count QEI
 #pragma xta command "analyze loop qei_main_loop"
 #pragma xta command "set required - 14.64 us"
 
-// Order is 00 -> 10 -> 11 -> 01  Clockwise direction
-// Order is 00 -> 01 -> 11 -> 10  Anti-Clockwise direction
-// 6 signals Forward direction
-// 4 signals Reverse direction
-// 5 signals Error condition
 
-static const unsigned char lookup[8][4] = {
-		{ 5, 4, 6, 5 }, // 00 00   Index bit Clear
-		{ 6, 5, 5, 4 }, // 00 01
-		{ 4, 5, 5, 6 }, // 00 10
-		{ 5, 6, 4, 5 }, // 00 11
-
-#ifdef MB
-		{ 1, 0, 2, 1 }, // 00 xx   Index bit Set
-		{ 2, 1, 1, 0 }, // 00 xx
-		{ 0, 1, 1, 2 }, // 00 xx
-		{ 1, 2, 0, 1 }, // 00 xx
-#endif //MB~
-		{ 0, 0, 0, 0 }, // 01 xx   Index bit Set
-		{ 0, 0, 0, 0 }, // 01 xx
-		{ 0, 0, 0, 0 }, // 01 xx
-		{ 0, 0, 0, 0 }, // 01 xx
+/*****************************************************************************/
+void init_qei_data( // Initialise  QEI data for one motor
+	QEI_PARAM_S &inp_qei_s // Reference to structure containing QEI parameters for one motor
+)
+{
+	inp_qei_s.prev_phases = 0; // Clear Previous phase values
+	inp_qei_s.orig_found = 0; // Clear flag indicating when motor at origin (index)
+	inp_qei_s.ang_pos = 0; // Reset angular position of motor (from origin)
+} // service_client_request
+/*****************************************************************************/
+#pragma unsafe arrays
+void service_input_pins( // Get QEI data from motor and send to client
+	QEI_PARAM_S &inp_qei_s, // Reference to structure containing QEI parameters for one motor
+	unsigned inp_pins // Set of raw data values on input port pins
+)
+{
+/* get_spin is a table for converting pins values to spin values
+ *	Order is 00 -> 10 -> 11 -> 01  Clockwise direction
+ *	Order is 00 -> 01 -> 11 -> 10  Anti-Clockwise direction
+ *		 1: Anit-Clocwise, 
+ *		 0: Unknown    (The motor has either stopped, or jumped one or more phases)
+ *		-1: Clocwise, 
+ */
+static const signed char get_spin[QEI_PHASES][QEI_PHASES] = {
+		{ 0, -1, 1, 0 }, // 00
+		{ 1, 0, 0, -1 }, // 01
+		{ -1, 0, 0, 1 }, // 10
+		{ 0, 1, -1, 0 }  // 11
 };
 
+	unsigned cur_phases; // Current set of phase values
+	unsigned origin; // Flag set when motor at origin position 
+	signed char cur_spin; // current spin direction
+	timer my_tymer;
 
+
+	origin = inp_pins & 0x4; 		// Extract origin flag 
+	cur_phases = inp_pins & 0x3; // Extract Phase bits
+
+	// If phases have changed, get new time stamp
+	if (cur_phases != inp_qei_s.prev_phases) 
+	{
+		inp_qei_s.prev_time = inp_qei_s.inp_time; // Store previous time stamp
+		my_tymer :> inp_qei_s.inp_time;		// Get new time stamp
+	}
+
+	// Check if motor at origin
+	if (origin)
+	{ // Reset position
+		inp_qei_s.ang_pos = 0; // Reset position value
+		inp_qei_s.orig_found = 1; // Set origin found flag
+	} // if (origin) 
+	else 
+	{ // Increment/Decrement position
+		cur_spin = get_spin[cur_phases][inp_qei_s.prev_phases]; // Decoded spin fom phase info.
+		inp_qei_s.ang_pos += cur_spin; // Increment/Decrement angular position
+	} // else !(origin) 
+
+	inp_qei_s.prev_phases = cur_phases; // Store phase value
+} // service_input_pins
+/*****************************************************************************/
 #pragma unsafe arrays
-void do_qei ( streaming chanend c_qei, port in pQEI )
+void service_client_request( // Send processed QEI data to client
+	QEI_PARAM_S &inp_qei_s, // Reference to structure containing QEI parameters for one motor
+	streaming chanend c_qei // Data channel to client (carries processed QEI data)
+)
 {
-	unsigned pos = 0, ts1, ts2, ok=0, old_pins=0, new_pins;
-	unsigned dec_params; // Decoded motor parameters
-	timer t;
+	// Send processed QEI data to client
+	c_qei <: inp_qei_s.ang_pos;
+	c_qei <: inp_qei_s.inp_time;
+	c_qei <: inp_qei_s.prev_time;
+	c_qei <: inp_qei_s.orig_found;
+} // service_client_request
+/*****************************************************************************/
+#pragma unsafe arrays
+void do_qei ( 
+	streaming chanend c_qei, // data channel to client (carries processed QEI data)
+	port in pQEI  						// Input port (carries raw QEI motor data)
+)
+{
+	QEI_PARAM_S qei_data_s; // Structure containing QEI parameters for one motor
+	unsigned inp_pins; // Set of raw data values on input port pins
+	timer my_tymer;
 
-	pQEI :> new_pins;
-	t :> ts1;
+
+	init_qei_data( qei_data_s );
+
+	pQEI :> inp_pins;
+	my_tymer :> qei_data_s.inp_time;
 
 	while (1) {
 #pragma xta endpoint "qei_main_loop"
 		select {
-			case pQEI when pinsneq(new_pins) :> new_pins :
+			// Service any change on input port pins
+			case pQEI when pinsneq(inp_pins) :> inp_pins :
 			{
-				new_pins &= 0x7; // Clear Un-used bit_3
-
-				dec_params = lookup[new_pins][old_pins]; // Decoded motor parameters
-
-				new_pins &= 0x3; // bit_2 no longer required
-
-				if (new_pins != old_pins) {
-					ts2 = ts1;
-					t :> ts1;
-				}
-
-				if (!dec_params) {
-					pos = 0;
-					ok = 1;
-				} else {
-					{ dec_params, pos } = lmul(1, pos, dec_params, -5);
-				}
-				old_pins = new_pins;
-			}
+				service_input_pins( qei_data_s ,inp_pins );
+			} // case
 			break;
+
+			// Service any client request for data
 			case c_qei :> int :
 			{
-				c_qei <: pos;
-				c_qei <: ts1;
-				c_qei <: ts2;
-				c_qei <: ok;
-			}
+				service_client_request( qei_data_s ,c_qei );
+			} // case
 			break;
-		}
-	}
-}
-
+		} // select
+	}	// while (1)
+} // do_qei
+/*****************************************************************************/
 #pragma unsafe arrays
-void do_multiple_qei ( streaming chanend c_qei[], port in pQEI[] )
+void do_multiple_qei( // Get QEI data from motor and send to client
+	streaming chanend c_qei[], // Array of data channel to client (carries processed QEI data)
+	port in pQEI[] 						 // Array of input port (carries raw QEI motor data)
+)
 {
-	unsigned pos[NUMBER_OF_MOTORS], ts1[NUMBER_OF_MOTORS], ts2[NUMBER_OF_MOTORS];
-	unsigned dec_params; // Decoded motor parameters
-	unsigned ok[NUMBER_OF_MOTORS], old_pins[NUMBER_OF_MOTORS], new_pins[NUMBER_OF_MOTORS];
-	unsigned cur_pins; // Current set of new pins
-	unsigned normal; // Flag set when normal transition detected
-	unsigned origin; // Flag set when motor at position origin
-	timer t;
+	QEI_PARAM_S all_qei_s[NUMBER_OF_MOTORS]; // Array of structures containing QEI parameters for all motor
+	unsigned inp_pins[NUMBER_OF_MOTORS]; // Set of raw data values on input port pins
+	timer my_tymer;
 
-	for (int q=0; q<NUMBER_OF_MOTORS; ++q) {
-		old_pins[q] = 0;
-		pQEI[q] :> new_pins[q];
-		t :> ts1[q];
-		pos[q] = 0;
-		ok[q] = 0;
+
+	for (int q=0; q<NUMBER_OF_MOTORS; ++q) 
+	{
+		init_qei_data( all_qei_s[q] );
+
+		pQEI[q] :> inp_pins[q];
+		my_tymer :> all_qei_s[q].inp_time;
 	}
 
 	while (1) {
 #pragma xta endpoint "qei_main_loop"
 		select {
-			case (int q=0; q<NUMBER_OF_MOTORS; ++q) pQEI[q] when pinsneq(new_pins[q]) :> new_pins[q] :
+			// Service any change on input port pins
+			case (int q=0; q<NUMBER_OF_MOTORS; ++q) pQEI[q] when pinsneq(inp_pins[q]) :> inp_pins[q] :
 			{
-				cur_pins = new_pins[q] & 0x7; // Clear Un-used bit_3
-				origin = !(cur_pins & 0x4); // Extract origin flag 
-
-				dec_params = lookup[cur_pins][old_pins[q]]; // Decoded motor parameters
-
-				normal = !(dec_params & 0x1); // Extract error flag 
-
-				cur_pins &= 0x3; // NB bit_2 no longer required
-
-				// Check if motor appears to be moving normally. 
-#ifdef MB
-				if (normal) 
-				{
-					ts2[q] = ts1[q];
-					t :> ts1[q];
-				}
-
-				if (!dec_params) {
-					pos[q] = 0;
-					ok[q] = 1;
-				} else {
-					{ dec_params, pos[q] } = lmul(1, pos[q], dec_params, -5);
-				}
-				old_pins[q] = cur_pins;
-#endif //MB~
-				if (cur_pins != old_pins[q]) 
-				{
-					ts2[q] = ts1[q];
-					t :> ts1[q];
-				}
-
-				// Check if motor at origin
-				if (origin) 
-				{ // Calculate position
-					{ dec_params, pos[q] } = lmul(1, pos[q], dec_params, -5);
-				} // if (origin) 
-				else 
-				{
-					pos[q] = 0;
-					ok[q] = 1;
-				} // else !(origin) 
-
-				old_pins[q] = cur_pins;
-			}
+				service_input_pins( all_qei_s[q] ,inp_pins[q] );
+			} // case
 			break;
+
+			// Service any client request for data
 			case (int q=0; q<NUMBER_OF_MOTORS; ++q) c_qei[q] :> int :
 			{
-				c_qei[q] <: pos[q];
-				c_qei[q] <: ts1[q];
-				c_qei[q] <: ts2[q];
-				c_qei[q] <: ok[q];
-			}
+				service_client_request( all_qei_s[q] ,c_qei[q] );
+			} // case
 			break;
-		}
-	}
-}
+		} // select
+	}	// while (1)
+} // do_multiple_qei
+/*****************************************************************************/
+// qei_server.xc
 
 
