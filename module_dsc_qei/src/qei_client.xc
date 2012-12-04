@@ -21,33 +21,37 @@
 {unsigned, unsigned, unsigned } get_qei_data( streaming chanend c_qei )
 //MB~ {unsigned, unsigned, unsigned, unsigned } get_qei_data( streaming chanend c_qei ) //MB~ DBG
 {
-	unsigned p, s, ts1, ts2, v;
-//MB~	unsigned new_pins; // MB~ dbg
+	unsigned meas_angl; // Angular position of motor (from origin)
+	unsigned new_time; // New time stamp
+	unsigned prev_time; // Previous time stamp
+	unsigned angl_valid; // Flag set when angular position is valid
+	unsigned meas_speed; // Speed calculated from time difference
 
-	c_qei <: QEI_CMD_POS_REQ;
+
 //MB~	c_qei :> new_pins; // MB~ dbg
-	c_qei :> p;
-	c_qei :> ts1;
-	c_qei :> ts2;
-	c_qei :> v;
+	c_qei <: QEI_CMD_POS_REQ;
+	c_qei :> meas_angl;
+	c_qei :> new_time;
+	c_qei :> prev_time;
+	c_qei :> angl_valid;
 
-	p &= (QEI_COUNT_MAX-1);
+	meas_angl &= (QEI_COUNT_MAX-1);
 
 	// Calculate the speed
-	if (ts1 == ts2)
-		s = 0;
+	if (new_time == prev_time)
+		meas_speed = 0;
 	else {
 #if PLATFORM_REFERENCE_MHZ == 100
 		// 6000000000 = 10ns -> 1min (100 MHz ports)
-		s = 3000000000 / ((ts1 - ts2) * QEI_COUNT_MAX);
-		s <<= 1;
+		meas_speed = 3000000000 / ((new_time - prev_time) * QEI_COUNT_MAX);
+		meas_speed <<= 1;
 #else
 		// 15000000000 = 4ns -> 1min (250 MHz ports)
-		s = 1875000000 / ((ts1 - ts2) * QEI_COUNT_MAX);
-		s <<= 3;
+		meas_speed = 1875000000 / ((new_time - prev_time) * QEI_COUNT_MAX);
+		meas_speed <<= 3;
 #endif
 	}
 
-	return {s, p, v};
-//MB~		return {s, p, v, new_pins}; //MB~ dbg
+	return { meas_speed ,meas_angl ,angl_valid };
+//MB~		return {meas_speed, meas_angl, angl_valid, new_pins}; //MB~ dbg
 }

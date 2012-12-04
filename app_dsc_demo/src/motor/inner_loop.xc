@@ -71,6 +71,16 @@
 #define STALL_SPEED 100
 #define STALL_TRIP_COUNT 5000
 
+#define LDO_MOTOR_SPIN 1 // Motor spins like an LDO Motor
+
+#define FIRST_HALL_STATE 0b001 // 1st Hall state of 6-state cycle
+
+// Choose last Hall state of 6-state cycle, depending on spin direction
+#if (LDO_MOTOR_SPIN == 1)
+	#define LAST_HALL_STATE 0b011
+#else
+	#define LAST_HALL_STATE 0b101
+#endif
 
 // This is half of the coil sector angle (6 sectors = 60 degrees per sector, 30 degrees per half sector)
 #define THETA_HALF_PHASE (QEI_COUNT_MAX * 30 / 360 / NUMBER_OF_POLES)
@@ -155,7 +165,7 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	int out_iq;	// Output measured tangential current value
 	int meas_theta;	// Position as measured by the QEI
 	int meas_speed;	// speed as measured by the QEI
-	int valid;	// Status flag returned by the QEI */
+	int angl_valid;	// Status flag returned by QEI when angular position origin has been found */
 	int theta_offset;	// Phase difference between the QEI and the coils
 
 	unsigned tmp; // Debug variable
@@ -324,6 +334,69 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 
 } // calc_foc_pwm
 /*****************************************************************************/
+MOTOR_STATE_TYP check_hall_state( // Inspect Hall-state and update motor-state if necessary
+	MOTOR_DATA_TYP &motor_s, // Reference to structure containing motor data
+	unsigned inp_hall // Input Hall state
+) // Returns new motor-state
+/* The input pins from the Hall port hold the following data
+ * Bit_3: Over-current flag (NB Value zero is over-current)
+ * Bit_2: Hall Sensor Phase_A
+ * Bit_1: Hall Sensor Phase_B
+ * Bit_0: Hall Sensor Phase_C
+ *
+ * The Sensor bits are toggled every 180 degrees. 
+ * Each phase is separated by 120 degrees. This gives the following bit pattern for ABC
+ * 
+ *          ------------> Clock-Wise ------------>
+ * (011) -> 001 -> 101 -> 100 -> 110 -> 010 -> 011 -> (001)
+ *          <---------- Anti-Clockwise <----------
+ * 
+ * WARNING: Each motor manufacturer uses their own definition for spin direction.
+ * So key Hall-states are implemented as defines e.g. FIRST_HALL and LAST_HALL
+ *
+ * For the purposes of this algorithm, the angular position origin is defined as
+ * the transition from the last-state to the first-state.
+ */
+{
+	MOTOR_STATE_TYP motor_state = motor_s.state; // Initialise to old motor state
+
+
+	inp_hall &= 0x7; // Clear Over-Current bit
+
+	// Check for change in Hall state
+	if (motor_s.prev_hall != inp_hall)
+	{
+		// Check for 1st Hall state, as we only do this check once a revolution
+		if (inp_hall == FIRST_HALL_STATE) 
+		{
+			// Check for correct spin direction
+			if (motor_s.prev_hall == LAST_HALL_STATE)
+			{ // Spinning in correct direction
+
+				// Check if position offset needs updating. MB~ I don't understand this check, it always appears to be TRUE.
+				if (motor_s.meas_theta < (QEI_COUNT_MAX/NUMBER_OF_POLES)) 
+				{ // Find the offset between the rotor and the QEI
+					motor_s.theta_offset = (THETA_HALF_PHASE + motor_s.meas_theta);
+					motor_state = FOC; // Switch to main FOC state
+					motor_s.cnts[FOC] = 0; // Initialise FOC-state counter 
+if (dbg) { printint(motor_s.id); printstr( " SE: " ); printintln( motor_s.cnts[SEARCH] ); } 
+				} // if (motor_s.meas_theta < (QEI_COUNT_MAX/NUMBER_OF_POLES))
+			} // if (motor_s.prev_hall == LAST_HALL_STATE)
+			else
+			{ // We are probably spinning in the wrong direction!-(
+				motor_s.err_flgs |= ERROR_DIRECTION;
+				motor_state = STOP; // Switch to stop state
+				motor_s.cnts[STOP] = 0; // Initialise stop-state counter 
+if (dbg) { printint(motor_s.id); printstr( " SE- " ); printintln( motor_s.cnts[SEARCH] ); } 
+			} // else !(motor_s.prev_hall == LAST_HALL_STATE)
+		} // if (inp_hall == FIRST_HALL_STATE)
+
+		motor_s.prev_hall = inp_hall; // Store hall state for next iteration
+	} // if (motor_s.prev_hall != inp_hall)
+
+	return motor_state; // Return updated motor state
+} // check_hall_state
+/*****************************************************************************/
 unsigned update_motor_state( // Update state of motor based on motor sensor data
 	MOTOR_DATA_TYP &motor_s, // reference to structure containing motor data
 	unsigned inp_hall // Input Hall state
@@ -340,58 +413,35 @@ unsigned update_motor_state( // Update state of motor based on motor sensor data
  * If too long a time is spent in the STALL state, this becomes an error and the motor is stopped.
  */
 {
+	MOTOR_STATE_TYP motor_state; // local motor state
 	unsigned stop_motor;	/* Fault detection */
 
-
-	inp_hall &= 0x7; // Mask out LS 3 hall-bits
 
 	// Update motor state based on new sensor data
 	switch( motor_s.state )
 	{
 		case START : // Intial entry state
-			if (1 == motor_s.valid)
+			if (1 == motor_s.angl_valid) // Check if angular postion origin found
 			{
 				motor_s.state = SEARCH; // Switch to search state
 				motor_s.cnts[SEARCH] = 0; // Initialise search-state counter
-if (dbg) { printstr( "SA: " ); printintln( motor_s.cnts[START] ); } 
-			} // if (1 == motor_s.valid)
+if (dbg) { printint(motor_s.id); printstr( " SA: " ); printintln( motor_s.cnts[START] ); } 
+			} // if (1 == motor_s.angl_valid)
 		break; // case START
 
-		case SEARCH : // Turn motor until FOC start condition found
-			// Check for reference phase
-			if (motor_s.prev_hall == 0b011) 
-			{
-				// Check for correct spin direction
-				if (inp_hall == 0b010)
-				{ // We are spinning in the wrong direction!-(
-					motor_s.err_flgs |= ERROR_DIRECTION;
-					motor_s.state = STOP; // Switch to stop state
-					motor_s.cnts[STOP] = 0; // Initialise stop-state counter 
-if (dbg) { printstr( "SE- " ); printintln( motor_s.cnts[SEARCH] ); } 
-				} // if (inp_hall == 0b010)
-				else
-				{
-					// Check if position offset needs updating
-					if ((inp_hall == 0b001) && (motor_s.meas_theta < (QEI_COUNT_MAX/NUMBER_OF_POLES))) 
-					{ // Find the offset between the rotor and the QEI
-						motor_s.theta_offset = (THETA_HALF_PHASE + motor_s.meas_theta);
-
-						motor_s.state = FOC; // Switch to main FOC state
-						motor_s.cnts[FOC] = 0; // Initialise FOC-state counter 
-if (dbg) { printstr( "SE: " ); printintln( motor_s.cnts[SEARCH] ); } 
-					} // if ((inp_hall == 0b001) && (motor_s.meas_theta < (QEI_COUNT_MAX/NUMBER_OF_POLES))) 
-				} // else !(inp_hall == 0b010)
-			} // if (motor_s.prev_hall == 0b011)
+		case SEARCH : // Turn motor using Hall state, and update motor state
+			motor_state = check_hall_state( motor_s ,inp_hall ); 
+ 			motor_s.state = motor_state; // NB Required due to XC compiler rules
 		break; // case SEARCH 
 	
 		case FOC : // Normal FOC state
 			// Check for a stall
-// if (dbg) { printint( motor_s.meas_speed ); printchar(' '); printint( motor_s.meas_theta ); printchar(' '); printintln( motor_s.valid ); }
+// if (dbg) { printint(motor_s.id); printchar(': '); printint( motor_s.meas_speed ); printchar(' '); printint( motor_s.meas_theta ); printchar(' '); printintln( motor_s.valid ); }
 			if (motor_s.meas_speed < STALL_SPEED) 
 			{
 				motor_s.state = STALL; // Switch to stall state
 				motor_s.cnts[STALL] = 0; // Initialise stall-state counter 
-if (dbg) { printstr( "FO: " ); printintln( motor_s.cnts[FOC] ); } 
+if (dbg) { printint(motor_s.id); printstr( " FO: " ); printintln( motor_s.cnts[FOC] ); } 
 			} // if (motor_s.meas_speed < STALL_SPEED)
 			else
 			{
@@ -414,14 +464,14 @@ if (dbg) { printstr( "FO: " ); printintln( motor_s.cnts[FOC] ); }
 					motor_s.err_flgs |= ERROR_STALL;
 					motor_s.state = STOP; // Switch to stop state
 					motor_s.cnts[STOP] = 0; // Initialise stop-state counter 
-if (dbg) { printstr( "SL- " ); printintln( motor_s.cnts[STALL] ); } 
+if (dbg) { printint(motor_s.id); printstr( " SL- " ); printintln( motor_s.cnts[STALL] ); } 
 				} // if (motor_s.cnts[STALL] > STALL_TRIP_COUNT) 
 			} // if (motor_s.meas_speed < STALL_SPEED) 
 			else
 			{ // No longer stalled
 				motor_s.state = FOC; // Switch to main FOC state
 				motor_s.cnts[FOC] = 0; // Initialise FOC-state counter 
-if (dbg) { printstr( "SL: " ); printintln( motor_s.cnts[STALL] ); } 
+if (dbg) { printint(motor_s.id); printstr( " SL: " ); printintln( motor_s.cnts[STALL] ); } 
 			} // else !(motor_s.meas_speed < STALL_SPEED) 
 		break; // case STALL
 	
@@ -464,8 +514,6 @@ if (dbg) { printstr( "SL: " ); printintln( motor_s.cnts[STALL] ); }
 			assert(0 == 1); // Motor state not supported
     break;
 	} // switch( motor_s.state )
-
-	motor_s.prev_hall = inp_hall; // Update last hall state
 
 	stop_motor = 0; // Do NOT stop motor
 	return stop_motor;
@@ -559,6 +607,7 @@ void use_motor ( // Start motor, and run step through different motor states
 			if(stop_motor == 0)
 			{
 				p_hall :> new_hall; // Get new hall state
+				motor_s.tmp = (100 * new_hall); //MB~ 
 
 				// Check error status
 				if (!(new_hall & 0b1000))
@@ -569,8 +618,8 @@ void use_motor ( // Start motor, and run step through different motor states
 				else
 				{
 					/* Get the position from encoder module. NB returns valid=0 at start-up  */
-					{ motor_s.meas_speed ,motor_s.meas_theta ,motor_s.valid } = get_qei_data( c_qei );
-//MB~			{ motor_s.meas_speed ,motor_s.meas_theta ,motor_s.valid ,motor_s.tmp } = get_qei_data( c_qei ); //MB~ dbg
+					{ motor_s.meas_speed ,motor_s.meas_theta ,motor_s.angl_valid } = get_qei_data( c_qei );
+//MB~			{ motor_s.meas_speed ,motor_s.meas_theta ,motor_s.angl_valid ,motor_s.tmp } = get_qei_data( c_qei ); //MB~ dbg
 
 					/* Get ADC readings */
 					{motor_s.meas_Is[PHASE_A], motor_s.meas_Is[PHASE_B], motor_s.meas_Is[PHASE_C]} = get_adc_vals_calibrated_int16( c_adc );
@@ -599,8 +648,8 @@ void use_motor ( // Start motor, and run step through different motor states
 	    			xscope_probe_data(2, pwm_vals[PHASE_A]);
 	    			xscope_probe_data(3, pwm_vals[PHASE_B]);
 	    			xscope_probe_data(4, motor_s.meas_Is[PHASE_A]);
-						xscope_probe_data(5, motor_s.meas_Is[PHASE_B]);
-//MB~	    	xscope_probe_data(5, motor_s.tmp ); //MB~ dbg
+//MB~						xscope_probe_data(5, motor_s.meas_Is[PHASE_B]);
+	    	xscope_probe_data(5, motor_s.tmp ); //MB~ dbg
 	  			} // if (isnull(c_in)) 
 				} // if ((motor_s.cnts[FOC] & 0x1) == 0) 
 #endif
@@ -696,7 +745,8 @@ void run_motor (
 	// NB First Motor to finish displays
 	if (motor_s.err_flgs)
 	{
-		printstrln( "Demo Ended Due to Following Errors:-" );
+		printstr( "Demo Ended Due to Following Errors on Motor " );
+		printintln(motor_s.id);
 		error_handling( motor_s );
 	} // if (motor_s.err_flgs)
 	else
