@@ -89,7 +89,7 @@
 #define ID_OPEN_LOOP 0		// Id value for open-loop mode
 #define INIT_HALL 0 // Initial Hall state
 #define INIT_THETA 0 // Initial start-up angle
-#define INIT_SPEED 1000 // Initial start-up speed
+#define INIT_SPEED 4000 // Initial start-up speed
 #define DEMO_LIMIT 1000000 // Demo. terminated after this number of FOC iterations
 
 #define STR_LEN 80 // String Length
@@ -607,7 +607,6 @@ void use_motor ( // Start motor, and run step through different motor states
 			if(stop_motor == 0)
 			{
 				p_hall :> new_hall; // Get new hall state
-				motor_s.tmp = (100 * new_hall); //MB~ 
 
 				// Check error status
 				if (!(new_hall & 0b1000))
@@ -623,6 +622,7 @@ void use_motor ( // Start motor, and run step through different motor states
 
 					/* Get ADC readings */
 					{motor_s.meas_Is[PHASE_A], motor_s.meas_Is[PHASE_B], motor_s.meas_Is[PHASE_C]} = get_adc_vals_calibrated_int16( c_adc );
+
 					stop_motor = update_motor_state( motor_s ,new_hall );
 				} // else !(!(new_hall & 0b1000))
 
@@ -646,10 +646,10 @@ void use_motor ( // Start motor, and run step through different motor states
 						xscope_probe_data(0, motor_s.meas_speed);
 				    xscope_probe_data(1, motor_s.set_iq);
 	    			xscope_probe_data(2, pwm_vals[PHASE_A]);
-	    			xscope_probe_data(3, pwm_vals[PHASE_B]);
+//MB~	    			xscope_probe_data(3, pwm_vals[PHASE_B]);
+	    			xscope_probe_data(3, motor_s.meas_Is[PHASE_C]); //MB~
 	    			xscope_probe_data(4, motor_s.meas_Is[PHASE_A]);
-//MB~						xscope_probe_data(5, motor_s.meas_Is[PHASE_B]);
-	    	xscope_probe_data(5, motor_s.tmp ); //MB~ dbg
+						xscope_probe_data(5, motor_s.meas_Is[PHASE_B]);
 	  			} // if (isnull(c_in)) 
 				} // if ((motor_s.cnts[FOC] & 0x1) == 0) 
 #endif

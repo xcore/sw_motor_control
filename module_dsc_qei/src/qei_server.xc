@@ -55,6 +55,8 @@
 #include <assert.h>
 
 #include <xs1.h>
+#include <print.h>
+
 #include "qei_server.h"
 #include "qei_commands.h"
 #include "dsc_config.h"
@@ -63,15 +65,25 @@
 #pragma xta command "analyze loop qei_main_loop"
 #pragma xta command "set required - 14.64 us"
 
+#define HIST_SIZ 8192
+//MB~ static unsigned short hist[HIST_SIZ]; //MB~ dbg
 
 /*****************************************************************************/
 void init_qei_data( // Initialise  QEI data for one motor
-	QEI_PARAM_S &inp_qei_s // Reference to structure containing QEI parameters for one motor
+	QEI_PARAM_S &inp_qei_s, // Reference to structure containing QEI parameters for one motor
+	int inp_id  // Input unique motor identifier
 )
 {
+//MB~ for(int cnt=0; cnt<HIST_SIZ; cnt++) hist[cnt] = 0; //MB~
+
+	inp_qei_s.id = inp_id; // Clear Previous phase values
 	inp_qei_s.prev_phases = 0; // Clear Previous phase values
-	inp_qei_s.orig_found = 0; // Clear flag indicating when motor at origin (index)
-	inp_qei_s.ang_pos = 0; // Reset angular position of motor (from origin)
+	inp_qei_s.orig_cnt = 0; // Reset counter indicating how many times motor has passed origin (index)
+	inp_qei_s.ang_cnt = 0; // Reset counter indicating angular position of motor (from origin)
+
+	inp_qei_s.prev_orig = 0; // Debug variable
+	inp_qei_s.cnt = 0; // Debug variable
+	inp_qei_s.tmp = 0; // Debug variable
 } // service_client_request
 /*****************************************************************************/
 #pragma unsafe arrays
@@ -83,15 +95,20 @@ void service_input_pins( // Get QEI data from motor and send to client
 /* get_spin is a table for converting pins values to spin values
  *	Order is 00 -> 10 -> 11 -> 01  Clockwise direction
  *	Order is 00 -> 01 -> 11 -> 10  Anti-Clockwise direction
- *		 1: Anit-Clocwise, 
- *		 0: Unknown    (The motor has either stopped, or jumped one or more phases)
- *		-1: Clocwise, 
+ *
+ *	Spin-state is
+ *		-1: CLOCK Clocwise rotation, 
+ *		 0: STALL (The motor has probably stopped)
+ *		 1: ANTI Anti-Clocwise rotation, 
+ *		 2: JUMP (The motor has probably jumped 2 phases)
  */
-static const signed char get_spin[QEI_PHASES][QEI_PHASES] = {
-		{ 0, -1, 1, 0 }, // 00
-		{ 1, 0, 0, -1 }, // 01
-		{ -1, 0, 0, 1 }, // 10
-		{ 0, 1, -1, 0 }  // 11
+
+// MB~ At present this table has wrong spin direction convention
+static const signed char get_spin_state[QEI_PHASES][QEI_PHASES] = {
+		{ QEI_STALL,	QEI_CLOCK,	QEI_ANTI,		QEI_JUMP	}, // 00
+		{ QEI_ANTI,		QEI_STALL,	QEI_JUMP,		QEI_CLOCK	}, // 01
+		{ QEI_CLOCK,	QEI_JUMP,		QEI_STALL,	QEI_ANTI	}, // 10
+		{ QEI_JUMP,		QEI_ANTI,		QEI_CLOCK,	QEI_STALL	}  // 11
 };
 
 	unsigned cur_phases; // Current set of phase values
@@ -103,26 +120,72 @@ static const signed char get_spin[QEI_PHASES][QEI_PHASES] = {
 	origin = inp_pins & 0x4; 		// Extract origin flag 
 	cur_phases = inp_pins & 0x3; // Extract Phase bits
 
-	// If phases have changed, get new time stamp
+	// Check if phases have changed
 	if (cur_phases != inp_qei_s.prev_phases) 
 	{
+		// Get new time stamp ..
 		inp_qei_s.prev_time = inp_qei_s.inp_time; // Store previous time stamp
 		my_tymer :> inp_qei_s.inp_time;		// Get new time stamp
-	}
 
-	// Check if motor at origin
-	if (origin)
-	{ // Reset position
-		inp_qei_s.ang_pos = 0; // Reset position value
-		inp_qei_s.orig_found = 1; // Set origin found flag
-	} // if (origin) 
-	else 
-	{ // Increment/Decrement position
-		cur_spin = get_spin[cur_phases][inp_qei_s.prev_phases]; // Decoded spin fom phase info.
-		inp_qei_s.ang_pos += cur_spin; // Increment/Decrement angular position
-	} // else !(origin) 
+		// Update angular position
+		cur_spin = get_spin_state[cur_phases][inp_qei_s.prev_phases]; // Decoded spin fom phase info.
+		inp_qei_s.ang_cnt += cur_spin; // Increment/Decrement angular position
+		inp_qei_s.prev_phases = cur_phases; // Store old phase value
 
-	inp_qei_s.prev_phases = cur_phases; // Store phase value
+		// Check if motor at origin
+		if (origin != inp_qei_s.prev_orig)
+		{
+			if (origin)
+			{ // Reset position ( Origin transition  0 --> 1 )
+				inp_qei_s.orig_cnt++; // Increment origin counter
+
+// hist[4096 + inp_qei_s.ang_cnt]++; // MB~ dbg
+
+				inp_qei_s.ang_cnt = 0; // Reset position value
+
+#ifdef MB
+if (1000 < inp_qei_s.orig_cnt)
+{
+if (inp_qei_s.id)
+{
+	for(int cnt=0; cnt<HIST_SIZ; cnt++)
+	{ 
+		if (0 < hist[cnt])
+		{
+			printint( (cnt - 4096) );
+			printchar(' ');
+			printintln( hist[cnt] );
+		} // if (0 < hist[cnt])
+	} // for cnt
+} //if (inp_qei_s.id)
+inp_qei_s.orig_cnt = 1;
+
+} // if (2000 < inp_qei_s.orig_cnt)
+
+// Check for missed origin signals
+if (inp_qei_s.id)
+{
+	inp_qei_s.cnt++; // Increment origin counter
+
+	if (inp_qei_s.cnt == 100)
+	{
+		printint( inp_qei_s.orig_cnt );
+		printchar(' ');
+		printintln( inp_qei_s.tmp );
+
+		inp_qei_s.cnt = 0; // Increment origin counter
+		inp_qei_s.tmp = 0;
+	} //if (inp_qei_s.cnt == 1000)
+} // if (inp_qei_s.id)
+#endif //MB
+
+			} // if (origin)
+
+			inp_qei_s.prev_orig = origin; //MB~ dbg
+		} // if (origin != inp_qei_s.prev_orig)
+
+	}	// if (cur_phases != inp_qei_s.prev_phases)
+
 } // service_input_pins
 /*****************************************************************************/
 #pragma unsafe arrays
@@ -132,10 +195,10 @@ void service_client_request( // Send processed QEI data to client
 )
 {
 	// Send processed QEI data to client
-	c_qei <: inp_qei_s.ang_pos;
+	c_qei <: inp_qei_s.ang_cnt;
 	c_qei <: inp_qei_s.inp_time;
 	c_qei <: inp_qei_s.prev_time;
-	c_qei <: inp_qei_s.orig_found;
+	c_qei <: inp_qei_s.orig_cnt;
 } // service_client_request
 /*****************************************************************************/
 #pragma unsafe arrays
@@ -149,7 +212,7 @@ void do_qei (
 	timer my_tymer;
 
 
-	init_qei_data( qei_data_s );
+	init_qei_data( qei_data_s ,0 ); // Initialise QEI data for motor_0
 
 	pQEI :> inp_pins;
 	my_tymer :> qei_data_s.inp_time;
@@ -187,7 +250,7 @@ void do_multiple_qei( // Get QEI data from motor and send to client
 
 	for (int q=0; q<NUMBER_OF_MOTORS; ++q) 
 	{
-		init_qei_data( all_qei_s[q] );
+		init_qei_data( all_qei_s[q] ,q ); // Initialise QEI data for current motor
 
 		pQEI[q] :> inp_pins[q];
 		my_tymer :> all_qei_s[q].inp_time;

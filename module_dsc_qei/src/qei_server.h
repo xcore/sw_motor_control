@@ -24,7 +24,16 @@
 #define NUMBER_OF_MOTORS 1
 #endif
 
-#define QEI_PHASES 4 // 4 combinatations of Phases_B & Phases_A  E.g. [ 00 01 11 10 ]
+#define QEI_PHASES 4	// 4 combinatations of Phases_B & Phases_A  E.g. [ 00 01 11 10 ]
+
+/** Different Motor Phases */
+typedef enum QEI_ENUM_TAG
+{
+  QEI_CLOCK = -1, // Clockwise Phase change
+  QEI_STALL = 0,  // Same Phase
+  QEI_ANTI = 1,		// Anti-Clockwise Phase change
+  QEI_JUMP = 0,		// Jumped 2 Phases
+} QEI_ENUM_TYP;
 
 /** Structure containing QEI parameters for one motor */
 typedef struct QEI_PARAM_TAG // 
@@ -33,8 +42,12 @@ typedef struct QEI_PARAM_TAG //
 	unsigned prev_phases; // Previous phase values
 	unsigned inp_time; // Input time stamp
 	unsigned prev_time; // Previous time stamp
-	unsigned orig_found; // Flag set when motor origin (index) found
-	unsigned ang_pos; // Angular position of motor (from origin)
+	int orig_cnt; // Increment every time motor passes origin (index)
+	int ang_cnt; // Counts angular position of motor (from origin)
+	int prev_orig; // Previous origin flag // MB~
+	int cnt; // MB~ dbg
+	int tmp; // MB~ dbg
+	int id; // Unique motor identifier
 } QEI_PARAM_S;
 
 /** Structure containing array of QEI parameters for all motors */
