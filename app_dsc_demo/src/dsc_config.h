@@ -22,9 +22,6 @@
 // Define the port for the control app to connect to
 #define TCP_CONTROL_PORT 9595
 
-// Define the number of poles the motor has
-#define NUMBER_OF_POLES	4
-
 // Define this to enable the CAN interface
 //	#define USE_CAN
 
@@ -36,15 +33,29 @@
 	#error Both CAN and Ethernet are enabled.
 #endif
 
-// Minimum RPM value for the motor
-#define MIN_RPM 500
-
-// Maximum RPM value for the motor
-#define MAX_RPM 3800
-
 #define BLDC_FOC
 
 // Define this to include XSCOPE support
 #define USE_XSCOPE 1
+
+// This section to be used for specifying motor type ...
+
+#define NUM_POLE_PAIRS	4 // Define the number of pole-pairs
+
+// Define the number different QEI sensors (angular positions)
+#ifdef FAULHABER_MOTOR
+#define QEI_COUNT_MAX (1024 * 4)
+#else
+#define QEI_COUNT_MAX (256 * 4)
+#endif
+
+#define MAX_SPEC_RPM 4000 // Maximum specified motor speed
+
+// Maximum user-assigned RPM value for the motor
+#define MAX_USER_RPM 3800
+
+// Minimum user-assigned RPM value for the motor
+#define MIN_USER_RPM 500
+
 
 #endif /* _DSC_CONFIG__H_ */

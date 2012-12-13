@@ -14,15 +14,11 @@
  * below. The modifications to the code are still covered by the 
  * copyright notice above.
  *
- */                                   
+ */
+#include "dsc_config.h"      
+                             
 #ifndef __QEI_CLIENT_H__
 #define __QEI_CLIENT_H__
-
-#ifdef FAULHABER_MOTOR
-#define QEI_COUNT_MAX (1024 * 4)
-#else
-#define QEI_COUNT_MAX (256 * 4)
-#endif
 
 /** \brief Get the position from the QEI server
  *
@@ -30,7 +26,6 @@
  *  \return the speed, position and valid state
  */
 { unsigned, unsigned, unsigned } get_qei_data( streaming chanend c_qei );
-//MB~ { unsigned, unsigned, unsigned, unsigned } get_qei_data( streaming chanend c_qei ); //MB~ dbg
 
 
 #endif /* __QEI_CLIENT_H__ */

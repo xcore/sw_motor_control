@@ -11,7 +11,7 @@ xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
   </Declarations>
 
   <Nodes>
-    <Node Id="0" Type="XS1-L1A" Oscillator="25Mhz" SystemFrequency="500MHz">
+    <Node Id="0" Type="XS1-L1A" Oscillator="25MHz" SystemFrequency="500MHz">
       <Boot>
         <Source Location="SPI:bootFlash"/>
         <Bootee NodeId="1"/>
@@ -59,7 +59,7 @@ xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
    	   	
     	</Core>
     </Node>
-   	<Node Id="1" Type="XS1-L1A" Oscillator="25Mhz" SystemFrequency="500MHz" ReferenceFrequency="250MHz">
+   	<Node Id="1" Type="XS1-L1A" Oscillator="25MHz" SystemFrequency="500MHz" ReferenceFrequency="250MHz">
    		<Boot>
      		<Source Location="XMOSLINK"/>
    		</Boot>

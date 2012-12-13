@@ -26,10 +26,29 @@
 #define NUMBER_OF_MOTORS 1
 #endif
 
+#define HALF_QEI_CNT (QEI_COUNT_MAX >> 1) // 180 degrees of rotation
+
+/* This is a bit of a cludge, we are using a non-standard configuration
+ * where the timer on the tile for inner_loop() is running at 250 MHz,
+ * but other timers are running at the default of 100 MHz.
+ * Currently this flexibility to define timer frequencies for each tile does not exist.
+ * Therefore, we set up the timer frequency here.
+ */
+#ifndef PLATFORM_REFERENCE_MHZ
+#define PLATFORM_REFERENCE_MHZ 250
+#define PLATFORM_REFERENCE_KHZ 250000
+#define PLATFORM_REFERENCE_HZ 250000000 // NB Uses 28-bits
+#endif
+
+// Calculate speed definitions, preserving precision and preventing overflow !-)
+#define TICKS_PER_SEC_PER_QEI (PLATFORM_REFERENCE_HZ / QEI_COUNT_MAX) // Ticks/sec/angular_increment // 18-bits
+#define TICKS_PER_MIN_PER_QEI (60 * TICKS_PER_SEC_PER_QEI) // Ticks/min/angular_increment // 24 bits
+#define MIN_TICKS_PER_QEI (TICKS_PER_MIN_PER_QEI / MAX_SPEC_RPM) // Min. expected Ticks/QEI // 12 bits
+#define THR_TICKS_PER_QEI (MIN_TICKS_PER_QEI >> 1) // Threshold value used to trap annomalies // 11 bits
+
 #define MAX_CONFID 2 // Maximum confidence value
 #define MAX_QEI_ERR 3 // Maximum number of consecutive QEI errors allowed
 
-#define HALF_QEI_CNT (QEI_COUNT_MAX >> 1) // 180 degrees of rotation
 #define QEI_CNT_LIMIT (QEI_COUNT_MAX + HALF_QEI_CNT) // 540 degrees of rotation
 
 #define QEI_PHASES 4	// 4 combinatations of Phases_B & Phases_A  E.g. [ 00 01 11 10 ]
@@ -48,8 +67,8 @@ typedef struct QEI_PARAM_TAG //
 {
 	unsigned inp_pins; // Raw data values on input port pins
 	unsigned prev_phases; // Previous phase values
-	unsigned inp_time; // Input time stamp
-	unsigned prev_time; // Previous time stamp
+	unsigned prev_time; // Previous angular position time stamp
+	unsigned diff_time; // Difference between 2 adjacent time stamps
 	QEI_ENUM_TYP prev_state; // Previous QEI state
 	int err_cnt; // counter for invalid QEI states
 	int orig_cnt; // Increment every time motor passes origin (index)
@@ -58,6 +77,7 @@ typedef struct QEI_PARAM_TAG //
 	int prev_orig; // Previous origin flag
 	int confid; // Confidence in current qei-state
 	int id; // Unique motor identifier
+	int dbg; // Debug
 } QEI_PARAM_S;
 
 /** Structure containing array of QEI parameters for all motors */

@@ -17,6 +17,10 @@
 #ifndef _INNER_LOOP_H_
 #define _INNER_LOOP_H_
 
+#define QEI_PER_POLE (QEI_COUNT_MAX / NUM_POLE_PAIRS) // e.g. 256 No. of QEI sensors per pole 
+#define THETA_HALF_PHASE (QEI_PER_POLE / 12) // e.g. ~21 CoilSectorAngle/2 (6 sectors = 60 degrees per sector, 30 degrees per half sector)
+
+
 /* run the motor inner loop */
 void run_motor ( unsigned motor_id, chanend? c_in, chanend? c_out, chanend c_pwm, streaming chanend c_qei, streaming chanend c_adc, chanend c_speed, chanend? c_wd, port in p_hall,chanend c_can_eth_shared );
 

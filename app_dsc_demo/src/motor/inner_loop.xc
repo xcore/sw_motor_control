@@ -44,6 +44,7 @@
 #include <assert.h>
 
 #include "pid_regulator.h"
+#include "qei_commands.h"
 #include "qei_client.h"
 #include "adc_client.h"
 #include "pwm_cli_inv.h"
@@ -82,19 +83,21 @@
 	#define LAST_HALL_STATE 0b101
 #endif
 
-// This is half of the coil sector angle (6 sectors = 60 degrees per sector, 30 degrees per half sector)
-#define THETA_HALF_PHASE (QEI_COUNT_MAX * 30 / 360 / NUMBER_OF_POLES)
-
 #define IQ_OPEN_LOOP 2000 // Iq value for open-loop mode
 #define ID_OPEN_LOOP 0		// Id value for open-loop mode
 #define INIT_HALL 0 // Initial Hall state
 #define INIT_THETA 0 // Initial start-up angle
 #define INIT_SPEED 4000 // Initial start-up speed
-#define DEMO_LIMIT 1000000 // Demo. terminated after this number of FOC iterations
+
+#ifdef USE_XSCOPE
+	#define DEMO_LIMIT 100000 // XSCOPE
+#else // ifdef USE_XSCOPE
+	#define DEMO_LIMIT 1000000
+#endif // else !USE_XSCOPE
 
 #define STR_LEN 80 // String Length
 
-#define ERROR_OVERCURRENT 0x1 //MB~
+#define ERROR_OVERCURRENT 0x1
 #define ERROR_UNDERVOLTAGE 0x2
 #define ERROR_STALL 0x4
 #define ERROR_DIRECTION 0x8
@@ -165,8 +168,10 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	int out_iq;	// Output measured tangential current value
 	int meas_theta;	// Position as measured by the QEI
 	int meas_speed;	// speed as measured by the QEI
-	int angl_valid;	// Status flag returned by QEI when angular position origin has been found */
+	int rev_cnt;	// rev. counter (No. of origin traversals)
 	int theta_offset;	// Phase difference between the QEI and the coils
+	int prev_angl; 	// previous angular position
+	unsigned prev_time; 	// previous time stamp
 
 	unsigned tmp; // Debug variable
 } MOTOR_DATA_TYP;
@@ -193,6 +198,8 @@ void init_motor( // initialise data structure for one motor
 	motor_s.set_id = 0;	// Ideal current producing radial magnetic field (NB never update as no radial force is required)
 	motor_s.set_iq = 0;	// Ideal current producing tangential magnetic field. (NB Updated based on the speed error)
 	motor_s.err_flgs = 0; 	// Clear fault detection flags
+	motor_s.prev_time = 0; 	// previous time stamp
+	motor_s.prev_angl = 0; 	// previous angular position
 
 	// Initialise error strings
 	for (err_cnt=0; err_cnt<NUM_ERR_TYPS; err_cnt++)
@@ -374,13 +381,13 @@ MOTOR_STATE_TYP check_hall_state( // Inspect Hall-state and update motor-state i
 			{ // Spinning in correct direction
 
 				// Check if position offset needs updating. MB~ I don't understand this check, it always appears to be TRUE.
-				if (motor_s.meas_theta < (QEI_COUNT_MAX/NUMBER_OF_POLES)) 
+				if (motor_s.meas_theta < QEI_PER_POLE) 
 				{ // Find the offset between the rotor and the QEI
 					motor_s.theta_offset = (THETA_HALF_PHASE + motor_s.meas_theta);
 					motor_state = FOC; // Switch to main FOC state
 					motor_s.cnts[FOC] = 0; // Initialise FOC-state counter 
 if (dbg) { printint(motor_s.id); printstr( " SE: " ); printintln( motor_s.cnts[SEARCH] ); } 
-				} // if (motor_s.meas_theta < (QEI_COUNT_MAX/NUMBER_OF_POLES))
+				} // if (motor_s.meas_theta < QEI_PER_POLE)
 			} // if (motor_s.prev_hall == LAST_HALL_STATE)
 			else
 			{ // We are probably spinning in the wrong direction!-(
@@ -421,12 +428,12 @@ unsigned update_motor_state( // Update state of motor based on motor sensor data
 	switch( motor_s.state )
 	{
 		case START : // Intial entry state
-			if (1 == motor_s.angl_valid) // Check if angular postion origin found
+			if (0 < motor_s.rev_cnt) // Check if angular position origin found
 			{
 				motor_s.state = SEARCH; // Switch to search state
 				motor_s.cnts[SEARCH] = 0; // Initialise search-state counter
 if (dbg) { printint(motor_s.id); printstr( " SA: " ); printintln( motor_s.cnts[START] ); } 
-			} // if (1 == motor_s.angl_valid)
+			} // if (1 == motor_s.rev_cnt)
 		break; // case START
 
 		case SEARCH : // Turn motor using Hall state, and update motor state
@@ -573,7 +580,6 @@ void use_motor ( // Start motor, and run step through different motor states
 			{
 				c_speed <: motor_s.err_flgs;
 			}
-
 		break; // case c_speed :> command:
 
 		case c_can_eth_shared :> command:		//This case responds to CAN or ETHERNET commands
@@ -616,9 +622,8 @@ void use_motor ( // Start motor, and run step through different motor states
 				} // if (!(new_hall & 0b1000))
 				else
 				{
-					/* Get the position from encoder module. NB returns valid=0 at start-up  */
-					{ motor_s.meas_speed ,motor_s.meas_theta ,motor_s.angl_valid } = get_qei_data( c_qei );
-//MB~			{ motor_s.meas_speed ,motor_s.meas_theta ,motor_s.angl_valid ,motor_s.tmp } = get_qei_data( c_qei ); //MB~ dbg
+					/* Get the position from encoder module. NB returns rev_cnt=0 at start-up  */
+					{ motor_s.meas_speed ,motor_s.meas_theta ,motor_s.rev_cnt } = get_qei_data( c_qei );
 
 					/* Get ADC readings */
 					{motor_s.meas_Is[PHASE_A], motor_s.meas_Is[PHASE_B], motor_s.meas_Is[PHASE_C]} = get_adc_vals_calibrated_int16( c_adc );
@@ -646,9 +651,10 @@ void use_motor ( // Start motor, and run step through different motor states
 						xscope_probe_data(0, motor_s.meas_speed);
 				    xscope_probe_data(1, motor_s.set_iq);
 	    			xscope_probe_data(2, pwm_vals[PHASE_A]);
+	    			xscope_probe_data(3, motor_s.meas_theta ); //MB~
 //MB~	    			xscope_probe_data(3, pwm_vals[PHASE_B]);
-	    			xscope_probe_data(3, motor_s.meas_Is[PHASE_C]); //MB~
-	    			xscope_probe_data(4, motor_s.meas_Is[PHASE_A]);
+//MB~	    			xscope_probe_data(4, motor_s.meas_Is[PHASE_A]);
+	    			xscope_probe_data(4, motor_s.rev_cnt );
 						xscope_probe_data(5, motor_s.meas_Is[PHASE_B]);
 	  			} // if (isnull(c_in)) 
 				} // if ((motor_s.cnts[FOC] & 0x1) == 0) 
