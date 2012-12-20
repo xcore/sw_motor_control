@@ -18,6 +18,14 @@
 #ifndef __ADC_CLIENT_H__
 #define __ADC_CLIENT_H__
 
+#include "adc_common.h"
+
+typedef struct ADC_DATA_TAG // Structure containing ADC data
+{
+	int vals[NUM_ADC_PHASES]; // Array of ADC values for each phase
+} ADC_DATA_TYP;
+
+
 /** \brief ADC calibration sequence
  *
  * This switches the ADC server into calibration mode.  After a number (512) of samples
@@ -37,6 +45,15 @@ void do_adc_calibration( streaming chanend c_adc );
  * \param c_adc the control channel to the ADC server
  */
 {int, int, int} get_adc_vals_calibrated_int16( streaming chanend c_adc );
+
+/** \brief Get values converted from 14 bit unsigned to 16 bit signed and calibrated
+ *
+ * Read a 2 of 3 ADC values from the motor, and convert them into a
+ * standardized 16 bit scale
+ *
+ * \param c_adc the control channel to the ADC server
+ */
+void get_adc_vals_calibrated_int16_mb( streaming chanend c_adc ,ADC_DATA_TYP &adc_data_s );
 
 
 

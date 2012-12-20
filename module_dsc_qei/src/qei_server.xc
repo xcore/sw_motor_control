@@ -52,6 +52,7 @@
 \*****************************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 
 #include <xs1.h>
@@ -329,14 +330,20 @@ void service_client_request( // Send processed QEI data to client
 	QEI_PARAM_S &inp_qei_s, // Reference to structure containing QEI parameters for one motor
 	streaming chanend c_qei // Data channel to client (carries processed QEI data)
 )
-// NB If angular position has NOT updated since last transmission, then the same data is re-transmitted
+/*	The speed is calculated assuming the angular change is always 1 position.
+ *	Experiment shows this to be more robust than using the actual position change, e.g. one of [0, 1, 2]
+ *	This is because, the actual positions are estimates (and are sometimes incorrect)
+ *	Whereas using the value 1, is effectively applying a lo-pass filter to the position change.
+ *
+ *	NB If angular position has NOT updated since last transmission, then the same data is re-transmitted
+ */
 {
 	unsigned meas_speed; // Speed of motor measured in Ticks/angle_position
 
 
 	assert(0 < inp_qei_s.diff_time); // Timer error. This should always be true!-(
 
-	meas_speed = (TICKS_PER_MIN_PER_QEI / inp_qei_s.diff_time);
+	meas_speed = (TICKS_PER_MIN_PER_QEI / inp_qei_s.diff_time); // Calculate new speed estimate
 
 	// Send processed QEI data to client
 	c_qei <: inp_qei_s.theta;

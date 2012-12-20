@@ -28,7 +28,18 @@
 // The number of trigger channels coming from PWM units
 #define ADC_NUMBER_OF_TRIGGERS NUMBER_OF_MOTORS
 
+#define NUM_ADC_PHASES 3 // 3 ADC phases [A, B, C]
+#define USED_ADC_PHASES (NUM_ADC_PHASES - 1) // NB 3rd Phase can be inferred as 3 phases sum to zero
+
 // Count of the number of elements in the ADC filter array
 #define ADC_FILT_SAMPLE_COUNT 31
+
+/** Different ADC Commands */
+typedef enum ADC_CMD_TAG
+{
+  CMD_REQ_ADC = 0,  // Request ADC data
+  CMD_CAL_ADC,		  // Calibrate ADC data
+  NUM_ADC_CMDS    // Handy Value!-)
+} ADC_CMD_TYP;
 
 #endif /* __ADC_COMMON_H__ */

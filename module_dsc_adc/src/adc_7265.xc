@@ -5,6 +5,8 @@
  *  Author: A SRIKANTH
  */
 
+#include <assert.h>
+
 #include <xs1.h>
 #include <platform.h>
 #include <xclib.h>
@@ -42,6 +44,7 @@ static int calibration_acc[ADC_NUMBER_OF_TRIGGERS][2];
 // 1 revolution at 600RPM is 0.1sec, at 61kHz needs at lease 6.1k samples
 #define CALIBRATION_COUNT 8192
 
+/*****************************************************************************/
 static void configure_adc_ports_7265(clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, out port MUX)
 {
 	// configure the clock to be 16MHz
@@ -65,8 +68,8 @@ static void configure_adc_ports_7265(clock clk, out port SCLK, port CNVST, in bu
 
     // start the ADC serial clock port
     start_clock(clk);
-}
-
+} // configure_adc_ports_7265
+/*****************************************************************************/
 #pragma unsafe arrays
 static void adc_get_data_7265( int adc_val[], unsigned channel, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, out port MUX )
 {
@@ -107,28 +110,45 @@ static void adc_get_data_7265( int adc_val[], unsigned channel, port CNVST, in b
 	adc_val[1] = val3;
 #endif
 
-}
-
+} // adc_get_data_7265
+/*****************************************************************************/
 #pragma unsafe arrays
-void adc_7265_triggered( streaming chanend c_adc[ADC_NUMBER_OF_TRIGGERS], chanend c_trig[ADC_NUMBER_OF_TRIGGERS], clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX )
+void adc_7265_triggered( // Thread to service ADC channels
+	streaming chanend c_adc[ADC_NUMBER_OF_TRIGGERS], // ADC data Channel connecting to Control (inner_loop.xc)
+	chanend c_adc_trig[ADC_NUMBER_OF_TRIGGERS], // Channel receiving control token triggers from PWM thread
+	clock clk, 
+	out port SCLK, 
+	port CNVST, 
+	in buffered port:32 DATA_A, 
+	in buffered port:32 DATA_B, 
+	port out MUX 
+)
 {
-	int adc_val[ADC_NUMBER_OF_TRIGGERS][2];
-	int cmd;
-	unsigned char ct;
+	int adc_val[ADC_NUMBER_OF_TRIGGERS][USED_ADC_PHASES];
+	int cmd_id; // command identifier
+	unsigned char cntrl_tokn; // control token
+	int phase_cnt; // ADC Phase counter
+	int trig_id; // trigger identifier
+	int phase_id; // identifies one of 3 phases of ADC data
 
-	timer t[ADC_NUMBER_OF_TRIGGERS];
-	unsigned ts[ADC_NUMBER_OF_TRIGGERS];
-	char go[ADC_NUMBER_OF_TRIGGERS];
+	timer my_timers[ADC_NUMBER_OF_TRIGGERS];
+	unsigned time_stamps[ADC_NUMBER_OF_TRIGGERS];
+	char guard_off[ADC_NUMBER_OF_TRIGGERS];
+
 
 	set_thread_fast_mode_on();
 
 	configure_adc_ports_7265( clk, SCLK, CNVST, DATA_A, DATA_B, MUX );
 
-	for (unsigned int c=0; c<ADC_NUMBER_OF_TRIGGERS; ++c) {
-		adc_val[c][0] = 0;
-		adc_val[c][1] = 0;
-		go[c] = 0;
-	}
+	for (trig_id=0; trig_id<ADC_NUMBER_OF_TRIGGERS; ++trig_id) 
+	{
+		for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
+		{
+			adc_val[trig_id][phase_cnt] = 0;
+		} // for phase_cnt
+
+		guard_off[trig_id] = 0;
+	} // for trig_id
 
 
 	while (1)
@@ -137,49 +157,71 @@ void adc_7265_triggered( streaming chanend c_adc[ADC_NUMBER_OF_TRIGGERS], chanen
 #pragma ordered
 		select
 		{
-		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) inct_byref(c_trig[trig], ct):
-			if (ct == XS1_CT_END)
+		// Service any Control Tokens that are received
+		case (int trig_id=0; trig_id<ADC_NUMBER_OF_TRIGGERS; ++trig_id) inct_byref(c_adc_trig[trig_id], cntrl_tokn):
+			// Check control token type
+			if (cntrl_tokn == XS1_CT_END)
+			{ // Kick-off capture of ADC values
+				my_timers[trig_id] :> time_stamps[trig_id]; // get current time
+				time_stamps[trig_id] += ADC_TRIGGER_DELAY; // Increment to time of ADC value capture
+				guard_off[trig_id] = 1; // Switch guard OFF to allow capture
+			}
+		break;
+
+		// If quard is OFF, load 'my_timer' at time 'time_stamp' 
+		case (int trig_id=0; trig_id<ADC_NUMBER_OF_TRIGGERS; ++trig_id) guard_off[trig_id] => my_timers[trig_id] when timerafter(time_stamps[trig_id]) :> void:
+			guard_off[trig_id] = 0; // Set guard ON
+
+			adc_get_data_7265( adc_val[trig_id], trigger_channel_to_adc_mux[trig_id], CNVST, DATA_A, DATA_B, MUX );
+
+			if (calibration_mode[trig_id] > 0) 
 			{
-				t[trig] :> ts[trig];
-				ts[trig] += ADC_TRIGGER_DELAY;
-				go[trig] = 1;
-			}
-			break;
+				calibration_mode[trig_id]--;
 
-		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) go[trig] => t[trig] when timerafter(ts[trig]) :> void:
-			go[trig] = 0;
-			adc_get_data_7265( adc_val[trig], trigger_channel_to_adc_mux[trig], CNVST, DATA_A, DATA_B, MUX );
-			if (calibration_mode[trig] > 0) {
-				calibration_mode[trig]--;
-				calibration_acc[trig][0] += adc_val[trig][0];
-				calibration_acc[trig][1] += adc_val[trig][1];
-				if (calibration_mode[trig] == 0) {
-					calibration[trig][0] = calibration_acc[trig][0] / CALIBRATION_COUNT;
-					calibration[trig][1] = calibration_acc[trig][1] / CALIBRATION_COUNT;
+				for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
+				{
+					calibration_acc[trig_id][phase_cnt] += adc_val[trig_id][phase_cnt];
+				} // for phase_cnt
+
+				if (calibration_mode[trig_id] == 0) 
+				{
+					for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
+					{
+						calibration[trig_id][phase_cnt] = calibration_acc[trig_id][phase_cnt] / CALIBRATION_COUNT;
+					} // for phase_cnt
 				}
-			}
-			break;
+			} // if (calibration_mode[trig_id] > 0) 
+		break;
 
-		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) c_adc[trig] :> cmd:
-			if (cmd == 1) {
-				calibration_mode[trig] = CALIBRATION_COUNT;
-				calibration_acc[trig][0]=0;
-				calibration_acc[trig][1]=0;
-			} else {
-				if (calibration_mode[trig] > 0) {
-					c_adc[trig] <: 0;
-					c_adc[trig] <: 0;
-					c_adc[trig] <: 0;
-				} else {
-					unsigned a = adc_val[trig][0] - calibration[trig][0];
-					unsigned b = adc_val[trig][1] - calibration[trig][1];
-					c_adc[trig] <: a;
-					c_adc[trig] <: b;
-					c_adc[trig] <: -(a+b);
-				}
-			}
-			break;
-		}
-	}
-}
+		// Service any client request for ADC data
+		case (int trig_id=0; trig_id<ADC_NUMBER_OF_TRIGGERS; ++trig_id) c_adc[trig_id] :> cmd_id:
+			switch(cmd_id)
+			{
+				case CMD_REQ_ADC : // Request for ADC data
+					for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
+					{
+						phase_id = adc_val[trig_id][phase_cnt] - calibration[trig_id][phase_cnt];
+						c_adc[trig_id] <: phase_id;
+					} // for phase_cnt
+				break; // case START
 
+				case CMD_CAL_ADC : // Calibration
+					calibration_mode[trig_id] = CALIBRATION_COUNT;
+
+					for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
+					{
+						calibration[trig_id][phase_cnt] = 0;
+					} // for phase_cnt
+				break; // case START
+
+		    default: // Unsupported Command
+					assert(0 == 1); // Error: Received unsupported ADC command
+  		  break;
+			} // switch(cmd_id)
+
+		break;
+		} // select
+	} // while (1)
+} // adc_7265_triggered
+/*****************************************************************************/
+// adc_7265.xc

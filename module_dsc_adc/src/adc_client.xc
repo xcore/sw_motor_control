@@ -21,33 +21,42 @@
  **/                                   
 #include <xs1.h>
 
+#include "adc_client.h"
+
 #ifdef __dsc_config_h_exists__
 #include <dsc_config.h>
 #endif
 
 void do_adc_calibration( streaming chanend c_adc )
 {
-	c_adc <: 1;
-}
-
-{int, int, int} get_adc_vals_calibrated_int16( streaming chanend c_adc )
+	c_adc <: CMD_CAL_ADC;
+} // do_adc_calibration
+/*****************************************************************************/
+void get_adc_vals_calibrated_int16_mb( 
+	streaming chanend c_adc, // channel connecting to ADC thread
+	ADC_DATA_TYP &adc_data_s // Reference to structure containing ADC data
+)
 {
-	int a, b, c;
-
-	/* request and then receive adc data */
-	c_adc <: 0;
-	c_adc :> a;
-	c_adc :> b;
-	c_adc :> c;
-
-	/* convert to 14 bit from 12 bit */
-	a = a << 2;
-	b = b << 2;
-	c = c << 2;
-
-	return {a, b, c};
-}
+	int phase_cnt; // ADC Phase counter
+	int adc_sum = 0; // Sums transmiited ADC Phases
 
 
+	c_adc <: CMD_REQ_ADC;	// Request ADC data */
 
+	// Loop through used phases of ADC data
+	for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
+	{
+		c_adc :> adc_data_s.vals[phase_cnt];	// Receive One phase of ADC data
 
+		adc_data_s.vals[phase_cnt] <<= 2;	// convert to 14 bit from 12 bit
+
+		adc_sum += adc_data_s.vals[phase_cnt]; // Add adc value to sum
+	} // for phase_cnt
+
+	// Calculate last ADC phase from previous phases (NB Sum of phases is zero)
+	adc_data_s.vals[USED_ADC_PHASES] = -adc_sum; 
+
+	return;
+} // get_adc_vals_calibrated_int16_mb
+/*****************************************************************************/
+// adc_client.xc

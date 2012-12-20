@@ -152,7 +152,7 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	pid_data pid_d;	/* Id PID control structure */
 	pid_data pid_q;	/* Iq PID control structure */
 	t_pwm_control pwm_ctrl;	// structure containing PWM data, (written to shared memory)
-	int meas_Is[NUM_PHASES]; // Array of measured coil currents from ADC
+	ADC_DATA_TYP meas_adc; // Structure containing measured data from ADC
 	int cnts[NUM_MOTOR_STATES]; // array of counters for each motor state	
 	unsigned id; // Unique Motor identifier e.g. 0 or 1
 	MOTOR_STATE_TYP state; // Current motor state
@@ -218,7 +218,7 @@ void init_motor( // initialise data structure for one motor
 
 	for (phase_cnt = 0; phase_cnt < NUM_PHASES; phase_cnt++)
 	{ 
-		motor_s.meas_Is[phase_cnt] = -1;
+		motor_s.meas_adc.vals[phase_cnt] = -1;
 	} // for phase_cnt
 } // init_motor
 /*****************************************************************************/
@@ -317,7 +317,7 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 #pragma xta label "foc_loop_clarke"
 
 	/* To calculate alpha and beta currents */
-	clarke_transform(motor_s.meas_Is[PHASE_A], motor_s.meas_Is[PHASE_B], motor_s.meas_Is[PHASE_C], alpha, beta );
+	clarke_transform(motor_s.meas_adc.vals[PHASE_A], motor_s.meas_adc.vals[PHASE_B], motor_s.meas_adc.vals[PHASE_C], alpha, beta );
 
 #pragma xta label "foc_loop_park"
 
@@ -587,12 +587,12 @@ void use_motor ( // Start motor, and run step through different motor states
 			if(command == CMD_GET_VALS)
 			{
 				c_can_eth_shared <: motor_s.meas_speed;
-				c_can_eth_shared <: motor_s.meas_Is[PHASE_A];
-				c_can_eth_shared <: motor_s.meas_Is[PHASE_B];
+				c_can_eth_shared <: motor_s.meas_adc.vals[PHASE_A];
+				c_can_eth_shared <: motor_s.meas_adc.vals[PHASE_B];
 			}
 			else if(command == CMD_GET_VALS2)
 			{
-				c_can_eth_shared <: motor_s.meas_Is[PHASE_C];
+				c_can_eth_shared <: motor_s.meas_adc.vals[PHASE_C];
 				c_can_eth_shared <: motor_s.set_iq;
 				c_can_eth_shared <: id_out;
 				c_can_eth_shared <: iq_out;
@@ -626,8 +626,8 @@ void use_motor ( // Start motor, and run step through different motor states
 					{ motor_s.meas_speed ,motor_s.meas_theta ,motor_s.rev_cnt } = get_qei_data( c_qei );
 
 					/* Get ADC readings */
-					{motor_s.meas_Is[PHASE_A], motor_s.meas_Is[PHASE_B], motor_s.meas_Is[PHASE_C]} = get_adc_vals_calibrated_int16( c_adc );
-
+//MB~	{motor_s.meas_adc.vals[PHASE_A], motor_s.meas_adc.vals[PHASE_C]} = get_adc_vals_calibrated_int16( c_adc );
+					get_adc_vals_calibrated_int16_mb( c_adc ,motor_s.meas_adc );
 					stop_motor = update_motor_state( motor_s ,new_hall );
 				} // else !(!(new_hall & 0b1000))
 
@@ -653,9 +653,9 @@ void use_motor ( // Start motor, and run step through different motor states
 	    			xscope_probe_data(2, pwm_vals[PHASE_A]);
 	    			xscope_probe_data(3, motor_s.meas_theta ); //MB~
 //MB~	    			xscope_probe_data(3, pwm_vals[PHASE_B]);
-//MB~	    			xscope_probe_data(4, motor_s.meas_Is[PHASE_A]);
+//MB~	    			xscope_probe_data(4, motor_s.meas_adc.vals[PHASE_A]);
 	    			xscope_probe_data(4, motor_s.rev_cnt );
-						xscope_probe_data(5, motor_s.meas_Is[PHASE_B]);
+						xscope_probe_data(5, motor_s.meas_adc.vals[PHASE_B]);
 	  			} // if (isnull(c_in)) 
 				} // if ((motor_s.cnts[FOC] & 0x1) == 0) 
 #endif
