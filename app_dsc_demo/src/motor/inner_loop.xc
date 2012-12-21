@@ -628,6 +628,7 @@ void use_motor ( // Start motor, and run step through different motor states
 					/* Get ADC readings */
 //MB~	{motor_s.meas_adc.vals[PHASE_A], motor_s.meas_adc.vals[PHASE_C]} = get_adc_vals_calibrated_int16( c_adc );
 					get_adc_vals_calibrated_int16_mb( c_adc ,motor_s.meas_adc );
+
 					stop_motor = update_motor_state( motor_s ,new_hall );
 				} // else !(!(new_hall & 0b1000))
 

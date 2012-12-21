@@ -38,7 +38,7 @@ void get_adc_vals_calibrated_int16_mb(
 )
 {
 	int phase_cnt; // ADC Phase counter
-	int adc_sum = 0; // Sums transmiited ADC Phases
+	int adc_sum = 0; // Accumulator for transmiited ADC Phases
 
 
 	c_adc <: CMD_REQ_ADC;	// Request ADC data */
