@@ -29,7 +29,7 @@
 
 void do_adc_calibration( streaming chanend c_adc )
 {
-	c_adc <: CMD_CAL_ADC;
+	c_adc <: ADC_CMD_CAL; // Activate calibration
 } // do_adc_calibration
 /*****************************************************************************/
 void get_adc_vals_calibrated_int16_mb( 
@@ -41,7 +41,7 @@ void get_adc_vals_calibrated_int16_mb(
 	int adc_sum = 0; // Accumulator for transmiited ADC Phases
 
 
-	c_adc <: CMD_REQ_ADC;	// Request ADC data */
+	c_adc <: ADC_CMD_REQ;	// Request ADC data */
 
 	// Loop through used phases of ADC data
 	for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 

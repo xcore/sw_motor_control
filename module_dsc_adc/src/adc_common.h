@@ -44,11 +44,11 @@ typedef enum ADC_PHASE_ETAG
 
 
 /** Different ADC Commands */
-typedef enum ADC_CMD_ETAG
+typedef enum CMD_ADC_ETAG
 {
-  CMD_REQ_ADC = 0,  // Request ADC data
-  CMD_CAL_ADC,		  // Calibrate ADC data
+  ADC_CMD_REQ = 0,  // Request ADC data
+  ADC_CMD_CAL,		  // Calibrate ADC data
   NUM_ADC_CMDS    // Handy Value!-)
-} ADC_CMD_ENUM;
+} CMD_ADC_ENUM;
 
 #endif /* __ADC_COMMON_H__ */

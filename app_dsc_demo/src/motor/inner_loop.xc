@@ -529,17 +529,12 @@ if (dbg) { printint(motor_s.id); printstr( " SL: " ); printintln( motor_s.cnts[S
 #pragma unsafe arrays
 void use_motor ( // Start motor, and run step through different motor states
 	MOTOR_DATA_TYP &motor_s, // reference to structure containing motor data
-	chanend? c_in, 
 	chanend c_pwm, 
 	streaming chanend c_qei, 
 	streaming chanend c_adc, 
 	chanend c_speed, 
-	chanend? c_wd, 
 	port in p_hall, 
 	chanend c_can_eth_shared 
-#ifdef MB
-	chanend? c_out, 
-#endif //MB
 )
 {
 	unsigned pwm_vals[NUM_PHASES]; // Array of PWM values
@@ -647,7 +642,7 @@ void use_motor ( // Start motor, and run step through different motor states
 #ifdef USE_XSCOPE
 				if ((motor_s.cnts[FOC] & 0x1) == 0) 
 				{
-					if (isnull(c_in)) 
+					if (0 == motor_s.id) // Check if 1st Motor
 					{
 						xscope_probe_data(0, motor_s.meas_speed);
 				    xscope_probe_data(1, motor_s.set_iq);
@@ -657,7 +652,7 @@ void use_motor ( // Start motor, and run step through different motor states
 //MB~	    			xscope_probe_data(4, motor_s.meas_adc.vals[PHASE_A]);
 	    			xscope_probe_data(4, motor_s.rev_cnt );
 						xscope_probe_data(5, motor_s.meas_adc.vals[PHASE_B]);
-	  			} // if (isnull(c_in)) 
+					} // if (0 == motor_s.id) 
 				} // if ((motor_s.cnts[FOC] & 0x1) == 0) 
 #endif
 				update_pwm_inv( motor_s.pwm_ctrl ,c_pwm, pwm_vals ); // Update the PWM values
@@ -693,13 +688,11 @@ void error_handling( // Prints out error messages
 #pragma unsafe arrays
 void run_motor ( 
 	unsigned motor_id,
-	chanend? c_in, 
-	chanend? c_out, 
+	chanend? c_wd,
 	chanend c_pwm, 
 	streaming chanend c_qei, 
 	streaming chanend c_adc, 
 	chanend c_speed, 
-	chanend? c_wd, 
 	port in p_hall, 
 	chanend c_can_eth_shared 
 )
@@ -747,7 +740,7 @@ void run_motor (
 	if (0 == motor_id) printstrln( "Demo Starts" ); // NB Prevent duplicate display lines
 
 	// start-and-run motor
-	use_motor( motor_s ,c_in ,c_pwm ,c_qei ,c_adc ,c_speed ,c_wd ,p_hall ,c_can_eth_shared );
+	use_motor( motor_s ,c_pwm ,c_qei ,c_adc ,c_speed ,p_hall ,c_can_eth_shared );
 
 	// NB First Motor to finish displays
 	if (motor_s.err_flgs)

@@ -67,6 +67,6 @@ typedef struct ADC_7265_TAG // Structure containing ADC-7265 data
  *  \param MUX a port to allow the selection of the analogue MUX input
  *
  */
-void adc_7265_triggered( streaming chanend c_adc[ADC_NUMBER_OF_TRIGGERS], chanend c_trig[ADC_NUMBER_OF_TRIGGERS], clock clk, out port SCLK, port CNVST, in buffered port:32 DATA_A, in buffered port:32 DATA_B, port out MUX );
+void adc_7265_triggered( streaming chanend c_adc[ADC_NUMBER_OF_TRIGGERS] ,chanend c_trig[ADC_NUMBER_OF_TRIGGERS] ,clock clk ,out port SCLK ,port CNVST ,in buffered port:32 p_adc_data[NUMBER_OF_MOTORS] ,port out MUX );
 
 #endif /* ADC_7265_H_ */

@@ -51,32 +51,27 @@ on tile[INTERFACE_CORE]: out port p_leds = PORT_LEDS;
 //CAN and ETH reset port
 on tile[INTERFACE_CORE] : out port p_shared_rs=PORT_SHARED_RS;
 
-// Motor 1 ports
-on tile[MOTOR_CORE]: port in p_hall1 = PORT_M1_HALLSENSOR;
-on tile[MOTOR_CORE]: buffered out port:32 p_pwm_hi1[3] = {PORT_M1_HI_A, PORT_M1_HI_B, PORT_M1_HI_C};
-on tile[MOTOR_CORE]: buffered out port:32 p_pwm_lo1[3] = {PORT_M1_LO_A, PORT_M1_LO_B, PORT_M1_LO_C};
-on tile[MOTOR_CORE]: clock pwm_clk1 = XS1_CLKBLK_REF;
-
-// Motor 2 ports
-on tile[MOTOR_CORE]: port in p_hall2 = PORT_M2_HALLSENSOR;
-on tile[MOTOR_CORE]: buffered out port:32 p_pwm_hi2[3] = {PORT_M2_HI_A, PORT_M2_HI_B, PORT_M2_HI_C};
-on tile[MOTOR_CORE]: buffered out port:32 p_pwm_lo2[3] = {PORT_M2_LO_A, PORT_M2_LO_B, PORT_M2_LO_C};
-on tile[MOTOR_CORE]: clock pwm_clk2 = XS1_CLKBLK_4;
+// Motor ports
+on tile[MOTOR_CORE]: port in p_hall[NUMBER_OF_MOTORS] = { PORT_M1_HALLSENSOR ,PORT_M2_HALLSENSOR };
+on tile[MOTOR_CORE]: clock pwm_clk[NUMBER_OF_MOTORS] = { XS1_CLKBLK_REF ,XS1_CLKBLK_4 };
+on tile[MOTOR_CORE]: buffered out port:32 p_pwm_hi[NUMBER_OF_MOTORS][NUM_ADC_PHASES] 
+	= {	{PORT_M1_HI_A, PORT_M1_HI_B, PORT_M1_HI_C} ,{PORT_M2_HI_A, PORT_M2_HI_B, PORT_M2_HI_C} };
+on tile[MOTOR_CORE]: buffered out port:32 p_pwm_lo[NUMBER_OF_MOTORS][NUM_ADC_PHASES] 
+	= {	{PORT_M1_LO_A, PORT_M1_LO_B, PORT_M1_LO_C} ,{PORT_M2_LO_A, PORT_M2_LO_B, PORT_M2_LO_C} };
 
 // QEI ports
-on tile[MOTOR_CORE]: port in p_qei[2] = { PORT_M1_ENCODER, PORT_M2_ENCODER };
+on tile[MOTOR_CORE]: port in p_qei[NUMBER_OF_MOTORS] = { PORT_M1_ENCODER, PORT_M2_ENCODER };
 
 // Watchdog port
 on tile[INTERFACE_CORE]: out port i2c_wd = PORT_WATCHDOG;
 
+// ADC ports
 on tile[MOTOR_CORE]: out port ADC_SCLK = PORT_ADC_CLK;
 on tile[MOTOR_CORE]: port ADC_CNVST = PORT_ADC_CONV;
-on tile[MOTOR_CORE]: buffered in port:32 ADC_DATA_A = PORT_ADC_MISOA;
-on tile[MOTOR_CORE]: buffered in port:32 ADC_DATA_B = PORT_ADC_MISOB;
 on tile[MOTOR_CORE]: out port ADC_MUX = PORT_ADC_MUX;
-on tile[MOTOR_CORE]: in port ADC_SYNC_PORT1 = XS1_PORT_16A;
-on tile[MOTOR_CORE]: in port ADC_SYNC_PORT2 = XS1_PORT_16B;
 on tile[MOTOR_CORE]: clock adc_clk = XS1_CLKBLK_2;
+on tile[MOTOR_CORE]: in port p_adc_sync[NUMBER_OF_MOTORS] = { XS1_PORT_16A ,XS1_PORT_16B };
+on tile[MOTOR_CORE]: buffered in port:32 p_adc_data[USED_ADC_PHASES] = { PORT_ADC_MISOA ,PORT_ADC_MISOB };
 
 #ifdef USE_ETH
 	// These intializers are taken from the ethernet_board_support.h header for
@@ -115,7 +110,6 @@ void init_can_phy( chanend c_rxChan, chanend c_txChan, clock p_can_clk, buffered
 int main ( void ) // Program Entry Point
 {
 	chan c_wd;
-	chan c_motor_comms;
 	chan c_speed[NUMBER_OF_MOTORS];
 	chan c_commands[NUMBER_OF_MOTORS];
 	chan c_pwm[NUMBER_OF_MOTORS];
@@ -131,6 +125,7 @@ int main ( void ) // Program Entry Point
 #ifdef USE_CAN
 	chan c_rxChan, c_txChan;
 #endif
+
 
 	par
 	{
@@ -162,27 +157,30 @@ int main ( void ) // Program Entry Point
 //					XSCOPE_CONTINUOUS, "PWM[0]", XSCOPE_UINT , "n"
 			); // xscope_register 
 #endif
-			run_motor( 0, null, c_motor_comms, c_pwm[0], c_qei[0], c_adc[0], c_speed[0], c_wd, p_hall1, c_commands[0]);
+
+			run_motor( 0 ,c_wd ,c_pwm[0] ,c_qei[0] ,c_adc[0] ,c_speed[0] ,p_hall[0] ,c_commands[0] ); // Special case of 1st Motor
 		} // on tile[MOTOR_CORE]
 
-		on tile[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[0], c_adc_trig[0], ADC_SYNC_PORT1, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
+		// Loop through remaining motors
+		par (int motor_cnt=1; motor_cnt<NUMBER_OF_MOTORS; motor_cnt++)
+			on tile[MOTOR_CORE] : run_motor( motor_cnt ,null ,c_pwm[motor_cnt] ,c_qei[motor_cnt] 
+				,c_adc[motor_cnt] ,c_speed[motor_cnt] ,p_hall[motor_cnt] ,c_commands[motor_cnt] );
 
-#if NUMBER_OF_MOTORS > 1
-		on tile[MOTOR_CORE] : run_motor( 1, c_motor_comms, null, c_pwm[1], c_qei[1], c_adc[1], c_speed[1], null, p_hall2, c_commands[1]);
-		on tile[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[1], c_adc_trig[1], ADC_SYNC_PORT2, p_pwm_hi2, p_pwm_lo2, pwm_clk2 );
-
+		// Loop through all motors
+		par (int motor_cnt=0; motor_cnt<NUMBER_OF_MOTORS; motor_cnt++)
+		{
+			on tile[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[motor_cnt] ,c_adc_trig[motor_cnt] 
+				,p_adc_sync[motor_cnt] ,p_pwm_hi[motor_cnt], p_pwm_lo[motor_cnt], pwm_clk[motor_cnt] );
 #ifdef USE_SEPARATE_QEI_THREADS
-		on tile[MOTOR_CORE] : do_qei ( c_qei[0], p_qei[0] );
-		on tile[MOTOR_CORE] : do_qei ( c_qei[1], p_qei[1] );
-#else // #ifdef USE_SEPARATE_QEI_THREADS
+			on tile[MOTOR_CORE] : do_qei ( c_qei[motor_cnt], p_qei[motor_cnt] );
+#endif // #ifdef USE_SEPARATE_QEI_THREADS
+		}
+
+#ifndef USE_SEPARATE_QEI_THREADS
 		on tile[MOTOR_CORE] : do_multiple_qei( c_qei, p_qei );
-#endif // else !#ifdef USE_SEPARATE_QEI_THREADS
+#endif // #ifndef USE_SEPARATE_QEI_THREADS
 
-#else // #if NUMBER_OF_MOTORS > 1
-		on tile[MOTOR_CORE] : do_qei ( c_qei[0], p_qei[0] );
-#endif // else !#if NUMBER_OF_MOTORS > 1
-
-		on tile[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );
+		on tile[MOTOR_CORE] : adc_7265_triggered( c_adc ,c_adc_trig ,adc_clk ,ADC_SCLK ,ADC_CNVST ,p_adc_data ,ADC_MUX );
 	} // par
 
 	return 0;

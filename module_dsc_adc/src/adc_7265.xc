@@ -65,11 +65,13 @@ static void configure_adc_ports_7265( // Configure all ADC data ports
 	clock clk, 
 	out port SCLK, 
 	port CNVST, 
-	in buffered port:32 DATA_A, 
-	in buffered port:32 DATA_B, 
+	in buffered port:32 p_adc_data[USED_ADC_PHASES],
 	out port MUX
 )
 {
+	int phase_cnt; // phase counter
+
+
 	// configure the clock to be 16MHz
 
 	//configure_clock_rate_at_least(clk, 16, 1);
@@ -81,9 +83,11 @@ static void configure_adc_ports_7265( // Configure all ADC data ports
 	set_port_inv(CNVST);
 	CNVST <: 0; //MB~ What's this do?
 
-	// configure the data ports to strobe data in to the buffer using the serial clock
-	configure_adc_data_port( DATA_A ,CNVST ,clk );
-	configure_adc_data_port( DATA_B ,CNVST ,clk );
+	// For each phase, configure the data ports to strobe data in to the buffer using the serial clock
+	for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; phase_cnt++)
+	{
+		configure_adc_data_port( p_adc_data[phase_cnt] ,CNVST ,clk );
+	} // for phase_cnt
 
 	// start the ADC serial clock port
 	start_clock(clk);
@@ -150,18 +154,21 @@ static void get_adc_port_data( // Get ADC data from one port
 static void get_trigger_data_7265( 
 	ADC_TRIG_TYP &trig_data_s, // Reference to structure containing data for this ADC trigger
 	port CNVST, 
-	in buffered port:32 DATA_A, 
-	in buffered port:32 DATA_B, 
+	in buffered port:32 p_adc_data[USED_ADC_PHASES], 
 	out port MUX 
 )
 {
+	int phase_cnt; // phase counter
 	unsigned time_stamp;
 
 
 	MUX <: trig_data_s.mux_id; // Signal to Multiplexor which input to use for this trigger
 
-	clearbuf( DATA_A );
-	clearbuf( DATA_B );
+	// Loop through phases
+	for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; phase_cnt++)
+	{
+		clearbuf( p_adc_data[phase_cnt] );
+	} // for phase_cnt
 
 	CNVST <: 1 @time_stamp;
 	time_stamp += 16;
@@ -170,8 +177,10 @@ static void get_trigger_data_7265(
 	sync(CNVST);
 
 	// Get ADC data for each used phase
-	get_adc_port_data( trig_data_s.phase_data[ADC_PHASE_A] ,DATA_A );
-	get_adc_port_data( trig_data_s.phase_data[ADC_PHASE_B] ,DATA_B );
+	for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; phase_cnt++)
+	{
+		get_adc_port_data( trig_data_s.phase_data[phase_cnt] ,p_adc_data[phase_cnt] );
+	} // for phase_cnt
 
 } // get_trigger_data_7265
 /*****************************************************************************/
@@ -205,12 +214,11 @@ void calibrate_trigger( // Do calibration for this trigger
 void update_adc_trigger_data( // Update ADC values for this trigger
 	ADC_TRIG_TYP &trig_data_s, // Reference to structure containing data for this ADC trigger
 	port CNVST, 
-	in buffered port:32 DATA_A, 
-	in buffered port:32 DATA_B, 
+	in buffered port:32 p_adc_data[USED_ADC_PHASES],
 	port out MUX 
 )
 {
-	get_trigger_data_7265( trig_data_s ,CNVST ,DATA_A ,DATA_B ,MUX );	// Gat ADC values for this trigger	
+	get_trigger_data_7265( trig_data_s ,CNVST ,p_adc_data ,MUX );	// Gat ADC values for this trigger	
 
 	// Check if we are collecting calibration data
 	if (trig_data_s.calib_cnt > 0) 
@@ -232,21 +240,21 @@ void service_data_request( // Services client command data request for this trig
 
 	switch(inp_cmd)
 	{
-		case CMD_REQ_ADC : // Request for ADC data
+		case ADC_CMD_REQ : // Request for ADC data
 			for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
 			{
 				c_adc_trig <: (trig_data_s.phase_data[phase_cnt].adc_val - trig_data_s.phase_data[phase_cnt].calib_val);
 			} // for phase_cnt
-		break; // case START
+		break; // case ADC_CMD_REQ 
 	
-		case CMD_CAL_ADC : // Start Calibration
+		case ADC_CMD_CAL : // Start Calibration
 			trig_data_s.calib_cnt = NUM_CALIBRATIONS;
 
 			for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
 			{
 				trig_data_s.phase_data[phase_cnt].calib_val = 0;
 			} // for phase_cnt
-		break; // case START
+		break; // case ADC_CMD_CAL 
 	
     default: // Unsupported Command
 			assert(0 == 1); // Error: Received unsupported ADC command
@@ -260,9 +268,8 @@ void adc_7265_triggered( // Thread for ADC server
 	chanend c_adc_trig[ADC_NUMBER_OF_TRIGGERS], // Channel receiving control token triggers from PWM thread
 	clock clk, 
 	out port SCLK, 
-	port CNVST, 
-	in buffered port:32 DATA_A, 
-	in buffered port:32 DATA_B, 
+	port CNVST,
+	in buffered port:32 p_adc_data[USED_ADC_PHASES],
 	port out MUX 
 )
 {
@@ -282,7 +289,7 @@ void adc_7265_triggered( // Thread for ADC server
 
 	set_thread_fast_mode_on();
 
-	configure_adc_ports_7265( clk, SCLK, CNVST, DATA_A, DATA_B, MUX );
+	configure_adc_ports_7265( clk ,SCLK ,CNVST ,p_adc_data ,MUX );
 
 	while (1)
 	{
@@ -297,7 +304,7 @@ void adc_7265_triggered( // Thread for ADC server
 	
 			// If guard is OFF, load 'my_timer' at time 'time_stamp' 
 			case (int trig_id=0; trig_id<ADC_NUMBER_OF_TRIGGERS; ++trig_id) trig_data[trig_id].guard_off => trig_data[trig_id].my_timer when timerafter( trig_data[trig_id].time_stamp ) :> void:
-				update_adc_trigger_data( trig_data[trig_id] ,CNVST ,DATA_A ,DATA_B ,MUX ); 
+				update_adc_trigger_data( trig_data[trig_id] ,CNVST ,p_adc_data ,MUX ); 
 			break;
 	
 			// Service any client request for ADC data
