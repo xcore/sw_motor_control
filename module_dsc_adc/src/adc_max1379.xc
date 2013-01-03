@@ -95,7 +95,7 @@ void run_adc_max1379( chanend c_adc[], clock clk, port out SCLK,  port out CNVST
 	while (1)
 	{
 		select {
-			case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) c_adc[trig] :> cmd:
+			case (int trig=0; trig<NUM_ADC_TRIGGERS; ++trig) c_adc[trig] :> cmd:
 				if (cmd == 1) {
 					calibrate(CNVST, SEL, DATA);
 				} else {

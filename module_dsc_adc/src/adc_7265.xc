@@ -5,6 +5,7 @@
  *  Author: A SRIKANTH
  */
 
+#include <stdlib.h>
 #include <assert.h>
 
 #include <xs1.h>
@@ -17,8 +18,6 @@
 
 #pragma xta command "analyze loop adc_7265_main_loop"
 #pragma xta command "set required - 40 us"
-
-static int cnt = 0; //MB~
 
 /*****************************************************************************/
 void init_adc_phase( // Initialise the data for this phase of one ADC trigger
@@ -50,47 +49,47 @@ void init_adc_trigger( // Initialise the data for this ADC trigger
 } // init_adc_trigger
 /*****************************************************************************/
 static void configure_adc_data_port( // Configure this ADC data port
-	in buffered port:32 inp_data_port, // ADC input data port for one phase 
-	port CNVST,
-	clock clk 
+	in buffered port:32 inp_data_port, // ADC input data port
+	port p1_adc_off,	// 1-bit port used to switch ADC conversions On/Off. NB Active Low
+	clock xclk 
 )
 {
 	// configure the data ports to strobe data in to the buffer using the serial clock
-	configure_in_port_strobed_slave( inp_data_port ,CNVST ,clk );
+	configure_in_port_strobed_slave( inp_data_port ,p1_adc_off ,xclk );
 
-	set_port_sample_delay( inp_data_port ); // sample the data in on falling edge of the serial clock
+	set_port_sample_delay( inp_data_port ); // Set port to sample data on falling edge of clock
 } // configure_adc_data_port
 /*****************************************************************************/
 static void configure_adc_ports_7265( // Configure all ADC data ports
-	clock clk, 
-	out port SCLK, 
-	port CNVST, 
-	in buffered port:32 p_adc_data[USED_ADC_PHASES],
-	out port MUX
+	in buffered port:32 p32_data[NUM_ADC_DATA_PORTS], // Array of 32-bit buffered ADC data ports
+	clock xclk, 
+	out port p_serial_clk, 
+	port p1_adc_off,	// 1-bit port used to switch ADC conversions On/Off. NB Active Low 
+	out port p4_mux	// 4-bit port used to control multiplexor on ADC chip
 )
 {
-	int phase_cnt; // phase counter
+	int port_cnt; // port counter
 
 
 	// configure the clock to be 16MHz
 
-	//configure_clock_rate_at_least(clk, 16, 1);
-	configure_clock_rate_at_most(clk, 16, 1);
-	configure_port_clock_output(SCLK, clk);
+	//configure_clock_rate_at_least(xclk, 16, 1);
+	configure_clock_rate_at_most(xclk, 16, 1);
+	configure_port_clock_output( p_serial_clk, xclk ); // Drive ADC serial clock port with XMOS clock
 
 	// Ports require +ve strobes, but ADC needs a -ve strobe. Therefore use the port pin invert function to satisfy both
-	configure_out_port(CNVST, clk, 1);
-	set_port_inv(CNVST);
-	CNVST <: 0; //MB~ What's this do?
+	configure_out_port( p1_adc_off ,xclk ,1 ); // Set initial value of port to 1 (ADC Off)
+	set_port_inv( p1_adc_off ); // Configure port to invert data which is sampled and driven on its pin.
+	p1_adc_off <: 0; // Switch off ADC conversions. NB Active Low
 
-	// For each phase, configure the data ports to strobe data in to the buffer using the serial clock
-	for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; phase_cnt++)
+	// For each port, configure the data ports to strobe data in to the buffer using the serial clock
+	for (port_cnt=0; port_cnt<NUM_ADC_DATA_PORTS; port_cnt++)
 	{
-		configure_adc_data_port( p_adc_data[phase_cnt] ,CNVST ,clk );
-	} // for phase_cnt
+		configure_adc_data_port( p32_data[port_cnt] ,p1_adc_off ,xclk );
+	} // for port_cnt
 
-	// start the ADC serial clock port
-	start_clock(clk);
+	// Start the ADC serial clock port
+	start_clock( xclk );
 } // configure_adc_ports_7265
 /*****************************************************************************/
 void enable_adc_capture( // Do set-up to allow ADC values for this trigger to be captured
@@ -104,6 +103,7 @@ void enable_adc_capture( // Do set-up to allow ADC values for this trigger to be
 /*****************************************************************************/
 void service_control_token( // Services client control token for this trigger
 	ADC_TRIG_TYP &trig_data_s, // Reference to structure containing data for this ADC trigger
+	int trig_id, // trigger identifier
 	unsigned char inp_token // input control token
 )
 {
@@ -153,43 +153,46 @@ static void get_adc_port_data( // Get ADC data from one port
 #pragma unsafe arrays
 static void get_trigger_data_7265( 
 	ADC_TRIG_TYP &trig_data_s, // Reference to structure containing data for this ADC trigger
-	port CNVST, 
-	in buffered port:32 p_adc_data[USED_ADC_PHASES], 
-	out port MUX 
+	in buffered port:32 p32_data[NUM_ADC_DATA_PORTS],  // Array of 32-bit buffered ADC data ports
+	port p1_adc_off,	// 1-bit port used to switch ADC conversions On/Off. NB Active Low 
+	out port p4_mux	// 4-bit port used to control multiplexor on ADC chip
 )
 {
-	int phase_cnt; // phase counter
+	int port_cnt; // port counter
 	unsigned time_stamp;
 
 
-	MUX <: trig_data_s.mux_id; // Signal to Multiplexor which input to use for this trigger
+	p4_mux <: trig_data_s.mux_id; // Signal to Multiplexor which input to use for this trigger
 
 	// Loop through phases
-	for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; phase_cnt++)
+	for (port_cnt=0; port_cnt<NUM_ADC_DATA_PORTS; port_cnt++)
 	{
-		clearbuf( p_adc_data[phase_cnt] );
-	} // for phase_cnt
+		clearbuf( p32_data[port_cnt] );
+	} // for port_cnt
 
-	CNVST <: 1 @time_stamp;
+	p1_adc_off <: 1 @time_stamp; // Switch On ADC conversions. NB Active Low
 	time_stamp += 16;
-	CNVST @time_stamp <: 0;
+	p1_adc_off @time_stamp <: 0; // Switch Off ADC conversions. NB Active Low
 
-	sync(CNVST);
+	sync( p1_adc_off ); // Wait until port has completed any pending outputs
 
 	// Get ADC data for each used phase
-	for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; phase_cnt++)
+	for (port_cnt=0; port_cnt<NUM_ADC_DATA_PORTS; port_cnt++)
 	{
-		get_adc_port_data( trig_data_s.phase_data[phase_cnt] ,p_adc_data[phase_cnt] );
-	} // for phase_cnt
+		get_adc_port_data( trig_data_s.phase_data[port_cnt] ,p32_data[port_cnt] );
+	} // for port_cnt
 
 } // get_trigger_data_7265
 /*****************************************************************************/
 void calibrate_trigger( // Do calibration for this trigger
-	ADC_TRIG_TYP &trig_data_s // Reference to structure containing data for this ADC trigger
+	ADC_TRIG_TYP &trig_data_s, // Reference to structure containing data for this ADC trigger
+	int trig_id // trigger identifier
 )
 {
 	int phase_cnt; // ADC Phase counter
 
+
+	trig_data_s.calib_cnt--; // Update No. of calibration points left to collect
 
 	// Loop through used phases
 	for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
@@ -197,7 +200,6 @@ void calibrate_trigger( // Do calibration for this trigger
 		trig_data_s.phase_data[phase_cnt].calib_acc += trig_data_s.phase_data[phase_cnt].adc_val; // Sum ADC values
 	} // for phase_cnt
 
-	trig_data_s.calib_cnt--; // Update No. of calibration points left to collect
 
 	// Check if we have all calibration data
 	if (trig_data_s.calib_cnt == 0) 
@@ -213,17 +215,18 @@ void calibrate_trigger( // Do calibration for this trigger
 /*****************************************************************************/
 void update_adc_trigger_data( // Update ADC values for this trigger
 	ADC_TRIG_TYP &trig_data_s, // Reference to structure containing data for this ADC trigger
-	port CNVST, 
-	in buffered port:32 p_adc_data[USED_ADC_PHASES],
-	port out MUX 
+	in buffered port:32 p32_data[NUM_ADC_DATA_PORTS], // Array of 32-bit buffered ADC data ports
+	port p1_adc_off,	// 1-bit port used to switch ADC conversions On/Off. NB Active Low 
+	int trig_id, // trigger identifier
+	out port p4_mux	// 4-bit port used to control multiplexor on ADC chip
 )
 {
-	get_trigger_data_7265( trig_data_s ,CNVST ,p_adc_data ,MUX );	// Gat ADC values for this trigger	
+	get_trigger_data_7265( trig_data_s ,p32_data ,p1_adc_off ,p4_mux );	// Get ADC values for this trigger	
 
 	// Check if we are collecting calibration data
 	if (trig_data_s.calib_cnt > 0) 
 	{
-		calibrate_trigger( trig_data_s );
+		calibrate_trigger( trig_data_s ,trig_id );
 	} // if (calibration_mode[trig_id] > 0) 
 
 	trig_data_s.guard_off = 0; // Reset guard to ON
@@ -231,7 +234,8 @@ void update_adc_trigger_data( // Update ADC values for this trigger
 /*****************************************************************************/
 void service_data_request( // Services client command data request for this trigger
 	ADC_TRIG_TYP &trig_data_s, // Reference to structure containing data for this trigger
-	streaming chanend c_adc_trig, // ADC data Channel for this trigger
+	streaming chanend c_control, // ADC Channel connecting to Control, for this trigger
+	int trig_id, // trigger identifier
 	int inp_cmd // input command
 )
 {
@@ -243,7 +247,7 @@ void service_data_request( // Services client command data request for this trig
 		case ADC_CMD_REQ : // Request for ADC data
 			for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
 			{
-				c_adc_trig <: (trig_data_s.phase_data[phase_cnt].adc_val - trig_data_s.phase_data[phase_cnt].calib_val);
+				c_control <: (trig_data_s.phase_data[phase_cnt].adc_val - trig_data_s.phase_data[phase_cnt].calib_val);
 			} // for phase_cnt
 		break; // case ADC_CMD_REQ 
 	
@@ -264,17 +268,17 @@ void service_data_request( // Services client command data request for this trig
 /*****************************************************************************/
 #pragma unsafe arrays
 void adc_7265_triggered( // Thread for ADC server
-	streaming chanend c_adc[ADC_NUMBER_OF_TRIGGERS], // ADC data Channel connecting to Control (inner_loop.xc)
-	chanend c_adc_trig[ADC_NUMBER_OF_TRIGGERS], // Channel receiving control token triggers from PWM thread
-	clock clk, 
-	out port SCLK, 
-	port CNVST,
-	in buffered port:32 p_adc_data[USED_ADC_PHASES],
-	port out MUX 
+	streaming chanend c_control[NUM_ADC_TRIGGERS], // Array of ADC control Channels connecting to Control (inner_loop.xc)
+	chanend c_trigger[NUM_ADC_TRIGGERS], // Array of channels receiving control token triggers from PWM threads
+	in buffered port:32 p32_data[NUM_ADC_DATA_PORTS], // Array of 32-bit buffered ADC data ports
+	clock xclk, // Internal XMOS clock
+	out port p_serial_clk, // Port connecting to external ADC serial clock
+	port p1_adc_off,	// 1-bit port used to switch ADC conversions On/Off. NB Active Low
+	out port p4_mux	// 4-bit port used to control multiplexor on ADC chip
 )
 {
-	int trigger_channel_to_adc_mux[ADC_NUMBER_OF_TRIGGERS] = { 0, 2 }; // Mapping array from 'trigger channel' to 'analogue ADC mux input'
-	ADC_TRIG_TYP trig_data[ADC_NUMBER_OF_TRIGGERS];
+	int trigger_channel_to_adc_mux[NUM_ADC_TRIGGERS] = { 0, 2 }; // Mapping array from 'trigger channel' to 'analogue ADC mux input' See. AD7265 data-sheet
+	ADC_TRIG_TYP trig_data[NUM_ADC_TRIGGERS];
 
 	unsigned char cntrl_token; // control token
 	int cmd_id; // command identifier
@@ -282,14 +286,14 @@ void adc_7265_triggered( // Thread for ADC server
 
 
 	// Initialise data structure for each trigger
-	for (trig_id=0; trig_id<ADC_NUMBER_OF_TRIGGERS; ++trig_id) 
+	for (trig_id=0; trig_id<NUM_ADC_TRIGGERS; ++trig_id) 
 	{
 		init_adc_trigger( trig_data[trig_id] ,trigger_channel_to_adc_mux[trig_id] );
 	} // for trig_id
 
 	set_thread_fast_mode_on();
 
-	configure_adc_ports_7265( clk ,SCLK ,CNVST ,p_adc_data ,MUX );
+	configure_adc_ports_7265( p32_data ,xclk ,p_serial_clk ,p1_adc_off ,p4_mux );
 
 	while (1)
 	{
@@ -298,18 +302,18 @@ void adc_7265_triggered( // Thread for ADC server
 		select
 		{
 			// Service any Control Tokens that are received
-			case (int trig_id=0; trig_id<ADC_NUMBER_OF_TRIGGERS; ++trig_id) inct_byref( c_adc_trig[trig_id], cntrl_token ):
-				service_control_token( trig_data[trig_id] ,cntrl_token );
+			case (int trig_id=0; trig_id<NUM_ADC_TRIGGERS; ++trig_id) inct_byref( c_trigger[trig_id], cntrl_token ):
+				service_control_token( trig_data[trig_id] ,trig_id ,cntrl_token );
 			break;
 	
 			// If guard is OFF, load 'my_timer' at time 'time_stamp' 
-			case (int trig_id=0; trig_id<ADC_NUMBER_OF_TRIGGERS; ++trig_id) trig_data[trig_id].guard_off => trig_data[trig_id].my_timer when timerafter( trig_data[trig_id].time_stamp ) :> void:
-				update_adc_trigger_data( trig_data[trig_id] ,CNVST ,p_adc_data ,MUX ); 
+			case (int trig_id=0; trig_id<NUM_ADC_TRIGGERS; ++trig_id) trig_data[trig_id].guard_off => trig_data[trig_id].my_timer when timerafter( trig_data[trig_id].time_stamp ) :> void:
+				update_adc_trigger_data( trig_data[trig_id] ,p32_data ,p1_adc_off ,trig_id ,p4_mux ); 
 			break;
 	
 			// Service any client request for ADC data
-			case (int trig_id=0; trig_id<ADC_NUMBER_OF_TRIGGERS; ++trig_id) c_adc[trig_id] :> cmd_id:
-				service_data_request( trig_data[trig_id] ,c_adc[trig_id] ,cmd_id );
+			case (int trig_id=0; trig_id<NUM_ADC_TRIGGERS; ++trig_id) c_control[trig_id] :> cmd_id:
+				service_data_request( trig_data[trig_id] ,c_control[trig_id] ,trig_id ,cmd_id );
 			break;
 		} // select
 	} // while (1)

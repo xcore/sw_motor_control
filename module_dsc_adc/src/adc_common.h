@@ -25,8 +25,7 @@
 #define NUMBER_OF_MOTORS 1
 #endif
 
-// The number of trigger channels coming from PWM units
-#define ADC_NUMBER_OF_TRIGGERS NUMBER_OF_MOTORS
+#define NUM_ADC_TRIGGERS NUMBER_OF_MOTORS	// The number of trigger channels coming from PWM units
 
 /** Different ADC Phases */
 typedef enum ADC_PHASE_ETAG

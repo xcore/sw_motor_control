@@ -18,7 +18,7 @@
  * below. The modifications to the code are still covered by the 
  * copyright notice above.
  *
- **/                                   
+ **/
 #include <xs1.h>
 
 #include "adc_client.h"
@@ -27,13 +27,15 @@
 #include <dsc_config.h>
 #endif
 
-void do_adc_calibration( streaming chanend c_adc )
+/*****************************************************************************/
+void do_adc_calibration( streaming chanend c_adc_cntrl )
 {
-	c_adc <: ADC_CMD_CAL; // Activate calibration
+
+	c_adc_cntrl <: ADC_CMD_CAL; // Activate calibration
 } // do_adc_calibration
 /*****************************************************************************/
 void get_adc_vals_calibrated_int16_mb( 
-	streaming chanend c_adc, // channel connecting to ADC thread
+	streaming chanend c_adc_cntrl, // channel connecting to ADC thread
 	ADC_DATA_TYP &adc_data_s // Reference to structure containing ADC data
 )
 {
@@ -41,12 +43,12 @@ void get_adc_vals_calibrated_int16_mb(
 	int adc_sum = 0; // Accumulator for transmiited ADC Phases
 
 
-	c_adc <: ADC_CMD_REQ;	// Request ADC data */
+	c_adc_cntrl <: ADC_CMD_REQ;	// Request ADC data */
 
 	// Loop through used phases of ADC data
 	for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
 	{
-		c_adc :> adc_data_s.vals[phase_cnt];	// Receive One phase of ADC data
+		c_adc_cntrl :> adc_data_s.vals[phase_cnt];	// Receive One phase of ADC data
 
 		adc_data_s.vals[phase_cnt] <<= 2;	// convert to 14 bit from 12 bit
 

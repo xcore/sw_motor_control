@@ -103,7 +103,7 @@ void adc_ltc1408_triggered( chanend c_adc[], chanend c_trig[], clock clk, port o
 	{
 		select
 		{
-		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) inct_byref(c_trig[trig], ct):
+		case (int trig=0; trig<NUM_ADC_TRIGGERS; ++trig) inct_byref(c_trig[trig], ct):
 			if (ct == XS1_CT_END)
 			{
 				t :> ts;
@@ -111,7 +111,7 @@ void adc_ltc1408_triggered( chanend c_adc[], chanend c_trig[], clock clk, port o
 				adc_get_data_ltc1408_singleshot( adc_val, 0, CNVST, DATA, clk );
 			}
 			break;
-		case (int trig=0; trig<ADC_NUMBER_OF_TRIGGERS; ++trig) c_adc[trig] :> cmd:
+		case (int trig=0; trig<NUM_ADC_TRIGGERS; ++trig) c_adc[trig] :> cmd:
 			if (cmd == 1) {
 				calibrate(clk, CNVST, DATA);
 			} else if (trig == 0) {

@@ -531,7 +531,7 @@ void use_motor ( // Start motor, and run step through different motor states
 	MOTOR_DATA_TYP &motor_s, // reference to structure containing motor data
 	chanend c_pwm, 
 	streaming chanend c_qei, 
-	streaming chanend c_adc, 
+	streaming chanend c_adc_cntrl, 
 	chanend c_speed, 
 	port in p_hall, 
 	chanend c_can_eth_shared 
@@ -621,8 +621,8 @@ void use_motor ( // Start motor, and run step through different motor states
 					{ motor_s.meas_speed ,motor_s.meas_theta ,motor_s.rev_cnt } = get_qei_data( c_qei );
 
 					/* Get ADC readings */
-//MB~	{motor_s.meas_adc.vals[PHASE_A], motor_s.meas_adc.vals[PHASE_C]} = get_adc_vals_calibrated_int16( c_adc );
-					get_adc_vals_calibrated_int16_mb( c_adc ,motor_s.meas_adc );
+//MB~	{motor_s.meas_adc.vals[PHASE_A], motor_s.meas_adc.vals[PHASE_C]} = get_adc_vals_calibrated_int16( c_adc_cntrl );
+					get_adc_vals_calibrated_int16_mb( c_adc_cntrl ,motor_s.meas_adc );
 
 					stop_motor = update_motor_state( motor_s ,new_hall );
 				} // else !(!(new_hall & 0b1000))
@@ -691,7 +691,7 @@ void run_motor (
 	chanend? c_wd,
 	chanend c_pwm, 
 	streaming chanend c_qei, 
-	streaming chanend c_adc, 
+	streaming chanend c_adc_cntrl, 
 	chanend c_speed, 
 	port in p_hall, 
 	chanend c_can_eth_shared 
@@ -715,7 +715,7 @@ void run_motor (
 	}
 
 	/* ADC centrepoint calibration before we start the PWM */
-	do_adc_calibration( c_adc );
+	do_adc_calibration( c_adc_cntrl );
 
 	/* allow the WD to get going */
 	if (!isnull(c_wd)) 
@@ -740,7 +740,7 @@ void run_motor (
 	if (0 == motor_id) printstrln( "Demo Starts" ); // NB Prevent duplicate display lines
 
 	// start-and-run motor
-	use_motor( motor_s ,c_pwm ,c_qei ,c_adc ,c_speed ,p_hall ,c_can_eth_shared );
+	use_motor( motor_s ,c_pwm ,c_qei ,c_adc_cntrl ,c_speed ,p_hall ,c_can_eth_shared );
 
 	// NB First Motor to finish displays
 	if (motor_s.err_flgs)

@@ -12,6 +12,8 @@
 
 #define ADC_FILTER_7265
 
+#define NUM_ADC_DATA_PORTS 2 // The number data ports on the ADC chip (AD7265)
+
 // ADC_TRIGGER_DELAY needs to be tuned to move the ADC trigger point into the centre of the 'OFF' period.
 // The 'test_pwm' application can be run in the simulator to tune the parameter.  Use the following
 // command line:
@@ -49,7 +51,7 @@ typedef struct ADC_TRIG_TAG // Structure containing data for one ADC Trigger
 
 typedef struct ADC_7265_TAG // Structure containing ADC-7265 data
 {
-	ADC_TRIG_TYP trig_data[ADC_NUMBER_OF_TRIGGERS];
+	ADC_TRIG_TYP trig_data[NUM_ADC_TRIGGERS];
 } ADC_7265_TYP;
 
 /** \brief Implements the AD7265 triggered ADC service
@@ -67,6 +69,14 @@ typedef struct ADC_7265_TAG // Structure containing ADC-7265 data
  *  \param MUX a port to allow the selection of the analogue MUX input
  *
  */
-void adc_7265_triggered( streaming chanend c_adc[ADC_NUMBER_OF_TRIGGERS] ,chanend c_trig[ADC_NUMBER_OF_TRIGGERS] ,clock clk ,out port SCLK ,port CNVST ,in buffered port:32 p_adc_data[NUMBER_OF_MOTORS] ,port out MUX );
+void adc_7265_triggered( 
+	streaming chanend c_control[NUM_ADC_TRIGGERS],
+	chanend c_trigger[NUM_ADC_TRIGGERS],
+	in buffered port:32 p_data[NUM_ADC_DATA_PORTS],
+	clock xclk,
+	out port p_serial_clk,
+	port p_conv_strobe,
+	port out p_mux
+);
 
 #endif /* ADC_7265_H_ */
