@@ -55,7 +55,8 @@
 #define MAX_USER_RPM 3800
 
 // Minimum user-assigned RPM value for the motor
-#define MIN_USER_RPM 500
+//MB~ #define MIN_USER_RPM 500
+#define MIN_USER_RPM 50 //MB~
 
 
 #endif /* _DSC_CONFIG__H_ */

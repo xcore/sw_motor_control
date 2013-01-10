@@ -69,7 +69,7 @@ on tile[INTERFACE_CORE]: out port i2c_wd = PORT_WATCHDOG;
 on tile[MOTOR_CORE]: in port p16_adc_sync[NUMBER_OF_MOTORS] = { XS1_PORT_16A ,XS1_PORT_16B };
 on tile[MOTOR_CORE]: buffered in port:32 p32_adc_data[NUM_ADC_DATA_PORTS] = { PORT_ADC_MISOA ,PORT_ADC_MISOB }; 
 on tile[MOTOR_CORE]: out port p1_adc_sclk = PORT_ADC_CLK; // 1-bit port connecting to external ADC serial clock
-on tile[MOTOR_CORE]: port p1_adc_off = PORT_ADC_CONV; // 1-bit port used to switch ADC conversions On/Off. NB Active Low
+on tile[MOTOR_CORE]: port p1_ready = PORT_ADC_CONV; // 1-bit port used to as ready signal for p32_adc_data ports and ADC chip
 on tile[MOTOR_CORE]: out port p4_adc_mux = PORT_ADC_MUX; // 4-bit port used to control multiplexor on ADC chip
 on tile[MOTOR_CORE]: clock adc_xclk = XS1_CLKBLK_2; // Internal XMOS clock
 
@@ -180,7 +180,7 @@ int main ( void ) // Program Entry Point
 		on tile[MOTOR_CORE] : do_multiple_qei( c_qei, p_qei );
 #endif // #ifndef USE_SEPARATE_QEI_THREADS
 
-		on tile[MOTOR_CORE] : adc_7265_triggered( c_adc_cntrl ,c_adc_trig ,p32_adc_data ,adc_xclk ,p1_adc_sclk ,p1_adc_off ,p4_adc_mux );
+		on tile[MOTOR_CORE] : adc_7265_triggered( c_adc_cntrl ,c_adc_trig ,p32_adc_data ,adc_xclk ,p1_adc_sclk ,p1_ready ,p4_adc_mux );
 	} // par
 	return 0;
 } // main

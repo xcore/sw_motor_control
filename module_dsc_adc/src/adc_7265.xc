@@ -48,44 +48,54 @@ void init_adc_trigger( // Initialise the data for this ADC trigger
 
 } // init_adc_trigger
 /*****************************************************************************/
-static void configure_adc_data_port( // Configure this ADC data port
-	in buffered port:32 inp_data_port, // ADC input data port
-	port p1_adc_off,	// 1-bit port used to switch ADC conversions On/Off. NB Active Low
-	clock xclk 
-)
-{
-	// configure the data ports to strobe data in to the buffer using the serial clock
-	configure_in_port_strobed_slave( inp_data_port ,p1_adc_off ,xclk );
-
-	set_port_sample_delay( inp_data_port ); // Set port to sample data on falling edge of clock
-} // configure_adc_data_port
-/*****************************************************************************/
 static void configure_adc_ports_7265( // Configure all ADC data ports
 	in buffered port:32 p32_data[NUM_ADC_DATA_PORTS], // Array of 32-bit buffered ADC data ports
-	clock xclk, 
-	out port p_serial_clk, 
-	port p1_adc_off,	// 1-bit port used to switch ADC conversions On/Off. NB Active Low 
+	clock xclk, // XMOS internal clock
+	out port p1_serial_clk,	// 1-bit Port connecting to external ADC serial clock
+	port p1_ready,	 // 1-bit port used to as ready signal for p32_adc_data ports and ADC chip
 	out port p4_mux	// 4-bit port used to control multiplexor on ADC chip
 )
 {
 	int port_cnt; // port counter
 
 
-	// configure the clock to be 16MHz
+	/* xclk & p1_ready, are used as the clock & ready signals respectively for controlling the following 2 functions:-
+		(1) Reading the Digital data from the AD7265 into an XMOS buffered 1-bit port
+		(2) Initiating an Analogue-to-digital conversion on the AD7265 chip.
 
-	//configure_clock_rate_at_least(xclk, 16, 1);
-	configure_clock_rate_at_most(xclk, 16, 1);
-	configure_port_clock_output( p_serial_clk, xclk ); // Drive ADC serial clock port with XMOS clock
+		For (1), Referring to XMOS XS1 library documentation ...
+		By default, the ports are read on the rising edge of the clock, and when the ready signal is high.
 
-	// Ports require +ve strobes, but ADC needs a -ve strobe. Therefore use the port pin invert function to satisfy both
-	configure_out_port( p1_adc_off ,xclk ,1 ); // Set initial value of port to 1 (ADC Off)
-	set_port_inv( p1_adc_off ); // Configure port to invert data which is sampled and driven on its pin.
-	p1_adc_off <: 0; // Switch off ADC conversions. NB Active Low
+		For (2), Referring to the  AD7265 data-sheet ...
+		p1_ready is used to control CSi (Chip Select Inverted)
+		When signal CSi falls, ( 1 -> 0 ) A2D conversion starts. When CSi rises ( 0 -> 1 ), conversion halts.
+    The digital outputs are tri-state when CSi is high (1).
+		xclk is used to control SCLK (Serial Clock).
+		Succesive bits of the digital sample are output after a falling edge of SCLK. In the following order ...
+		[0, 0, Bit_11, Bit_10, ... Bit_1, Bit_0, 0, 0]. If CSi rises early, the LSB bits (and zeros) are NOT output.
 
-	// For each port, configure the data ports to strobe data in to the buffer using the serial clock
+		We require the analogue signal to be sampled on the falling edge of the clock, 
+		According to the AD7265 data-sheet, the output data is ready to be sampled 36 ns after the falling edge.
+		If we use the rising edge of the xclk to read the data, an xclk frequency of 13.8 MHz or less is required. 
+		Frequencies above 13.9 MHz require the data to be read on the next falling edge of xclk.
+
+		We require the analogue signal to be sampled when CSi goes low,
+		and we require data to be read when the ready signal goes high.
+		By using the set_port_sample_delay() function to invert the ready signal, is can be used for both (1) & (2).
+		NB If an inverted port is used as ready signals to control another port, 
+    the internal signal (used by XMOS port) is inverted with respect to the external signal (used to control AD7265).
+	*/
+
+	configure_clock_rate_at_most( xclk ,ADC_SCLK_MHZ ,1 );	// configure the clock to be (at most) 13 MHz
+	configure_port_clock_output( p1_serial_clk, xclk ); // Drive ADC serial clock port with XMOS clock
+
+	configure_out_port( p1_ready ,xclk ,0 ); // Set initial value of port to 0 ( NOT ready )
+	set_port_inv( p1_ready ); // Invert p1_ready for connection to AD7265, which has active low
+
+	// For each port, configure to read into buffer when using the serial clock
 	for (port_cnt=0; port_cnt<NUM_ADC_DATA_PORTS; port_cnt++)
 	{
-		configure_adc_data_port( p32_data[port_cnt] ,p1_adc_off ,xclk );
+		configure_in_port_strobed_slave( p32_data[port_cnt] ,p1_ready ,xclk );
 	} // for port_cnt
 
 	// Start the ADC serial clock port
@@ -128,25 +138,29 @@ static void get_adc_port_data( // Get ADC data from one port
 {
 	unsigned inp_val; // input value read from buffered ports
 	unsigned tmp_val; // Temporary manipulation value
-	int sum_val; // input plus remainder
+	short word_16; // signed 16-bit value
+	int int_32; // signed 32-bit value
 
 
 	endin( inp_data_port ); // End the previous input on this buffered port
 	inp_data_port :> inp_val; // Get new input
 
-	tmp_val = bitrev( inp_val );	// Reverse bit order
-	tmp_val >>= 4;								// Shift right by 4 bits
-	tmp_val &= 0x00000FFF;				// Mask out LS 12 bits
+	// This section extracts active bits from sample with padding zeros
+	tmp_val = bitrev( inp_val );	// Reverse bit order. WARNING. Machine dependent
+	tmp_val <<= ADC_SHIFT_BITS;		// Align active bits to MS 16-bit boundary
+	word_16 = (short)(tmp_val & ADC_MASK);	// Mask out active bits and convert to signed word
+	int_32 = ((int)word_16) >> ADC_DIFF_BITS; // Convert to int and recover original magnitude
 
 #ifdef ADC_FILTER_7265
-	// Create filtered value and store in tmp_val ...
+{
+	int sum_val = phase_data_s.adc_val; // get old value
 
-	sum_val = (int)tmp_val + phase_data_s.rem_val; // Add in old remainder
-	tmp_val = (phase_data_s.adc_val + sum_val) >> 1; // 1st order filter
-	phase_data_s.rem_val = sum_val - (int)(tmp_val << 1); // Calculate new remainder
-#endif
+	// Create filtered value and store in int_32 ...
+	int_32 = (sum_val + (sum_val << 1) + int_32 + 2) >> 2; // 1st order filter (uncalibrated value)
+}
+#endif // ifdef ADC_FILTER_7265
 
-	phase_data_s.adc_val = (int)tmp_val;
+	phase_data_s.adc_val = int_32; // Store uncalibrated value
 
 } // get_adc_port_data
 /*****************************************************************************/
@@ -154,7 +168,7 @@ static void get_adc_port_data( // Get ADC data from one port
 static void get_trigger_data_7265( 
 	ADC_TRIG_TYP &trig_data_s, // Reference to structure containing data for this ADC trigger
 	in buffered port:32 p32_data[NUM_ADC_DATA_PORTS],  // Array of 32-bit buffered ADC data ports
-	port p1_adc_off,	// 1-bit port used to switch ADC conversions On/Off. NB Active Low 
+	port p1_ready,	 // 1-bit port used to as ready signal for p32_adc_data ports and ADC chip
 	out port p4_mux	// 4-bit port used to control multiplexor on ADC chip
 )
 {
@@ -170,11 +184,11 @@ static void get_trigger_data_7265(
 		clearbuf( p32_data[port_cnt] );
 	} // for port_cnt
 
-	p1_adc_off <: 1 @time_stamp; // Switch On ADC conversions. NB Active Low
-	time_stamp += 16;
-	p1_adc_off @time_stamp <: 0; // Switch Off ADC conversions. NB Active Low
+	p1_ready <: 1 @ time_stamp; // Switch ON input reads (and ADC conversion)
+	time_stamp += ADC_TOTAL_BITS; // Allows sample-bits to be read on buffered input ports
+	p1_ready @ time_stamp <: 0; // Switch OFF input reads, (and ADC conversion) 
 
-	sync( p1_adc_off ); // Wait until port has completed any pending outputs
+	sync( p1_ready ); // Wait until port has completed any pending outputs
 
 	// Get ADC data for each used phase
 	for (port_cnt=0; port_cnt<NUM_ADC_DATA_PORTS; port_cnt++)
@@ -216,12 +230,12 @@ void calibrate_trigger( // Do calibration for this trigger
 void update_adc_trigger_data( // Update ADC values for this trigger
 	ADC_TRIG_TYP &trig_data_s, // Reference to structure containing data for this ADC trigger
 	in buffered port:32 p32_data[NUM_ADC_DATA_PORTS], // Array of 32-bit buffered ADC data ports
-	port p1_adc_off,	// 1-bit port used to switch ADC conversions On/Off. NB Active Low 
+	port p1_ready,	 // 1-bit port used to as ready signal for p32_adc_data ports and ADC chip
 	int trig_id, // trigger identifier
 	out port p4_mux	// 4-bit port used to control multiplexor on ADC chip
 )
 {
-	get_trigger_data_7265( trig_data_s ,p32_data ,p1_adc_off ,p4_mux );	// Get ADC values for this trigger	
+	get_trigger_data_7265( trig_data_s ,p32_data ,p1_ready ,p4_mux );	// Get ADC values for this trigger	
 
 	// Check if we are collecting calibration data
 	if (trig_data_s.calib_cnt > 0) 
@@ -272,8 +286,8 @@ void adc_7265_triggered( // Thread for ADC server
 	chanend c_trigger[NUM_ADC_TRIGGERS], // Array of channels receiving control token triggers from PWM threads
 	in buffered port:32 p32_data[NUM_ADC_DATA_PORTS], // Array of 32-bit buffered ADC data ports
 	clock xclk, // Internal XMOS clock
-	out port p_serial_clk, // Port connecting to external ADC serial clock
-	port p1_adc_off,	// 1-bit port used to switch ADC conversions On/Off. NB Active Low
+	out port p1_serial_clk, // 1-bit port connecting to external ADC serial clock
+	port p1_ready,	 // 1-bit port used to as ready signal for p32_adc_data ports and ADC chip
 	out port p4_mux	// 4-bit port used to control multiplexor on ADC chip
 )
 {
@@ -293,7 +307,7 @@ void adc_7265_triggered( // Thread for ADC server
 
 	set_thread_fast_mode_on();
 
-	configure_adc_ports_7265( p32_data ,xclk ,p_serial_clk ,p1_adc_off ,p4_mux );
+	configure_adc_ports_7265( p32_data ,xclk ,p1_serial_clk ,p1_ready ,p4_mux );
 
 	while (1)
 	{
@@ -308,7 +322,7 @@ void adc_7265_triggered( // Thread for ADC server
 	
 			// If guard is OFF, load 'my_timer' at time 'time_stamp' 
 			case (int trig_id=0; trig_id<NUM_ADC_TRIGGERS; ++trig_id) trig_data[trig_id].guard_off => trig_data[trig_id].my_timer when timerafter( trig_data[trig_id].time_stamp ) :> void:
-				update_adc_trigger_data( trig_data[trig_id] ,p32_data ,p1_adc_off ,trig_id ,p4_mux ); 
+				update_adc_trigger_data( trig_data[trig_id] ,p32_data ,p1_ready ,trig_id ,p4_mux ); 
 			break;
 	
 			// Service any client request for ADC data

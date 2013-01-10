@@ -40,7 +40,7 @@ void get_adc_vals_calibrated_int16_mb(
 )
 {
 	int phase_cnt; // ADC Phase counter
-	int adc_sum = 0; // Accumulator for transmiited ADC Phases
+	int adc_sum = 0; // Accumulator for transmitted ADC Phases
 
 
 	c_adc_cntrl <: ADC_CMD_REQ;	// Request ADC data */
@@ -49,8 +49,6 @@ void get_adc_vals_calibrated_int16_mb(
 	for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
 	{
 		c_adc_cntrl :> adc_data_s.vals[phase_cnt];	// Receive One phase of ADC data
-
-		adc_data_s.vals[phase_cnt] <<= 2;	// convert to 14 bit from 12 bit
 
 		adc_sum += adc_data_s.vals[phase_cnt]; // Add adc value to sum
 	} // for phase_cnt

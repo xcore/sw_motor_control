@@ -92,7 +92,7 @@
 #ifdef USE_XSCOPE
 	#define DEMO_LIMIT 100000 // XSCOPE
 #else // ifdef USE_XSCOPE
-	#define DEMO_LIMIT 1000000
+	#define DEMO_LIMIT 9000000
 #endif // else !USE_XSCOPE
 
 #define STR_LEN 80 // String Length
@@ -153,6 +153,7 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	pid_data pid_q;	/* Iq PID control structure */
 	t_pwm_control pwm_ctrl;	// structure containing PWM data, (written to shared memory)
 	ADC_DATA_TYP meas_adc; // Structure containing measured data from ADC
+	int iters; // Iterations of inner_loop
 	int cnts[NUM_MOTOR_STATES]; // array of counters for each motor state	
 	unsigned id; // Unique Motor identifier e.g. 0 or 1
 	MOTOR_STATE_TYP state; // Current motor state
@@ -173,7 +174,7 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	int prev_angl; 	// previous angular position
 	unsigned prev_time; 	// previous time stamp
 
-	unsigned tmp; // Debug variable
+	unsigned tmp[32]; // Debug variable
 } MOTOR_DATA_TYP;
 
 static int dbg = 0; // Debug variable
@@ -189,6 +190,7 @@ void init_motor( // initialise data structure for one motor
 
 
 	motor_s.id = motor_id; // Unique Motor identifier e.g. 0 or 1
+	motor_s.iters = 0;
 	motor_s.cnts[START] = 0;
 	motor_s.state = START;
 	motor_s.prev_hall = INIT_HALL;
@@ -219,6 +221,11 @@ void init_motor( // initialise data structure for one motor
 	for (phase_cnt = 0; phase_cnt < NUM_PHASES; phase_cnt++)
 	{ 
 		motor_s.meas_adc.vals[phase_cnt] = -1;
+	} // for phase_cnt
+
+	for (phase_cnt = 0; phase_cnt < 32; phase_cnt++) //MB~ debug
+	{ 
+		motor_s.tmp[phase_cnt] = 0;
 	} // for phase_cnt
 } // init_motor
 /*****************************************************************************/
@@ -450,15 +457,6 @@ if (dbg) { printint(motor_s.id); printstr( " SA: " ); printintln( motor_s.cnts[S
 				motor_s.cnts[STALL] = 0; // Initialise stall-state counter 
 if (dbg) { printint(motor_s.id); printstr( " FO: " ); printintln( motor_s.cnts[FOC] ); } 
 			} // if (motor_s.meas_speed < STALL_SPEED)
-			else
-			{
-				// Check if it is time to stop demo
-				if (motor_s.cnts[FOC] > DEMO_LIMIT)
-				{
-					motor_s.state = STOP; // Switch to stop state
-					motor_s.cnts[STOP] = 0; // Initialise stop-state counter 
-				} // if (motor_s.cnts[FOC] > DEMO_LIMIT)
-			} // else !(motor_s.meas_speed < STALL_SPEED)
 		break; // case FOC
 	
 		case STALL : // state where motor stalled
@@ -547,7 +545,6 @@ void use_motor ( // Start motor, and run step through different motor states
 	unsigned stop_motor = 0;	/* Fault detection */
 
 
-
 	// initialise arrays
 	for (phase_cnt = 0; phase_cnt < NUM_PHASES; phase_cnt++)
 	{ 
@@ -605,8 +602,17 @@ void use_motor ( // Start motor, and run step through different motor states
 		break; // case c_can_eth_shared :> command:
 
 		default:	// This case updates the motor state
+			motor_s.iters++; // Increment No. of iterations 
+
 			if(stop_motor == 0)
 			{
+				// Check if it is time to stop demo
+				if (motor_s.iters > DEMO_LIMIT)
+				{
+					motor_s.state = STOP; // Switch to stop state
+					motor_s.cnts[STOP] = 0; // Initialise stop-state counter 
+				} // if (motor_s.iters > DEMO_LIMIT)
+
 				p_hall :> new_hall; // Get new hall state
 
 				// Check error status
@@ -621,7 +627,6 @@ void use_motor ( // Start motor, and run step through different motor states
 					{ motor_s.meas_speed ,motor_s.meas_theta ,motor_s.rev_cnt } = get_qei_data( c_qei );
 
 					/* Get ADC readings */
-//MB~	{motor_s.meas_adc.vals[PHASE_A], motor_s.meas_adc.vals[PHASE_C]} = get_adc_vals_calibrated_int16( c_adc_cntrl );
 					get_adc_vals_calibrated_int16_mb( c_adc_cntrl ,motor_s.meas_adc );
 
 					stop_motor = update_motor_state( motor_s ,new_hall );
@@ -640,21 +645,20 @@ void use_motor ( // Start motor, and run step through different motor states
 				} // else !(1 == stop_motor)
 
 #ifdef USE_XSCOPE
-				if ((motor_s.cnts[FOC] & 0x1) == 0) 
+				if ((motor_s.cnts[FOC] & 0x1) == 0) // If even, (NB Forgotton why this works!-(
 				{
 					if (0 == motor_s.id) // Check if 1st Motor
 					{
 						xscope_probe_data(0, motor_s.meas_speed);
 				    xscope_probe_data(1, motor_s.set_iq);
 	    			xscope_probe_data(2, pwm_vals[PHASE_A]);
-	    			xscope_probe_data(3, motor_s.meas_theta ); //MB~
-//MB~	    			xscope_probe_data(3, pwm_vals[PHASE_B]);
-//MB~	    			xscope_probe_data(4, motor_s.meas_adc.vals[PHASE_A]);
-	    			xscope_probe_data(4, motor_s.rev_cnt );
+	    			xscope_probe_data(3, pwm_vals[PHASE_B]);
+						xscope_probe_data(4, motor_s.meas_adc.vals[PHASE_A] );
 						xscope_probe_data(5, motor_s.meas_adc.vals[PHASE_B]);
-					} // if (0 == motor_s.id) 
+					} // if (0 == motor_s.id)
 				} // if ((motor_s.cnts[FOC] & 0x1) == 0) 
 #endif
+
 				update_pwm_inv( motor_s.pwm_ctrl ,c_pwm, pwm_vals ); // Update the PWM values
 			} // if(stop_motor==0)
 		break; // default:
@@ -742,19 +746,21 @@ void run_motor (
 	// start-and-run motor
 	use_motor( motor_s ,c_pwm ,c_qei ,c_adc_cntrl ,c_speed ,p_hall ,c_can_eth_shared );
 
-	// NB First Motor to finish displays
-	if (motor_s.err_flgs)
+	if (0 == motor_id)
 	{
-		printstr( "Demo Ended Due to Following Errors on Motor " );
-		printintln(motor_s.id);
-		error_handling( motor_s );
-	} // if (motor_s.err_flgs)
-	else
-	{
-		printstrln( "Demo Ended Normally" );
-	} // else !(motor_s.err_flgs)
+		if (motor_s.err_flgs)
+		{
+			printstr( "Demo Ended Due to Following Errors on Motor " );
+			printintln(motor_s.id);
+			error_handling( motor_s );
+		} // if (motor_s.err_flgs)
+		else
+		{
+			printstrln( "Demo Ended Normally" );
+		} // else !(motor_s.err_flgs)
 
-	_Exit(1); // Exit without flushing buffers
+		_Exit(1); // Exit without flushing buffers
+	} // if (0 == motor_id)
 } // run_motor
 /*****************************************************************************/
 // inner_loop.xc
