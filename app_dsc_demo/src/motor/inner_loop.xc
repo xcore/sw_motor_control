@@ -180,6 +180,62 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 static int dbg = 0; // Debug variable
 
 /*****************************************************************************/
+void init_pwm_out_data( // Initialise PWM ouput data structure
+	t_out_data &pwm_out_data // Reference to structure of PWM output data
+)
+{
+	// MB~ Rework as Hi/Lo nested structures, when assembler pwm_op_inv removed
+	pwm_out_data.hi_ts0 = 0;
+	pwm_out_data.hi_out0 = 0;
+	pwm_out_data.hi_ts1 = 0;
+	pwm_out_data.hi_out1 = 0;
+
+	pwm_out_data.lo_ts0 = 0;
+	pwm_out_data.lo_out0 = 0;
+	pwm_out_data.lo_ts1 = 0;
+	pwm_out_data.lo_out1 = 0;
+
+	pwm_out_data.cat = DOUBLE; 
+	pwm_out_data.value = 0; 
+} // init_pwm_out_data
+/*****************************************************************************/
+void init_pwm_buffer( // Initialise PWM buffer structures
+	t_out_data pwm_out_data_buf[], // Reference to array of PWM output data buffers for each phase
+	unsigned chan_id_buf[], // Reference to array of channel id buffers for each phase
+	unsigned &mode_buf // Current mode
+)
+{
+	int phase_cnt; // phase counter
+
+
+	mode_buf = 0; // Initialise mode
+
+	for (phase_cnt = 0; phase_cnt < NUM_PWM_PHASES; phase_cnt++)
+	{ 
+		chan_id_buf[phase_cnt] = 0;
+
+		init_pwm_out_data( pwm_out_data_buf[phase_cnt] );
+	} // for phase_cnt
+
+} // init_pwm_buffer 
+/*****************************************************************************/
+void init_pwm_control( // Initialise PWM control structure
+	t_pwm_control &ctrl_s // Reference to PWM control structure
+)
+{
+	int buf_cnt; // double-buffer counter
+
+
+	ctrl_s.pwm_cur_buf = 0; // Initialise double-buffer to 1st buffer 
+
+	for (buf_cnt = 0; buf_cnt < NUM_PWM_BUFS; buf_cnt++)
+	{ 
+		// MB~ Rework as nested structures, when assembler pwm_op_inv removed
+		init_pwm_buffer( ctrl_s.pwm_out_data_buf[buf_cnt] ,ctrl_s.chan_id_buf[buf_cnt] ,ctrl_s.mode_buf[buf_cnt] );
+	} // for buf_cnt
+
+} // init_pwm_control 
+/*****************************************************************************/
 void init_motor( // initialise data structure for one motor
 	MOTOR_DATA_TYP &motor_s, // reference to structure containing motor data
 	unsigned motor_id // Unique Motor identifier e.g. 0 or 1
@@ -227,6 +283,8 @@ void init_motor( // initialise data structure for one motor
 	{ 
 		motor_s.tmp[phase_cnt] = 0;
 	} // for phase_cnt
+
+	init_pwm_control( motor_s.pwm_ctrl ); // Initialise PWM control structure
 } // init_motor
 /*****************************************************************************/
 void error_pwm_values( // Set PWM values to error condition
@@ -649,11 +707,15 @@ void use_motor ( // Start motor, and run step through different motor states
 				{
 					if (0 == motor_s.id) // Check if 1st Motor
 					{
-						xscope_probe_data(0, motor_s.meas_speed);
-				    xscope_probe_data(1, motor_s.set_iq);
-	    			xscope_probe_data(2, pwm_vals[PHASE_A]);
+						xscope_probe_data(0, motor_s.meas_speed );
+				    xscope_probe_data(1, motor_s.set_iq );
+	    			xscope_probe_data(2, pwm_vals[PHASE_A] );
+	    			xscope_probe_data(3, motor_s.out_id );
+						xscope_probe_data(4, motor_s.out_iq );
+/*
 	    			xscope_probe_data(3, pwm_vals[PHASE_B]);
 						xscope_probe_data(4, motor_s.meas_adc.vals[PHASE_A] );
+*/
 						xscope_probe_data(5, motor_s.meas_adc.vals[PHASE_B]);
 					} // if (0 == motor_s.id)
 				} // if ((motor_s.cnts[FOC] & 0x1) == 0) 
@@ -693,7 +755,7 @@ void error_handling( // Prints out error messages
 void run_motor ( 
 	unsigned motor_id,
 	chanend? c_wd,
-	chanend c_pwm, 
+	chanend c_pwm,
 	streaming chanend c_qei, 
 	streaming chanend c_adc_cntrl, 
 	chanend c_speed, 
@@ -702,14 +764,14 @@ void run_motor (
 )
 {
 	MOTOR_DATA_TYP motor_s; // Structure containing motor data
-
-
+	unsigned mem_addr; // Shared memory address
 	timer t;	/* Timer */
 	unsigned ts1;	/* timestamp */
 
 
 	// First send my PWM server the shared memory structure address
-	pwm_share_control_buffer_address_with_server(c_pwm, motor_s.pwm_ctrl );
+	mem_addr = get_struct_address( motor_s.pwm_ctrl ); 
+	c_pwm <: mem_addr;
 
 	// Pause to allow the rest of the system to settle
 	{

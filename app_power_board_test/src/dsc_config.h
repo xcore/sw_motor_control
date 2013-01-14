@@ -25,6 +25,15 @@
 // Define the number of poles the motor has
 #define NUMBER_OF_POLES	8
 
+
+// Define the number different QEI sensors (angular positions)
+#ifdef FAULHABER_MOTOR
+#define QEI_COUNT_MAX (1024 * 4)
+#else
+#define MAX_SPEC_RPM 4000 // Maximum specified motor speed
+#define QEI_COUNT_MAX (256 * 4)
+#endif
+
 // Value to increase/decrease the speed by when the button is pressed
 #define PWM_INC_DEC_VAL 100
 

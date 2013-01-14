@@ -19,10 +19,10 @@
  *
  **/
 
+#include <stdlib.h>
 
 #include <print.h>
 #include <limits.h>
-#include <stdlib.h>
 
 #include "adc_client.h"
 #include "adc_7265.h"
@@ -44,7 +44,7 @@ void run_motor(chanend? c_ctrl_in, chanend? c_ctrl_out, chanend? c_wd, chanend c
 	int id_out = 0, iq_out = 0;
 
 	/* ADC variables */
-	int a, b, c;
+	ADC_DATA_TYP meas_adc; // Structure containing measured data from ADC
 	int maxa = INT_MIN, mina = INT_MAX, maxb = INT_MIN, minb = INT_MAX, maxc = INT_MIN, minc = INT_MAX;
 
 	/* Inverse Park transform outputs */
@@ -122,7 +122,8 @@ void run_motor(chanend? c_ctrl_in, chanend? c_ctrl_out, chanend? c_wd, chanend c
 		hall |= (1<<(oc_status&0b0111));
 
 		// Read ADC
-		{a, b, c} = get_adc_vals_calibrated_int16( c_adc );
+//		{a, b, c} = get_adc_vals_calibrated_int16( c_adc );
+		get_adc_vals_calibrated_int16_mb( c_adc ,meas_adc );
 
 		// Read QEI
 		{speed, theta, valid} = get_qei_data( c_qei );
@@ -160,12 +161,12 @@ void run_motor(chanend? c_ctrl_in, chanend? c_ctrl_out, chanend? c_wd, chanend c
 		if (start_up > QEI_COUNT_MAX*64) {
 
 			// Record ADC
-			if (mina > a) mina = a;
-			if (maxa < a) maxa = a;
-			if (minb > b) minb = b;
-			if (maxb < b) maxb = b;
-			if (minc > c) minc = c;
-			if (maxc < c) maxc = c;
+			if (mina > meas_adc.vals[ADC_PHASE_A]) mina = meas_adc.vals[ADC_PHASE_A];
+			if (maxa < meas_adc.vals[ADC_PHASE_A]) maxa = meas_adc.vals[ADC_PHASE_A];
+			if (minb > meas_adc.vals[ADC_PHASE_B]) minb = meas_adc.vals[ADC_PHASE_B];
+			if (maxb < meas_adc.vals[ADC_PHASE_B]) maxb = meas_adc.vals[ADC_PHASE_B];
+			if (minc > meas_adc.vals[ADC_PHASE_C]) minc = meas_adc.vals[ADC_PHASE_C];
+			if (maxc < meas_adc.vals[ADC_PHASE_C]) maxc = meas_adc.vals[ADC_PHASE_C];
 
 			// Check QEI speed
 			if (speed < 10 || speed > 10000) qei_spd=0;

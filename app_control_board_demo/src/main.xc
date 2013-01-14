@@ -629,9 +629,9 @@ int main ( void )
 		on stdcore[INTERFACE_CORE] : do_demo_interface(c_xtcp[0], c_demo_commands);
 		on stdcore[MOTOR_CORE] : do_demo_motor(c_demo_commands, c_pwm, c_qei, c_adc, p_hall1, p_hall2);
 
-		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[0], c_adc_trig[0], ADC_SYNC_PORT1, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
+		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[0], p_pwm_hi1, p_pwm_lo1, c_adc_trig[0], ADC_SYNC_PORT1, pwm_clk1 );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei[0], p_qei1 );
-		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[1], c_adc_trig[1], ADC_SYNC_PORT2, p_pwm_hi2, p_pwm_lo2, pwm_clk2 );
+		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[1], p_pwm_hi2, p_pwm_lo2, c_adc_trig[1], ADC_SYNC_PORT2, pwm_clk2 );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei[1], p_qei2 );
 
 		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );

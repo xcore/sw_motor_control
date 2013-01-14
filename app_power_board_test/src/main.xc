@@ -19,18 +19,19 @@
  *
  **/
 
-#include <xs1.h>
-#include <platform.h>
 #include <stdio.h>
-#include <print.h>
 #include <stdlib.h>
 
-#include "pwm_service_inv.h"
-#include "run_motor.h"
+#include <xs1.h>
+#include <platform.h>
+#include <print.h>
+
+#include "dsc_config.h"
 #include "watchdog.h"
+#include "run_motor.h"
+#include "pwm_service_inv.h"
 #include "qei_server.h"
 #include "adc_7265.h"
-#include "dsc_config.h"
 
 
 // Motor 1 ports
@@ -53,12 +54,13 @@ on stdcore[INTERFACE_CORE]: out port i2c_wd = PORT_WATCHDOG;
 //ADC
 on stdcore[MOTOR_CORE]: out port ADC_SCLK = PORT_ADC_CLK;
 on stdcore[MOTOR_CORE]: port ADC_CNVST = PORT_ADC_CONV;
-on stdcore[MOTOR_CORE]: buffered in port:32 ADC_DATA_A = PORT_ADC_MISOA;
-on stdcore[MOTOR_CORE]: buffered in port:32 ADC_DATA_B = PORT_ADC_MISOB;
+on stdcore[MOTOR_CORE]: buffered in port:32 p32_adc_data[NUM_ADC_DATA_PORTS] = { PORT_ADC_MISOA ,PORT_ADC_MISOB }; 
+
 on stdcore[MOTOR_CORE]: out port ADC_MUX = PORT_ADC_MUX;
 on stdcore[MOTOR_CORE]: in port ADC_SYNC_PORT1 = XS1_PORT_16A;
 on stdcore[MOTOR_CORE]: in port ADC_SYNC_PORT2 = XS1_PORT_16B;
 on stdcore[MOTOR_CORE]: clock adc_clk = XS1_CLKBLK_2;
+
 
 void do_complete(chanend c_done)
 {
@@ -98,14 +100,14 @@ int main ( void )
 
 		/* L1 */
 		on stdcore[MOTOR_CORE]: run_motor( null, c_ctrl, c_wd, c_pwm[0], c_adc[0], c_qei[0], p_hall1 );
-		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[0], c_adc_trig[0], ADC_SYNC_PORT1, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
+		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[0], p_pwm_hi1, p_pwm_lo1, c_adc_trig[0], ADC_SYNC_PORT1, pwm_clk1 );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei[0], p_qei1 );
 
 		on stdcore[MOTOR_CORE]: run_motor( c_ctrl, c_done, null, c_pwm[1], c_adc[1], c_qei[1], p_hall2 );
-		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[1], c_adc_trig[1], ADC_SYNC_PORT2, p_pwm_hi2, p_pwm_lo2, pwm_clk2 );
+		on stdcore[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[1], p_pwm_hi2, p_pwm_lo2, c_adc_trig[1], ADC_SYNC_PORT2, pwm_clk2 );
 		on stdcore[MOTOR_CORE] : do_qei ( c_qei[1], p_qei2 );
 
-		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );
+		on stdcore[MOTOR_CORE] : adc_7265_triggered( c_adc, c_adc_trig, p32_adc_data, adc_clk, ADC_SCLK, ADC_CNVST, ADC_MUX );
 	}
 	return 0;
 }

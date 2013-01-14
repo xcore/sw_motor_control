@@ -123,7 +123,7 @@ typedef struct ADC_7265_TAG // Structure containing ADC-7265 data
 void adc_7265_triggered( 
 	streaming chanend c_control[NUM_ADC_TRIGGERS],
 	chanend c_trigger[NUM_ADC_TRIGGERS],
-	in buffered port:32 p_data[NUM_ADC_DATA_PORTS],
+	in buffered port:32 p_data[NUM_ADC_DATA_PORTS], 
 	clock xclk,
 	out port p_serial_clk,
 	port p_conv_strobe,

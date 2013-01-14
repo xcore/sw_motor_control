@@ -17,6 +17,8 @@
 #ifndef __ADC_COMMON_H__
 #define __ADC_COMMON_H__
 
+#include <xs1.h>
+
 #ifdef __dsc_config_h_exists__
 #include <dsc_config.h>
 #endif

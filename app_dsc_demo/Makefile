@@ -20,6 +20,7 @@ APP_NAME =
 
 XCC_FLAGS = -O3 -g -report -Wno-timing -fxscope
 
+
 # The USED_MODULES variable lists other module used by the application. 
 
 USED_MODULES = module_dsc_display module_dsc_blocks 

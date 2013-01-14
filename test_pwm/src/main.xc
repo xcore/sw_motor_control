@@ -23,8 +23,7 @@ on stdcore[1]: clock pwm_clk1 = XS1_CLKBLK_1;
 
 on stdcore[1]: out port ADC_SCLK = PORT_ADC_CLK;
 on stdcore[1]: port ADC_CNVST = PORT_ADC_CONV;
-on stdcore[1]: buffered in port:32 ADC_DATA_A = PORT_ADC_MISOA;
-on stdcore[1]: buffered in port:32 ADC_DATA_B = PORT_ADC_MISOB;
+on stdcore[1]: buffered in port:32 p32_adc_data[NUM_ADC_DATA_PORTS] = { PORT_ADC_MISOA ,PORT_ADC_MISOB }; 
 on stdcore[1]: out port ADC_MUX = PORT_ADC_MUX;
 on stdcore[1]: in port ADC_SYNC_PORT1 = XS1_PORT_16A;
 on stdcore[1]: in port ADC_SYNC_PORT2 = XS1_PORT_16B;
@@ -56,9 +55,9 @@ int main ( void )
 	par
 	{
 		/* L1 */
-		on stdcore[1]: do_pwm_inv_triggered( c_pwm[0], c_adc_trig[0], ADC_SYNC_PORT1, p_pwm_hi1, p_pwm_lo1, pwm_clk1 );
+		on stdcore[1]: do_pwm_inv_triggered( c_pwm[0], p_pwm_hi1, p_pwm_lo1, c_adc_trig[0], ADC_SYNC_PORT1, pwm_clk1 );
 		on stdcore[1]: do_test( c_pwm );
-		on stdcore[1]: adc_7265_triggered( c_adc, c_adc_trig, adc_clk, ADC_SCLK, ADC_CNVST, ADC_DATA_A, ADC_DATA_B, ADC_MUX );
+		on stdcore[1]: adc_7265_triggered( c_adc, c_adc_trig, p32_adc_data, adc_clk, ADC_SCLK, ADC_CNVST, ADC_MUX );
 
 		// These can be used to simulate other threads running in the motor core, for tuning purposes
 		on stdcore[1]: dummy_thread();
