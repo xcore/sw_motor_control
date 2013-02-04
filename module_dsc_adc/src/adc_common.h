@@ -19,6 +19,13 @@
 
 #include <xs1.h>
 
+// Define this to include XSCOPE support
+#define USE_XSCOPE 1
+
+#ifdef USE_XSCOPE
+#include <xscope.h>
+#endif
+
 #ifdef __dsc_config_h_exists__
 #include <dsc_config.h>
 #endif

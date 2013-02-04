@@ -297,6 +297,7 @@ void adc_7265_triggered( // Thread for ADC server
 	unsigned char cntrl_token; // control token
 	int cmd_id; // command identifier
 	int trig_id; // trigger identifier
+	int dummy = -512; // MB~
 
 
 	// Initialise data structure for each trigger
@@ -318,6 +319,13 @@ void adc_7265_triggered( // Thread for ADC server
 			// Service any Control Tokens that are received
 			case (int trig_id=0; trig_id<NUM_ADC_TRIGGERS; ++trig_id) inct_byref( c_trigger[trig_id], cntrl_token ):
 				service_control_token( trig_data[trig_id] ,trig_id ,cntrl_token );
+#ifdef USE_XSCOPE
+		if (0 == trig_id) // Check if 1st Motor
+		{
+			xscope_probe_data( 1 ,dummy );
+			dummy = -dummy;
+		} // if (0 == trig_id)
+#endif
 			break;
 	
 			// If guard is OFF, load 'my_timer' at time 'time_stamp' 
@@ -330,6 +338,7 @@ void adc_7265_triggered( // Thread for ADC server
 				service_data_request( trig_data[trig_id] ,c_control[trig_id] ,trig_id ,cmd_id );
 			break;
 		} // select
+
 	} // while (1)
 } // adc_7265_triggered
 /*****************************************************************************/

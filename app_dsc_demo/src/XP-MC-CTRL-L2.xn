@@ -7,16 +7,16 @@ xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
   <BoardId>0003011X</BoardId>
 
   <Declarations>
-    <Declaration>core tile[2]</Declaration>
+    <Declaration>tileref tile[2]</Declaration>
   </Declarations>
 
   <Nodes>
-    <Node Id="0" Type="XS1-L1A" Oscillator="25MHz" SystemFrequency="500MHz">
+    <Node Id="0" InPackageId="0" Type="XS1-L1A" Oscillator="25MHz" SystemFrequency="500MHz">
       <Boot>
         <Source Location="SPI:bootFlash"/>
         <Bootee NodeId="1"/>
       </Boot>
-      <Core Number="0" Reference="tile[0]">
+      <Tile Number="0" Reference="tile[0]">
       
         <!-- DISPLAY-->
   	<Port Location="XS1_PORT_1C" Name="PORT_SPI_CLK" />
@@ -57,13 +57,13 @@ xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
    	<!--WATCHDOG-->
    	<Port Location="XS1_PORT_4D" Name="PORT_WATCHDOG" />
    	   	
-    	</Core>
+    	</Tile>
     </Node>
-   	<Node Id="1" Type="XS1-L1A" Oscillator="25MHz" SystemFrequency="500MHz" ReferenceFrequency="250MHz">
+   	<Node Id="1" InPackageId="1" Type="XS1-L1A" Oscillator="25MHz" SystemFrequency="500MHz" ReferenceFrequency="250MHz">
    		<Boot>
      		<Source Location="XMOSLINK"/>
    		</Boot>
-    	<Core Number="0" Reference="tile[1]">
+    	<Tile Number="0" Reference="tile[1]">
     
     <!-- MOTOR 1 -->
 	<Port Location="XS1_PORT_1D" Name="PORT_M1_HI_A" />
@@ -95,7 +95,7 @@ xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
     <!-- UV FAULT  --> 
     <Port Location="XS1_PORT_8C" Name="PORT_UV_FAULT" />
     
-    	</Core>
+    	</Tile>
     </Node>
   	</Nodes>
 
@@ -135,7 +135,7 @@ xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
   </Packages>
 
   <ExternalDevices>
-    <Device NodeId="0" Core="0" Class="SPIFlash" Name="bootFlash" Type="W25X40BV">
+    <Device NodeId="0" Tile="0" Class="SPIFlash" Name="bootFlash" Type="W25X40BV">
       <Attribute Name="PORT_SPI_MISO" Value="PORT_SPI_MISO"/>
       <Attribute Name="PORT_SPI_SS"   Value="PORT_SPI_SS"/>
       <Attribute Name="PORT_SPI_CLK"  Value="PORT_SPI_CLK"/>
