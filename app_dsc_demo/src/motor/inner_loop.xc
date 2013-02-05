@@ -185,37 +185,21 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 static int dbg = 0; // Debug variable
 
 /*****************************************************************************/
-void init_pwm_edge_data( // Initialise PWM pulse-edge data
-	PWM_EDGE_TYP & cur_edge_data // Reference to structure of current pulse-edge data
+void init_pwm_port_data( // Initialise PWM data for one buffered output port
+	PWM_PORT_TYP & cur_port_data // Reference to structure of current port data
 )
 {
-	cur_edge_data.pattern = 0; // bit-pattern of pulse edge
-	cur_edge_data.time_off = 0; // time-off to start of pattern (measured from centre of pulse)
-} // init_pwm_edge_data
-/*****************************************************************************/
-void init_pwm_leg_data( // Initialise PWM ouput data for one leg of balanced line
-	PWM_PULSE_TYP & cur_pulse_data // Reference to structure of current PWM pulse data
-)
-{
-	int edge_cnt; // pulse edge counter
-
-
-	for (edge_cnt=0; edge_cnt<NUM_PULSE_EDGES; edge_cnt++)
-	{ 
-		init_pwm_edge_data( cur_pulse_data.edges[edge_cnt] );
-	} // for edge_cnt
-} // init_pwm_leg_data
+	cur_port_data.pattern = 0; // bit-pattern for loaing onto output port
+	cur_port_data.time_off = 0; // time-offset to start of pattern
+} // init_pwm_port_data
 /*****************************************************************************/
 void init_pwm_phase_data( // Initialise PWM ouput data structure
 	PWM_PHASE_TYP &pwm_phase_data // Reference to structure of PWM output data
 )
 {
-	pwm_phase_data.typ = DOUBLE; 
-	pwm_phase_data.width = 0; 
-
 	// Initialise PWM output data for each leg of balanced line
-	init_pwm_leg_data( pwm_phase_data.hi ); // V+
-	init_pwm_leg_data( pwm_phase_data.lo ); // V-
+	init_pwm_port_data( pwm_phase_data.hi ); // V+
+	init_pwm_port_data( pwm_phase_data.lo ); // V-
 } // init_pwm_phase_data
 /*****************************************************************************/
 void init_pwm_buffer_data( // Initialise PWM buffer-data structure
@@ -229,9 +213,10 @@ void init_pwm_buffer_data( // Initialise PWM buffer-data structure
 
 	for (phase_cnt = 0; phase_cnt < NUM_PWM_PHASES; phase_cnt++)
 	{ 
-		cur_buf_data.phase_data[phase_cnt].ord_id = phase_cnt; // Default phase order
+		cur_buf_data.width[phase_cnt] = 0; 
 
-		init_pwm_phase_data( cur_buf_data.phase_data[phase_cnt] );
+		init_pwm_phase_data( cur_buf_data.rise_edg.phase_data[phase_cnt] );
+		init_pwm_phase_data( cur_buf_data.fall_edg.phase_data[phase_cnt] );
 	} // for phase_cnt
 
 } // init_pwm_buffer_data 
