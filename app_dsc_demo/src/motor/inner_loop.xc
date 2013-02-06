@@ -213,8 +213,6 @@ void init_pwm_buffer_data( // Initialise PWM buffer-data structure
 
 	for (phase_cnt = 0; phase_cnt < NUM_PWM_PHASES; phase_cnt++)
 	{ 
-		cur_buf_data.width[phase_cnt] = 0; 
-
 		init_pwm_phase_data( cur_buf_data.rise_edg.phase_data[phase_cnt] );
 		init_pwm_phase_data( cur_buf_data.fall_edg.phase_data[phase_cnt] );
 	} // for phase_cnt
@@ -701,7 +699,7 @@ void use_motor ( // Start motor, and run step through different motor states
 					// Convert Output DQ values to PWM values
 					dq_to_pwm( pwm_vals ,motor_s.out_id ,motor_s.out_iq ,motor_s.set_theta ); // Convert Output DQ values to PWM values
 
-					update_pwm_inv( motor_s.asm_ctrl ,motor_s.pwm_ctrl ,motor_s.xscope ,c_pwm ,pwm_vals ); // Update the PWM values
+					update_pwm_inv( motor_s.id ,motor_s.asm_ctrl ,motor_s.pwm_ctrl ,motor_s.xscope ,c_pwm ,pwm_vals ); // Update the PWM values
 { //MB~
 	motor_s.pwm_store[motor_s.store_cnt] = motor_s.pwm_ctrl;
 	motor_s.store_cnt++;
@@ -713,11 +711,6 @@ void use_motor ( // Start motor, and run step through different motor states
 				{
 					if (0 == motor_s.id) // Check if 1st Motor
 					{
-						xscope_probe_data(0, motor_s.meas_speed );
-						xscope_probe_data(2, motor_s.xscope[0] );
-						xscope_probe_data(3, motor_s.xscope[1] );
-						xscope_probe_data(4, motor_s.xscope[2] );
-						xscope_probe_data(5, motor_s.xscope[3] );
 /*
 						xscope_probe_data(0, motor_s.meas_speed );
 				    xscope_probe_data(1, motor_s.set_iq );

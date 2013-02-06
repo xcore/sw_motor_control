@@ -17,6 +17,9 @@
 #ifndef _PWM_CONFIG__H_
 #define _PWM_CONFIG__H_
 
+// Define this to include XSCOPE support
+#define USE_XSCOPE 1
+
 // dead time is 1200. Configure this in ReferenceFrequency cycles (See .xn file)
 #define HALF_DEAD_TIME 150  // Currently configured for 250 MHz Ref-Freq (4 ns period)
 #define PWM_DEAD_TIME (HALF_DEAD_TIME << 1)

@@ -353,6 +353,7 @@ void service_client_request( // Send processed QEI data to client
 /*****************************************************************************/
 #pragma unsafe arrays
 void do_qei ( 
+	unsigned motor_id, // Motor identifier
 	streaming chanend c_qei, // data channel to client (carries processed QEI data)
 	port in pQEI  						// Input port (carries raw QEI motor data)
 )

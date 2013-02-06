@@ -91,7 +91,11 @@ typedef struct ALL_QEI_TAG //
  *  \param c_qei The control channel used by the client
  *  \param p_qei The hardware port where the quadrature encoder is located
  */
-void do_qei ( streaming chanend c_qei, port in p_qei );
+void do_qei ( 
+	unsigned motor_id, // Motor identifier
+	streaming chanend c_qei, 
+	port in p_qei 
+);
 
 /** \brief Implementation of the QEI server thread that services multiple QEI devices
  *

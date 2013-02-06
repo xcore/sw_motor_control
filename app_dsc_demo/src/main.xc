@@ -107,6 +107,23 @@ void init_can_phy( chanend c_rxChan, chanend c_txChan, clock p_can_clk, buffered
 } // init_can_phy 
 #endif
 /*****************************************************************************/
+#ifdef USE_XSCOPE
+void xscope_user_init()
+{
+	xscope_register( 6,
+		XSCOPE_CONTINUOUS, "meas_speed", XSCOPE_INT , "n",
+		XSCOPE_CONTINUOUS, "set_iq", XSCOPE_INT , "n",
+		XSCOPE_CONTINUOUS, "pwm_A", XSCOPE_INT , "n",
+		XSCOPE_CONTINUOUS, "pwm_B", XSCOPE_INT , "n",
+		XSCOPE_CONTINUOUS, "meas_Ia", XSCOPE_INT , "n",
+		XSCOPE_CONTINUOUS, "meas_Ib", XSCOPE_INT , "n"
+//		XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT , "n",
+//		XSCOPE_CONTINUOUS, "Theta", XSCOPE_UINT , "n"
+//		XSCOPE_CONTINUOUS, "PWM[0]", XSCOPE_UINT , "n"
+	); // xscope_register 
+} // xscope_user_init
+#endif
+/*****************************************************************************/
 int main ( void ) // Program Entry Point
 {
 	chan c_wd;
@@ -144,20 +161,6 @@ int main ( void ) // Program Entry Point
 
 		on tile[MOTOR_CORE] : 
 		{
-#ifdef USE_XSCOPE
-			xscope_register( 6,
-					XSCOPE_CONTINUOUS, "meas_speed", XSCOPE_INT , "n",
-					XSCOPE_CONTINUOUS, "set_iq", XSCOPE_INT , "n",
-					XSCOPE_CONTINUOUS, "pwm_A", XSCOPE_INT , "n",
-					XSCOPE_CONTINUOUS, "pwm_B", XSCOPE_INT , "n",
-					XSCOPE_CONTINUOUS, "meas_Ia", XSCOPE_INT , "n",
-					XSCOPE_CONTINUOUS, "meas_Ib", XSCOPE_INT , "n"
-//					XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT , "n",
-//					XSCOPE_CONTINUOUS, "Theta", XSCOPE_UINT , "n"
-//					XSCOPE_CONTINUOUS, "PWM[0]", XSCOPE_UINT , "n"
-			); // xscope_register 
-#endif
-
 			run_motor( 0 ,c_wd ,c_pwm[0] ,c_qei[0] ,c_adc_cntrl[0] ,c_speed[0] ,p_hall[0] ,c_commands[0] ); // Special case of 1st Motor
 		} // on tile[MOTOR_CORE]
 
@@ -169,10 +172,10 @@ int main ( void ) // Program Entry Point
 		// Loop through all motors
 		par (int motor_cnt=0; motor_cnt<NUMBER_OF_MOTORS; motor_cnt++)
 		{
-			on tile[MOTOR_CORE] : do_pwm_inv_triggered( c_pwm[motor_cnt] ,p32_pwm_hi[motor_cnt] ,p32_pwm_lo[motor_cnt] ,c_adc_trig[motor_cnt] ,p16_adc_sync[motor_cnt] ,pwm_clk[motor_cnt] );
+			on tile[MOTOR_CORE] : do_pwm_inv_triggered( motor_cnt ,c_pwm[motor_cnt] ,p32_pwm_hi[motor_cnt] ,p32_pwm_lo[motor_cnt] ,c_adc_trig[motor_cnt] ,p16_adc_sync[motor_cnt] ,pwm_clk[motor_cnt] );
 
 #ifdef USE_SEPARATE_QEI_THREADS
-			on tile[MOTOR_CORE] : do_qei ( c_qei[motor_cnt], p_qei[motor_cnt] );
+			on tile[MOTOR_CORE] : do_qei ( motor_cnt ,c_qei[motor_cnt], p_qei[motor_cnt] );
 #endif // #ifdef USE_SEPARATE_QEI_THREADS
 		}
 
