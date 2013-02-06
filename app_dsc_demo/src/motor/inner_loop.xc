@@ -102,8 +102,6 @@
 #define ERROR_STALL 0x4
 #define ERROR_DIRECTION 0x8
 
-#define PWM_SIZE 1 //MB~Dbg 50
-
 #pragma xta command "add exclusion foc_loop_motor_fault"
 #pragma xta command "add exclusion foc_loop_speed_comms"
 #pragma xta command "add exclusion foc_loop_shared_comms"
@@ -149,9 +147,6 @@ typedef struct STRING_TAG // Structure containing string
 
 typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 {
-	PWM_CONTROL_TYP pwm_store[PWM_SIZE];	// Store of PWM data,
-	PWM_CONTROL_TYP pwm_ctrl;	// Data structure containing PWM data,
-	ASM_CONTROL_TYP asm_ctrl;	// PWM data structure as read from shared memory by assembly program pwm_op_inv()
 	STRING_TYP err_strs[NUM_ERR_TYPS]; // Array of error messages
 	ADC_DATA_TYP meas_adc; // Structure containing measured data from ADC
 	MOTOR_STATE_TYP state; // Current motor state
@@ -183,54 +178,6 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 
 static int dbg = 0; // Debug variable
 
-/*****************************************************************************/
-void init_pwm_port_data( // Initialise PWM data for one buffered output port
-	PWM_PORT_TYP & cur_port_data // Reference to structure of current port data
-)
-{
-	cur_port_data.pattern = 0; // bit-pattern for loaing onto output port
-	cur_port_data.time_off = 0; // time-offset to start of pattern
-} // init_pwm_port_data
-/*****************************************************************************/
-void init_pwm_phase_data( // Initialise PWM ouput data structure
-	PWM_PHASE_TYP &pwm_phase_data // Reference to structure of PWM output data
-)
-{
-	// Initialise PWM output data for each leg of balanced line
-	init_pwm_port_data( pwm_phase_data.hi ); // V+
-	init_pwm_port_data( pwm_phase_data.lo ); // V-
-} // init_pwm_phase_data
-/*****************************************************************************/
-void init_pwm_buffer_data( // Initialise PWM buffer-data structure
-	PWM_BUFFER_TYP & cur_buf_data // Reference to current buffer-data structure
-)
-{
-	int phase_cnt; // phase counter
-
-
-	cur_buf_data.cur_mode = 0; // Initialise mode
-
-	for (phase_cnt = 0; phase_cnt < NUM_PWM_PHASES; phase_cnt++)
-	{ 
-		init_pwm_phase_data( cur_buf_data.rise_edg.phase_data[phase_cnt] );
-		init_pwm_phase_data( cur_buf_data.fall_edg.phase_data[phase_cnt] );
-	} // for phase_cnt
-
-} // init_pwm_buffer_data 
-/*****************************************************************************/
-void init_pwm_control( // Initialise PWM control structure
-	PWM_CONTROL_TYP &pwm_ctrl_s // Reference to PWM control structure
-)
-{
-	int buf_cnt; // double-buffer counter
-
-
-	for (buf_cnt = 0; buf_cnt < NUM_PWM_BUFS; buf_cnt++)
-	{ 
-		init_pwm_buffer_data( pwm_ctrl_s.buf_data[buf_cnt] );
-	} // for buf_cnt
-
-} // init_pwm_control 
 /*****************************************************************************/
 void init_motor( // initialise data structure for one motor
 	MOTOR_DATA_TYP &motor_s, // reference to structure containing motor data
@@ -276,8 +223,6 @@ void init_motor( // initialise data structure for one motor
 	{ 
 		motor_s.meas_adc.vals[phase_cnt] = -1;
 	} // for phase_cnt
-
-	init_pwm_control( motor_s.pwm_ctrl ); // Initialise PWM control structure
 
 } // init_motor
 /*****************************************************************************/
@@ -777,15 +722,6 @@ void run_motor (
 	timer t;	/* Timer */
 	unsigned ts1;	/* timestamp */
 
-#ifdef MB // Depreciated
-{
-	unsigned mem_addr; // Shared memory address
-
-	// First send my PWM server the shared memory structure address
-	mem_addr = get_struct_address( motor_s.asm_ctrl ); 
-	c_pwm <: mem_addr;
-}
-#endif //MB~ Depreciated
 
 	// Pause to allow the rest of the system to settle
 	{
