@@ -177,9 +177,8 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	int theta_offset;	// Phase difference between the QEI and the coils
 	int prev_angl; 	// previous angular position
 	unsigned prev_time; 	// previous time stamp
-
-	unsigned store_cnt; // store counter MB~ Dbg
-	int xscope[6]; // xscope values
+	unsigned mem_addr; // Shared memory address
+	unsigned cur_buf; // Current double-buffer in use at shared memory address
 } MOTOR_DATA_TYP;
 
 static int dbg = 0; // Debug variable
@@ -226,10 +225,6 @@ void init_pwm_control( // Initialise PWM control structure
 	int buf_cnt; // double-buffer counter
 
 
-	pwm_ctrl_s.cur_buf = 1; // Initialise double-buffer to 2nd buffer (NB pwm_op_inv.S relies on this)
-	pwm_ctrl_s.tmp= 1; // MB~ 
-
-
 	for (buf_cnt = 0; buf_cnt < NUM_PWM_BUFS; buf_cnt++)
 	{ 
 		init_pwm_buffer_data( pwm_ctrl_s.buf_data[buf_cnt] );
@@ -259,6 +254,8 @@ void init_motor( // initialise data structure for one motor
 	motor_s.err_flgs = 0; 	// Clear fault detection flags
 	motor_s.prev_time = 0; 	// previous time stamp
 	motor_s.prev_angl = 0; 	// previous angular position
+	motor_s.cur_buf = 0; 	// Initialise which double-buffer in use
+	motor_s.mem_addr = NULL; 	// Signal unassigned address
 
 	// Initialise error strings
 	for (err_cnt=0; err_cnt<NUM_ERR_TYPS; err_cnt++)
@@ -282,7 +279,6 @@ void init_motor( // initialise data structure for one motor
 
 	init_pwm_control( motor_s.pwm_ctrl ); // Initialise PWM control structure
 
-	motor_s.store_cnt = 0; //PWM store count MB~ Dbg  
 } // init_motor
 /*****************************************************************************/
 void error_pwm_values( // Set PWM values to error condition
@@ -607,31 +603,46 @@ void use_motor ( // Start motor, and run step through different motor states
 		pwm_vals[phase_cnt] = 0;
 	} // for phase_cnt
 
+#ifdef SHARED_MEM
+	c_pwm :> motor_s.mem_addr; // Receive shared memory address from PWM server
+#endif // #ifdef SHARED_MEM
+
 	/* Main loop */
 	while (0 == stop_motor)
 	{
+// if (!motor_s.id) printcharln( 'S' ); //MB~
 #pragma xta endpoint "foc_loop"
 		select
 		{
 		case c_speed :> command:		/* This case responds to speed control through shared I/O */
 #pragma xta label "foc_loop_speed_comms"
-			if(command == CMD_GET_IQ)
+			switch(command)
 			{
-				c_speed <: motor_s.meas_speed;
-				c_speed <: motor_s.set_speed;
-			}
-			else if (command == CMD_SET_SPEED)
-			{
-				c_speed :> motor_s.set_speed;
-			}
-			else if(command == CMD_GET_FAULT)
-			{
-				c_speed <: motor_s.err_flgs;
-			}
+				case CMD_GET_IQ :
+					c_speed <: motor_s.meas_speed;
+					c_speed <: motor_s.set_speed;
+// if (!motor_s.id) printcharln( '7' ); //MB~
+				break; // case CMD_GET_IQ
+	
+				case CMD_SET_SPEED :
+					c_speed :> motor_s.set_speed;
+				break; // case CMD_SET_SPEED 
+	
+				case CMD_GET_FAULT :
+					c_speed <: motor_s.err_flgs;
+				break; // case CMD_GET_FAULT 
+	
+		    default: // Unsupported
+					assert(0 == 1); // command NOT supported
+		    break; // default
+			} // switch(command)
+
+// if (!motor_s.id) printcharln( '4' ); //MB~
 		break; // case c_speed :> command:
 
 		case c_can_eth_shared :> command:		//This case responds to CAN or ETHERNET commands
 #pragma xta label "foc_loop_shared_comms"
+// if (!motor_s.id) printcharln( 'X' ); //MB~
 			if(command == CMD_GET_VALS)
 			{
 				c_can_eth_shared <: motor_s.meas_speed;
@@ -658,6 +669,7 @@ void use_motor ( // Start motor, and run step through different motor states
 		break; // case c_can_eth_shared :> command:
 
 		default:	// This case updates the motor state
+// if (!motor_s.id) printcharln( 'Y' ); //MB~
 			motor_s.iters++; // Increment No. of iterations 
 
 			if(stop_motor == 0)
@@ -699,12 +711,7 @@ void use_motor ( // Start motor, and run step through different motor states
 					// Convert Output DQ values to PWM values
 					dq_to_pwm( pwm_vals ,motor_s.out_id ,motor_s.out_iq ,motor_s.set_theta ); // Convert Output DQ values to PWM values
 
-					update_pwm_inv( motor_s.id ,motor_s.asm_ctrl ,motor_s.pwm_ctrl ,motor_s.xscope ,c_pwm ,pwm_vals ); // Update the PWM values
-{ //MB~
-	motor_s.pwm_store[motor_s.store_cnt] = motor_s.pwm_ctrl;
-	motor_s.store_cnt++;
-	if (motor_s.store_cnt == PWM_SIZE) motor_s.store_cnt = 0;
-} //MB~
+					update_pwm_inv( c_pwm ,pwm_vals ,motor_s.id ,motor_s.cur_buf ,motor_s.mem_addr ); // Update the PWM values
 
 #ifdef USE_XSCOPE
 				if ((motor_s.cnts[FOC] & 0x1) == 0) // If even, (NB Forgotton why this works!-(
@@ -727,6 +734,8 @@ void use_motor ( // Start motor, and run step through different motor states
 		break; // default:
 
 		}	// select
+
+// if (!motor_s.id) printcharln( '0' ); //MB~
 	}	// while (0 == stop_motor)
 
 } // use_motor
@@ -765,14 +774,18 @@ void run_motor (
 )
 {
 	MOTOR_DATA_TYP motor_s; // Structure containing motor data
-	unsigned mem_addr; // Shared memory address
 	timer t;	/* Timer */
 	unsigned ts1;	/* timestamp */
 
+#ifdef MB // Depreciated
+{
+	unsigned mem_addr; // Shared memory address
 
 	// First send my PWM server the shared memory structure address
 	mem_addr = get_struct_address( motor_s.asm_ctrl ); 
 	c_pwm <: mem_addr;
+}
+#endif //MB~ Depreciated
 
 	// Pause to allow the rest of the system to settle
 	{
