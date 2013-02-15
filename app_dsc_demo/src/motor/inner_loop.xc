@@ -58,13 +58,7 @@
 #include <xscope.h>
 #endif
 
-#define MOTOR_P 2100
-#define MOTOR_I 6
-#define MOTOR_D 0
 #define SEC 100000000
-#define Kp 5000
-#define Ki 100
-#define Kd 40
 #define PWM_MAX_LIMIT 3800
 #define PWM_MIN_LIMIT 200
 #define OFFSET_14 16383
@@ -150,10 +144,8 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	STRING_TYP err_strs[NUM_ERR_TYPS]; // Array of error messages
 	ADC_DATA_TYP meas_adc; // Structure containing measured data from ADC
 	MOTOR_STATE_TYP state; // Current motor state
+	PID_REGULATOR_TYP pids[NUM_PIDS]; // array of pid regulators used for motor control
 	int cnts[NUM_MOTOR_STATES]; // array of counters for each motor state	
-	pid_data pid_speed;	/* Speed PID control structure */
-	pid_data pid_d;	/* Id PID control structure */
-	pid_data pid_q;	/* Iq PID control structure */
 	int iters; // Iterations of inner_loop
 	unsigned id; // Unique Motor identifier e.g. 0 or 1
 	unsigned prev_hall; // previous hall state value
@@ -186,8 +178,15 @@ void init_motor( // initialise data structure for one motor
 {
 	int phase_cnt; // phase counter
 	int err_cnt; // phase counter
+	int pid_cnt; // PID counter
 
 
+	/* PID control initialisation... */
+	for (pid_cnt = 0; pid_cnt < NUM_PIDS; pid_cnt++)
+	{ 
+		initialise_pid( motor_s.pids[pid_cnt] ,pid_cnt );
+	} // for pid_cnt
+	
 	motor_s.id = motor_id; // Unique Motor identifier e.g. 0 or 1
 	motor_s.iters = 0;
 	motor_s.cnts[START] = 0;
@@ -202,7 +201,7 @@ void init_motor( // initialise data structure for one motor
 	motor_s.prev_time = 0; 	// previous time stamp
 	motor_s.prev_angl = 0; 	// previous angular position
 	motor_s.cur_buf = 0; 	// Initialise which double-buffer in use
-	motor_s.mem_addr = NULL; 	// Signal unassigned address
+	motor_s.mem_addr = 0; 	// Signal unassigned address
 
 	// Initialise error strings
 	for (err_cnt=0; err_cnt<NUM_ERR_TYPS; err_cnt++)
@@ -309,7 +308,6 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 {
 	int alpha = 0, beta = 0;	// Measured currents once transformed to a 2D vector
 	int Id_in = 0, Iq_in = 0;	/* Measured radial and tangential currents in the rotor frame of reference */
-	int Id_err = 0, Iq_err = 0;	/* The difference between the actual coil currents, and the demand coil currents */
 
 
 #pragma xta label "foc_loop_read_hardware"
@@ -325,23 +323,19 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 
 #pragma xta label "foc_loop_park"
 
-	/* Id and Iq outputs derived from park transform */
+	// Calculate actual coil currents (Id & Iq) using park transform
 	park_transform( Id_in, Iq_in, alpha, beta, motor_s.set_theta  );
 
 #pragma xta label "foc_loop_speed_pid"
 
-	/* Applying Speed PID */
-	motor_s.set_iq = pid_regulator_delta_cust_error_speed( (int)(motor_s.set_speed - motor_s.meas_speed) ,motor_s.pid_speed );
-	if (motor_s.set_iq <0) motor_s.set_iq = 0;
-
-	/* Apply PID control to Iq and Id */
-	Iq_err = Iq_in - motor_s.set_iq;
-	Id_err = Id_in - motor_s.set_id;
+	// Applying Speed PID. WARNING: Currently the speed parameters are inverted to get correct value for set_iq
+	motor_s.set_iq = get_pid_regulator_correction( motor_s.pids[SPEED] ,-motor_s.meas_speed ,-motor_s.set_speed );
 
 #pragma xta label "foc_loop_id_iq_pid"
 
-	motor_s.out_iq = pid_regulator_delta_cust_error_Iq_control( Iq_err, motor_s.pid_q );
-	motor_s.out_id = pid_regulator_delta_cust_error_Id_control( Id_err, motor_s.pid_d );
+	/* Apply PID control to Iq and Id */
+	motor_s.out_iq = get_pid_regulator_correction( motor_s.pids[I_Q] ,Iq_in ,motor_s.set_iq );
+	motor_s.out_id = get_pid_regulator_correction( motor_s.pids[I_D] ,Id_in ,motor_s.set_id );
 
 } // calc_foc_pwm
 /*****************************************************************************/
@@ -745,11 +739,6 @@ void run_motor (
 		t :> ts1;
 		t when timerafter(ts1+1*SEC) :> void;
 	}
-
-	/* PID control initialisation... */
-	init_pid( MOTOR_P, MOTOR_I, MOTOR_D, motor_s.pid_d );
-	init_pid( MOTOR_P, MOTOR_I, MOTOR_D, motor_s.pid_q );
-	init_pid( Kp, Ki, Kd, motor_s.pid_speed );
 
 	init_motor( motor_s ,motor_id );	// Initialise motor data
 

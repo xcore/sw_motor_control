@@ -20,18 +20,107 @@
  * copyright notice above.
  *
  **/                                   
+
 #include "pid_regulator.h"
-#include <xs1.h>
 
-#define DQ_INTEGRAL_LIMIT 8192
-#define Q_LIMIT 12000
-#define Q_LIMIT_L -12000
-#define D_LIMIT 6000
-#define D_LIMIT_L -4000
+const PID_CONST_TYP pid_const_Id = { DQ_P ,DQ_I ,DQ_D ,DQ_INTEGRAL_LIMIT ,D_HI_LIM ,D_LO_LIM ,PID_RESOLUTION };
+const PID_CONST_TYP pid_const_Iq = { DQ_P ,DQ_I ,DQ_D ,DQ_INTEGRAL_LIMIT ,Q_LIMIT ,-Q_LIMIT ,PID_RESOLUTION };
+const PID_CONST_TYP pid_const_speed = { SPEED_P ,SPEED_I ,SPEED_D ,SPEED_INTEGRAL_LIMIT ,SPEED_HI_LIM ,SPEED_LO_LIM ,PID_RESOLUTION };
 
-#define SPEED_LIMIT 8000000
-#define SPEED_INTEGRAL_LIMIT 10000000
+/*****************************************************************************/
+void initialise_pid( // Initialise PID settings
+	PID_REGULATOR_TYP * pid_regul_p, // Pointer to PID regulator data structure
+	PID_ENUM pid_id // Identifies which PID is being initialised
+)
+{
+	// Assign correct constants based on PID identifier
+	switch( pid_id )
+	{
+		case I_D :
+			pid_regul_p->consts = pid_const_Id; // Assign Id constants
+		break; // case I_D
 
+		case I_Q :
+			pid_regul_p->consts = pid_const_Iq; // Assign Iq constants
+		break; // case I_Q
+
+		case SPEED :
+			pid_regul_p->consts = pid_const_speed; // Assign Iq constants
+		break; // case SPEED
+
+		default :
+			assert( 0 == 1 ); // ERROR: Unsipported PID regulator
+		break; // default
+
+	} // switch( pid_id )
+
+	// Calculate rounding error based on resolution
+	pid_regul_p->consts.half_res = (1 << (pid_regul_p->consts.resolution - 1));
+
+	// Initialise variables
+	pid_regul_p->sum_err = 0;
+	pid_regul_p->prev_err = 0;
+} // inititialise_pid
+/*****************************************************************************/
+int get_pid_regulator_correction( // Computes new PID correction based on input error
+	PID_REGULATOR_TYP * pid_regul_p, // Pointer to PID regulator data structure
+	int meas_val, // measured value
+	int requ_val // request value
+)
+#define MAX_32 0x40000000
+{
+	PID_CONST_TYP * pid_const_p = &(pid_regul_p->consts); // Local pointer to PID constants data structure
+	int inp_err = (meas_val - requ_val); // Compute input error
+	int diff_err = (inp_err - pid_regul_p->prev_err); // Compute difference error
+	S64_T res_64; // Result at 64-bit precision
+	int res_32; // Result at 32-bit precision
+
+
+	pid_regul_p->sum_err = pid_regul_p->sum_err + inp_err; // Update Sum of errors
+
+	// If necessary, Clip Sum-of-errors 
+	if (pid_regul_p->sum_err > pid_const_p->sum_lim)
+	{
+		pid_regul_p->sum_err = pid_const_p->sum_lim;
+	} // if (pid_regul_p->sum_err > pid_const_p->sum_lim)
+	else
+	{
+		if (pid_regul_p->sum_err < -pid_const_p->sum_lim)
+		{
+			pid_regul_p->sum_err = -pid_const_p->sum_lim;
+		} // if (pid_regul_p->sum_err < -pid_const_p->sum_lim)
+	} // else !(pid_regul_p->sum_err > pid_const_p->sum_lim)
+
+	// Build 64-bit result
+	res_64 = (S64_T)pid_const_p->K_i * (S64_T)pid_regul_p->sum_err;
+	res_64 += (S64_T)pid_const_p->K_p * (S64_T)inp_err;
+	if (pid_const_p->K_d)
+	{
+		res_64 += (S64_T)pid_const_p->K_d * (S64_T)diff_err;
+	} // if (pid_const_p->K_d)
+ 
+	// Convert to 32-bit result
+	res_32 = (int)((res_64 + (S64_T)pid_const_p->half_res) >> pid_const_p->resolution);
+
+	// If necessary, Clip res_32
+	if (res_32 > pid_const_p->max_lim)
+	{
+		res_32 = pid_const_p->max_lim;
+	} // if (res_32 > pid_const_p->max_lim)
+	else
+	{
+		if (res_32 < pid_const_p->min_lim)
+		{
+			res_32 = pid_const_p->min_lim;
+		} // if (res_32 < pid_const_p->min_lim)
+	} // else !(res_32 > pid_const_p->mix_lim)
+
+	pid_regul_p->prev_err = inp_err; // Update previous error
+
+	return res_32;
+}
+/*****************************************************************************/
+#ifdef MB // Depreciated
 extern int frac_mul( int a, int b );
 
 /* initialise PID settings */
@@ -44,7 +133,6 @@ void init_pid( int Kp, int Ki, int Kd, pid_data *d )
 	d->integral = 0;
 	d->previous_error = 0;
 }
-
 
 /* PID controller algorithm
  * Assumptions:
@@ -121,8 +209,19 @@ int pid_regulator_delta_cust_error_speed( int error, pid_data *d )
 	result = (((d->Kp * error) + (d->Kd * derivative)) >> PID_RESOLUTION) + frac_mul( d->Ki, d->integral);
 
 #ifdef BLDC_FOC
-	if (result > SPEED_LIMIT) result = (result >> 2);
-	else if (result < -SPEED_LIMIT) result = -(result >> 2);
+	if (result > SPEED_LIMIT)
+	{
+printf("B\n");
+		result = (result >> 2);
+	} // if (result > SPEED_LIMIT)
+	else
+	{
+		if (result < -SPEED_LIMIT)
+		{
+printf("S\n");
+			result = -((-result) >> 2);
+		} // if (result < -SPEED_LIMIT)
+	} // else !(result > SPEED_LIMIT)
 #endif
 
 
@@ -171,6 +270,6 @@ int pid_regulator_delta_cust_error_Id_control( int error, pid_data *id )
 
 	return result;
 }
-
-
-
+#endif //MB~ Depreciated
+/*****************************************************************************/
+// pid_regulator.c
