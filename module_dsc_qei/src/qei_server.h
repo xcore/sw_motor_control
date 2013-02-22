@@ -68,12 +68,13 @@ typedef struct QEI_PARAM_TAG //
 	unsigned inp_pins; // Raw data values on input port pins
 	unsigned prev_phases; // Previous phase values
 	unsigned prev_time; // Previous angular position time stamp
-	unsigned diff_time; // Difference between 2 adjacent time stamps
+	int diff_time; // Difference between 2 adjacent time stamps
 	QEI_ENUM_TYP prev_state; // Previous QEI state
 	int err_cnt; // counter for invalid QEI states
 	int orig_cnt; // Increment every time motor passes origin (index)
 	int ang_cnt; // Counts angular position of motor (from origin)
 	int theta; // angular position returned to client
+	int spin_sign; // Sign of spin direction
 	int prev_orig; // Previous origin flag
 	int confid; // Confidence in current qei-state
 	int id; // Unique motor identifier

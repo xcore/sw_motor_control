@@ -35,21 +35,21 @@ void clarke_transform( int Ia, int Ib, int Ic, int *I_alpha, int *I_beta )
 
 }
 
-
-// Do an inverse clarke transform
-void inverse_clarke_transform( int *Ia, int *Ib, int *Ic, int alpha, int beta )
+/*****************************************************************************/
+void inverse_clarke_transform( // Inverse clarke transform
+	int *Ia, 
+	int *Ib, 
+	int *Ic, 
+	int alpha, 
+	int beta 
+)
 {
-	int tmp ;
+	int sqrt3_beta = ((ROOT_THREE * beta ) >> 14); // sqrt(3) * beta
 
-	*Ia = beta;
 
-	tmp = (-beta ) + ((ROOT_THREE * alpha ) >> 14);
-	tmp = tmp >> 1;
-	*Ib = tmp;
-
-	tmp = (-beta ) - ((ROOT_THREE * alpha ) >> 14);
-	tmp = tmp >> 1;
-	*Ic = tmp;
-
-}
-
+	*Ia = alpha;
+	*Ib = (-alpha + sqrt3_beta) >> 1;
+	*Ic = (-alpha - sqrt3_beta) >> 1;
+} // inverse_clarke_transform
+/*****************************************************************************/
+// clarke.c

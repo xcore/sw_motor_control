@@ -25,7 +25,7 @@
  *  \param c_qei The control channel for the QEI server
  *  \return the speed, position and valid state
  */
-{ unsigned, unsigned, unsigned } get_qei_data( streaming chanend c_qei );
+{ int ,int ,int } get_qei_data( streaming chanend c_qei );
 
 
 #endif /* __QEI_CLIENT_H__ */

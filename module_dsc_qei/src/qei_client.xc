@@ -20,15 +20,15 @@
 #include "qei_commands.h"
 #include "qei_client.h"
 
-{unsigned, unsigned, unsigned } get_qei_data( streaming chanend c_qei )
+{int ,int ,int} get_qei_data( streaming chanend c_qei )
 {
-	unsigned new_angl, meas_speed, orig_cnt;
+	int new_angl, meas_veloc, orig_cnt;
 
 
 	c_qei <: QEI_CMD_POS_REQ;
 	c_qei :> new_angl;
-	c_qei :> meas_speed;
+	c_qei :> meas_veloc;
 	c_qei :> orig_cnt;
 
-	return {meas_speed, new_angl, orig_cnt};
+	return {meas_veloc, new_angl, orig_cnt};
 }

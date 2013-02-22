@@ -82,10 +82,11 @@ void init_qei_data( // Initialise  QEI data for one motor
 	inp_qei_s.prev_phases = inp_pins & 0x3; // Initialise previous phase values
 
 	inp_qei_s.id = inp_id; // Clear Previous phase values
-	inp_qei_s.diff_time = TICKS_PER_MIN_PER_QEI; // NB Speed=1
+	inp_qei_s.diff_time = (int)TICKS_PER_MIN_PER_QEI; // NB Speed=1
 	inp_qei_s.orig_cnt = 0; // Reset counter indicating how many times motor has passed origin (index)
 	inp_qei_s.ang_cnt = 0; // Reset counter indicating angular position of motor (from origin)
 	inp_qei_s.theta = 0; // Reset angular position returned to client
+	inp_qei_s.spin_sign; // Clear Sign of spin direction
 	inp_qei_s.prev_state = QEI_STALL; // Initialise previous QEI state
 	inp_qei_s.err_cnt = 0; // Initialise counter for invalid QEI states
 	inp_qei_s.confid = 1; // Initialise confidence value
@@ -211,7 +212,7 @@ int get_theta_value( // Calculate theta value (returned to client) from local an
 			} // if (inp_ang > -QEI_CNT_LIMIT)
 			else 
 			{ // Origin Missed - Correct counters
-				inp_qei_s.orig_cnt++; // Increment origin counter
+				inp_qei_s.orig_cnt--; // Decrement origin counter
 				inp_qei_s.ang_cnt += QEI_COUNT_MAX; // Add a whole rotation
 
 				out_theta = inp_qei_s.ang_cnt; // Now a normal case -ve
@@ -253,8 +254,8 @@ void service_input_pins( // Get QEI data from motor and send to client
 )
 {
 /* get_spin is a table for converting pins values to spin values
- *	Order is 00 -> 10 -> 11 -> 01  Clockwise direction
- *	Order is 00 -> 01 -> 11 -> 10  Anti-Clockwise direction
+ *	Order is 00 -> 01 -> 11 -> 10  Clockwise direction
+ *	Order is 00 -> 10 -> 11 -> 01  Anti-Clockwise direction
  *
  *	Spin-state is
  *		-1: CLOCK Clocwise rotation, 
@@ -263,7 +264,12 @@ void service_input_pins( // Get QEI data from motor and send to client
  *		 2: JUMP (The motor has probably jumped 2 phases)
  */
 
-// MB~ At present this table has wrong spin direction convention
+/*	NB We are going to use a convention that a Clock-wise spin has +ve value.
+ *	This does NOT mean the motor will spin clock-wise! 
+ *	This depends on the observers position relative to the motor.
+ *	The following table satisfies the above convention when accessed as:-
+ *		Spin = get_spin_state[Old_Phase][New_phase]
+ */
 static const signed char get_spin_state[QEI_PHASES][QEI_PHASES] = {
 		{ QEI_STALL,	QEI_CLOCK,	QEI_ANTI,		QEI_JUMP	}, // 00
 		{ QEI_ANTI,		QEI_STALL,	QEI_JUMP,		QEI_CLOCK	}, // 01
@@ -274,7 +280,7 @@ static const signed char get_spin_state[QEI_PHASES][QEI_PHASES] = {
 	QEI_ENUM_TYP cur_state; // current QEI spin state
 	unsigned ang_time; // time when angular position measured
 	unsigned cur_phases; // Current set of phase values
-	unsigned origin; // Flag set when motor at origin position 
+	unsigned orig_flg; // Flag set when motor at origin position 
 	signed char cur_spin; // current spin direction
 	int cur_theta; // current theta value (returned to client)
 	timer my_tymer;
@@ -287,7 +293,7 @@ static const signed char get_spin_state[QEI_PHASES][QEI_PHASES] = {
 	{
 		// Get new time stamp ..
 		my_tymer :> ang_time;	// Get new time stamp
-		inp_qei_s.diff_time = (unsigned)(ang_time - inp_qei_s.prev_time);
+		inp_qei_s.diff_time = (int)(ang_time - inp_qei_s.prev_time);
 
 		// Check for sensible time
 		if (THR_TICKS_PER_QEI < inp_qei_s.diff_time)
@@ -295,26 +301,35 @@ static const signed char get_spin_state[QEI_PHASES][QEI_PHASES] = {
 			inp_qei_s.prev_time = ang_time; // Store time stamp
 	
 			// Update QEI-state
-			cur_state = get_spin_state[cur_phases][inp_qei_s.prev_phases]; // Decoded spin fom phase info.
-		
-			// Update spin value
+			cur_state = get_spin_state[inp_qei_s.prev_phases][cur_phases]; // Decoded spin fom phase info. New Correct
+
 			cur_spin = get_spin_value( inp_qei_s ,cur_state );
-	
+
+			// Update spin direction	
+			if (cur_spin < 0)
+			{
+				inp_qei_s.spin_sign = -1; // -ve spin direction
+			} // if (cur_spin < 0)
+			else
+			{
+				inp_qei_s.spin_sign = 1;  // +ve spin direction
+			} // else !(cur_spin < 0)
+
 			inp_qei_s.ang_cnt += cur_spin; // Increment/Decrement angular position
 	
-			origin = inp_pins & 0x4; 		// Extract origin flag 
+			orig_flg = inp_pins & 0x4; 		// Extract origin flag 
 	
 			// Check if motor at origin
-			if (origin != inp_qei_s.prev_orig)
+			if (orig_flg != inp_qei_s.prev_orig)
 			{
-				if (origin)
-				{ // Reset position ( Origin transition  0 --> 1 )
-					inp_qei_s.orig_cnt++; // Increment origin counter
+				if (orig_flg)
+				{ // Reset position ( 'orig_flg' transition  0 --> 1 )
+					inp_qei_s.orig_cnt += inp_qei_s.spin_sign; // Update origin counter
 					inp_qei_s.ang_cnt = 0; // Reset position value
-				} // if (origin)
+				} // if (orig_flg)
 	
-				inp_qei_s.prev_orig = origin;
-			} // if (origin != inp_qei_s.prev_orig)
+				inp_qei_s.prev_orig = orig_flg;
+			} // if (orig_flg != inp_qei_s.prev_orig)
 	
 			// Update theta value
 			cur_theta = get_theta_value( inp_qei_s ,inp_qei_s.ang_cnt );
@@ -338,16 +353,16 @@ void service_client_request( // Send processed QEI data to client
  *	NB If angular position has NOT updated since last transmission, then the same data is re-transmitted
  */
 {
-	unsigned meas_speed; // Speed of motor measured in Ticks/angle_position
+	int meas_veloc; // Angular velocity of motor measured in Ticks/angle_position
 
 
 	assert(0 < inp_qei_s.diff_time); // Timer error. This should always be true!-(
 
-	meas_speed = (TICKS_PER_MIN_PER_QEI / inp_qei_s.diff_time); // Calculate new speed estimate
+	// Calculate new speed estimate.
+	meas_veloc = inp_qei_s.spin_sign * TICKS_PER_MIN_PER_QEI / inp_qei_s.diff_time;
 
-	// Send processed QEI data to client
 	c_qei <: inp_qei_s.theta;
-	c_qei <: meas_speed;
+	c_qei <: meas_veloc;			
 	c_qei <: inp_qei_s.orig_cnt;
 } // service_client_request
 /*****************************************************************************/

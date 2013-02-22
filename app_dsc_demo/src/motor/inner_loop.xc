@@ -1,19 +1,5 @@
 /**
- * File:    inner_loop.xc
- *
- * The copyrights, all other intellectual and industrial 
- * property rights are retained by XMOS and/or its licensors. 
- * Terms and conditions covering the use of this code can
- * be found in the Xmos End User License Agreement.
- *
- * Copyright XMOS Ltd 2011
- *
- * In the case where this code is a modification of existing code
- * under a separate license, the separate license terms are shown
- * below. The modifications to the code are still covered by the 
- * copyright notice above.
- *
- * run_motor() function initially runs in open loop, spinning the magnetic field around at a fixed
+ * File:    inner_loop.xc_motor() function initially runs in open loop, spinning the magnetic field around at a fixed
  * torque until the QEI reports that it has an accurate position measurement.  After this time,
  * it uses the hall sensors to calculate the phase difference between the QEI zero point and the
  * hall sectors, and therefore between the motors coils and the QEI disc.
@@ -151,6 +137,7 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	unsigned prev_hall; // previous hall state value
 	int set_theta;	// theta value
 	int set_speed;	// Demand speed set by the user/comms interface
+	int set_veloc;	// Demand angular velocity set by the user/comms interface
 	int set_id;	// Ideal current producing radial magnetic field.
 	int set_iq;	// Ideal current producing tangential magnetic field
 	int start_theta; // Theta start position during warm-up (START and SEARCH states)
@@ -159,7 +146,8 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	int out_id;	// Output radial current value
 	int out_iq;	// Output measured tangential current value
 	int meas_theta;	// Position as measured by the QEI
-	int meas_speed;	// speed as measured by the QEI
+	int meas_veloc;	// angular velocity as measured by the QEI
+	int meas_speed;	// speed, i.e. magnitude of angular velocity
 	int rev_cnt;	// rev. counter (No. of origin traversals)
 	int theta_offset;	// Phase difference between the QEI and the coils
 	int prev_angl; 	// previous angular position
@@ -192,8 +180,8 @@ void init_motor( // initialise data structure for one motor
 	motor_s.cnts[START] = 0;
 	motor_s.state = START;
 	motor_s.prev_hall = INIT_HALL;
-	motor_s.set_theta = INIT_THETA;
-	motor_s.set_speed = INIT_SPEED;
+	motor_s.set_theta = -INIT_THETA; // MB~ MMO
+	motor_s.set_veloc = -INIT_SPEED; // MB~ MMO
 	motor_s.start_theta = 0; // Theta start position during warm-up (START and SEARCH states)
 	motor_s.set_id = 0;	// Ideal current producing radial magnetic field (NB never update as no radial force is required)
 	motor_s.set_iq = 0;	// Ideal current producing tangential magnetic field. (NB Updated based on the speed error)
@@ -216,6 +204,9 @@ void init_motor( // initialise data structure for one motor
 
 	// NB Display will require following variables, before we have measured them! ...
 
+	// MB~ Tidy up one day
+	motor_s.meas_veloc = motor_s.set_veloc;
+	motor_s.set_speed = abs(motor_s.set_veloc);
 	motor_s.meas_speed = motor_s.set_speed;
 
 	for (phase_cnt = 0; phase_cnt < NUM_PHASES; phase_cnt++)
@@ -269,15 +260,21 @@ void dq_to_pwm ( // Convert Id & Iq input values to 3 PWM output values
 )
 {
 	int I_coil[NUM_PHASES];	// array of intermediate coil currents for each phase
-	int alpha_tmp = 0, beta_tmp = 0; // Intermediate currents as a 2D vector
+	int alpha_new = 0, beta_new = 0; // New Intermediate currents as a 2D vector
 	int phase_cnt; // phase counter
 
 
 	/* Inverse park  [d,q] to [alpha, beta] */
-	inverse_park_transform( alpha_tmp, beta_tmp, inp_id, inp_iq, inp_theta  );
+inp_iq *= -1; // MB~ MMO
+	inverse_park_transform( alpha_new, beta_new, inp_id, inp_iq, inp_theta  );
+beta_new *= -1; // MB~ MMO
 
-	/* Final voltages applied */
-	inverse_clarke_transform( I_coil[PHASE_A ] ,I_coil[PHASE_B] ,I_coil[PHASE_C] ,alpha_tmp ,beta_tmp );
+	// Final voltages applied: 
+/* WARNING At present (alpha beta) arguments have to be supplied to InverseClarke in reverse order,
+ * to make motor control work (this creates currents that are spinning in the opposite direction!)
+ */ 
+//	inverse_clarke_transform( I_coil[PHASE_A ] ,I_coil[PHASE_B] ,I_coil[PHASE_C] ,alpha_new ,beta_new ); // Correct order
+	inverse_clarke_transform( I_coil[PHASE_A ] ,I_coil[PHASE_B] ,I_coil[PHASE_C] ,beta_new ,alpha_new ); //MB~ To make it work!-(
 
 	/* Scale to 12bit unsigned for PWM output */
 	for (phase_cnt = 0; phase_cnt < NUM_PHASES; phase_cnt++)
@@ -291,10 +288,13 @@ void calc_open_loop_pwm ( // Calculate open-loop PWM output values to spins magn
 	MOTOR_DATA_TYP &motor_s // reference to structure containing motor data
 )
 {
+// NB Mask correctly maps -ve values into +ve range 0 <= theta < QEI_COUNT_MAX;
+
 #if PLATFORM_REFERENCE_MHZ == 100
-	motor_s.set_theta = (motor_s.start_theta >> 2) & (QEI_COUNT_MAX-1);
+assert ( 0 == 1 ); // MB~ 100 MHz Untested
+	motor_s.set_theta = (-motor_s.start_theta >> 2) & (QEI_COUNT_MAX-1);
 #else
-	motor_s.set_theta = (motor_s.start_theta >> 4) & (QEI_COUNT_MAX-1);
+	motor_s.set_theta = (-motor_s.start_theta >> 4) & (QEI_COUNT_MAX-1); //MB~ MMO
 #endif
 	motor_s.out_id = ID_OPEN_LOOP;
 	motor_s.out_iq = IQ_OPEN_LOOP;
@@ -313,8 +313,10 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 #pragma xta label "foc_loop_read_hardware"
 
 	// Bring theta into the correct phase (adjustment between QEI and motor windings)
+	// NB Mask correctly maps -ve values into +ve range 0 <= theta < QEI_COUNT_MAX;
 	motor_s.set_theta = motor_s.meas_theta - motor_s.theta_offset;
 	motor_s.set_theta &= (QEI_COUNT_MAX - 1);
+	assert(0 <= motor_s.set_theta ); // MB~ Check
 
 #pragma xta label "foc_loop_clarke"
 
@@ -324,12 +326,14 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 #pragma xta label "foc_loop_park"
 
 	// Calculate actual coil currents (Id & Iq) using park transform
+beta *= -1; // MB~ MMO
 	park_transform( Id_in, Iq_in, alpha, beta, motor_s.set_theta  );
+Iq_in *= -1; // MB~ MMO
 
 #pragma xta label "foc_loop_speed_pid"
 
-	// Applying Speed PID. WARNING: Currently the speed parameters are inverted to get correct value for set_iq
-	motor_s.set_iq = get_pid_regulator_correction( motor_s.pids[SPEED] ,-motor_s.meas_speed ,-motor_s.set_speed );
+	// Applying Speed PID.
+	motor_s.set_iq = get_pid_regulator_correction( motor_s.pids[SPEED] ,motor_s.meas_veloc ,motor_s.set_veloc );
 
 #pragma xta label "foc_loop_id_iq_pid"
 
@@ -378,14 +382,24 @@ MOTOR_STATE_TYP check_hall_state( // Inspect Hall-state and update motor-state i
 			if (motor_s.prev_hall == LAST_HALL_STATE)
 			{ // Spinning in correct direction
 
-				// Check if position offset needs updating. MB~ I don't understand this check, it always appears to be TRUE.
-				if (motor_s.meas_theta < QEI_PER_POLE) 
-				{ // Find the offset between the rotor and the QEI
-					motor_s.theta_offset = (THETA_HALF_PHASE + motor_s.meas_theta);
+				// Check theta within range. MB~ I don't understand this.
+				if (abs(motor_s.meas_theta) < QEI_PER_POLE)
+				{  // Find the offset between the rotor and the QEI
+
+					// Check spin direction
+					if (motor_s.meas_theta < 0)
+					{ // -ve spin
+						motor_s.theta_offset = motor_s.meas_theta - THETA_HALF_PHASE; // NB More -ve
+					} // if (motor_s.meas_theta < 0)
+					else
+					{ // +ve spin
+						assert( 0 == 1 ); // MB~ Untested. Unvisited branch
+						motor_s.theta_offset = motor_s.meas_theta + THETA_HALF_PHASE; // NB More +ve
+					} // else !(motor_s.meas_theta < 0)
+
 					motor_state = FOC; // Switch to main FOC state
 					motor_s.cnts[FOC] = 0; // Initialise FOC-state counter 
-if (dbg) { printint(motor_s.id); printstr( " SE: " ); printintln( motor_s.cnts[SEARCH] ); } 
-				} // if (motor_s.meas_theta < QEI_PER_POLE)
+				} // if (abs(motor_s.meas_theta) < QEI_PER_POLE) 
 			} // if (motor_s.prev_hall == LAST_HALL_STATE)
 			else
 			{ // We are probably spinning in the wrong direction!-(
@@ -426,12 +440,12 @@ unsigned update_motor_state( // Update state of motor based on motor sensor data
 	switch( motor_s.state )
 	{
 		case START : // Intial entry state
-			if (0 < motor_s.rev_cnt) // Check if angular position origin found
+			if (0 != motor_s.rev_cnt) // Check if angular position origin found
 			{
 				motor_s.state = SEARCH; // Switch to search state
 				motor_s.cnts[SEARCH] = 0; // Initialise search-state counter
 if (dbg) { printint(motor_s.id); printstr( " SA: " ); printintln( motor_s.cnts[START] ); } 
-			} // if (1 == motor_s.rev_cnt)
+			} // if (0 != motor_s.rev_cnt)
 		break; // case START
 
 		case SEARCH : // Turn motor using Hall state, and update motor state
@@ -558,13 +572,22 @@ void use_motor ( // Start motor, and run step through different motor states
 			switch(command)
 			{
 				case CMD_GET_IQ :
-					c_speed <: motor_s.meas_speed;
+					c_speed <: motor_s.meas_speed; // Need to alter display to accept -ve values
 					c_speed <: motor_s.set_speed;
 // if (!motor_s.id) printcharln( '7' ); //MB~
 				break; // case CMD_GET_IQ
 	
 				case CMD_SET_SPEED :
 					c_speed :> motor_s.set_speed;
+					if (motor_s.set_veloc < 0)
+					{
+						motor_s.set_veloc = -motor_s.set_speed;
+					} // if (motor_s.set_veloc < 0)
+					else
+					{
+						motor_s.set_veloc = motor_s.set_speed;
+					} // else !(motor_s.set_veloc < 0)
+// printstr("V="); printintln( motor_s.set_veloc ); //MB~
 				break; // case CMD_SET_SPEED 
 	
 				case CMD_GET_FAULT :
@@ -584,7 +607,7 @@ void use_motor ( // Start motor, and run step through different motor states
 // if (!motor_s.id) printcharln( 'X' ); //MB~
 			if(command == CMD_GET_VALS)
 			{
-				c_can_eth_shared <: motor_s.meas_speed;
+				c_can_eth_shared <: motor_s.meas_veloc;
 				c_can_eth_shared <: motor_s.meas_adc.vals[PHASE_A];
 				c_can_eth_shared <: motor_s.meas_adc.vals[PHASE_B];
 			}
@@ -595,10 +618,9 @@ void use_motor ( // Start motor, and run step through different motor states
 				c_can_eth_shared <: id_out;
 				c_can_eth_shared <: iq_out;
 			}
-
 			else if (command == CMD_SET_SPEED)
 			{
-				c_can_eth_shared :> motor_s.set_speed;
+				c_can_eth_shared :> motor_s.set_veloc;
 			}
 			else if (command == CMD_GET_FAULT)
 			{
@@ -631,8 +653,9 @@ void use_motor ( // Start motor, and run step through different motor states
 				else
 				{
 					/* Get the position from encoder module. NB returns rev_cnt=0 at start-up  */
-					{ motor_s.meas_speed ,motor_s.meas_theta ,motor_s.rev_cnt } = get_qei_data( c_qei );
+					{ motor_s.meas_veloc ,motor_s.meas_theta ,motor_s.rev_cnt } = get_qei_data( c_qei );
 
+						motor_s.meas_speed = abs( motor_s.meas_veloc ); // NB Used to spot stalling behaviour
 					/* Get ADC readings */
 					get_adc_vals_calibrated_int16_mb( c_adc_cntrl ,motor_s.meas_adc );
 
@@ -648,7 +671,8 @@ void use_motor ( // Start motor, and run step through different motor states
 				else
 				{
 					// Convert Output DQ values to PWM values
-					dq_to_pwm( pwm_vals ,motor_s.out_id ,motor_s.out_iq ,motor_s.set_theta ); // Convert Output DQ values to PWM values
+//					dq_to_pwm( pwm_vals ,motor_s.out_id ,motor_s.out_iq ,motor_s.set_theta ); // Convert Output DQ values to PWM values
+					dq_to_pwm( pwm_vals ,motor_s.out_id ,motor_s.out_iq ,motor_s.set_theta ); // MB~ MMO
 
 					update_pwm_inv( c_pwm ,pwm_vals ,motor_s.id ,motor_s.cur_buf ,motor_s.mem_addr ); // Update the PWM values
 
@@ -658,7 +682,7 @@ void use_motor ( // Start motor, and run step through different motor states
 					if (0 == motor_s.id) // Check if 1st Motor
 					{
 /*
-						xscope_probe_data(0, motor_s.meas_speed );
+						xscope_probe_data(0, motor_s.meas_veloc );
 				    xscope_probe_data(1, motor_s.set_iq );
 	    			xscope_probe_data(2, pwm_vals[PHASE_A] );
 	    			xscope_probe_data(3, pwm_vals[PHASE_B]);
