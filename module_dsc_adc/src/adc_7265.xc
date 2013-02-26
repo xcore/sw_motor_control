@@ -322,7 +322,7 @@ void adc_7265_triggered( // Thread for ADC server
 #ifdef USE_XSCOPE
 		if (0 == trig_id) // Check if 1st Motor
 		{
-			xscope_probe_data( 1 ,dummy );
+//			xscope_probe_data( 1 ,dummy );
 			dummy = -dummy;
 		} // if (0 == trig_id)
 #endif

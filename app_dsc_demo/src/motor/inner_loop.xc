@@ -56,13 +56,6 @@
 
 #define FIRST_HALL_STATE 0b001 // 1st Hall state of 6-state cycle
 
-// Choose last Hall state of 6-state cycle, depending on spin direction
-#if (LDO_MOTOR_SPIN == 1)
-	#define LAST_HALL_STATE 0b011
-#else
-	#define LAST_HALL_STATE 0b101
-#endif
-
 #define IQ_OPEN_LOOP 2000 // Iq value for open-loop mode
 #define ID_OPEN_LOOP 0		// Id value for open-loop mode
 #define INIT_HALL 0 // Initial Hall state
@@ -135,8 +128,8 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	int iters; // Iterations of inner_loop
 	unsigned id; // Unique Motor identifier e.g. 0 or 1
 	unsigned prev_hall; // previous hall state value
+	unsigned end_hall; // hall state at end of cycle. I.e. next value is first value of cycle (001)
 	int set_theta;	// theta value
-	int set_speed;	// Demand speed set by the user/comms interface
 	int set_veloc;	// Demand angular velocity set by the user/comms interface
 	int set_id;	// Ideal current producing radial magnetic field.
 	int set_iq;	// Ideal current producing tangential magnetic field
@@ -180,8 +173,17 @@ void init_motor( // initialise data structure for one motor
 	motor_s.cnts[START] = 0;
 	motor_s.state = START;
 	motor_s.prev_hall = INIT_HALL;
-	motor_s.set_theta = -INIT_THETA; // MB~ MMO
-	motor_s.set_veloc = -INIT_SPEED; // MB~ MMO
+
+// Choose last Hall state of 6-state cycle, depending on spin direction
+#if (LDO_MOTOR_SPIN == 1)
+	#define LAST_HALL_STATE 0b011
+#else
+	#define LAST_HALL_STATE 0b101
+#endif
+
+
+	motor_s.set_theta = 0;
+	motor_s.set_veloc = -INIT_SPEED; // -INIT_SPEED; // MB~ MMO
 	motor_s.start_theta = 0; // Theta start position during warm-up (START and SEARCH states)
 	motor_s.set_id = 0;	// Ideal current producing radial magnetic field (NB never update as no radial force is required)
 	motor_s.set_iq = 0;	// Ideal current producing tangential magnetic field. (NB Updated based on the speed error)
@@ -203,11 +205,18 @@ void init_motor( // initialise data structure for one motor
 	safestrcpy( motor_s.err_strs[DIRECTION].str ,"Motor Spinning In Wrong Direction!" );
 
 	// NB Display will require following variables, before we have measured them! ...
-
-	// MB~ Tidy up one day
 	motor_s.meas_veloc = motor_s.set_veloc;
-	motor_s.set_speed = abs(motor_s.set_veloc);
-	motor_s.meas_speed = motor_s.set_speed;
+	motor_s.meas_speed = abs(motor_s.set_veloc);
+
+	// Choose last Hall state of 6-state cycle NB depends on motor-type and spin-direction
+	if (LDO_MOTOR_SPIN ^ (motor_s.set_veloc < 0))
+	{
+		motor_s.end_hall = 0b101;
+	} // if (LDO_MOTOR_SPIN ^ (motor_s.set_veloc < 0))
+	else
+	{
+		motor_s.end_hall = 0b011;
+	} // else !(LDO_MOTOR_SPIN ^ (motor_s.set_veloc < 0))
 
 	for (phase_cnt = 0; phase_cnt < NUM_PHASES; phase_cnt++)
 	{ 
@@ -237,7 +246,8 @@ unsigned scale_to_12bit( // Returns coil current converted to 12-bit unsigned
 	unsigned out_pwm; // output 12bit PWM value
 
 
-	out_pwm = (inp_I + OFFSET_14) >> 3; // Convert coil current to PWM value
+	out_pwm = (inp_I + OFFSET_14) >> 3; // Convert coil current to PWM value. NB Always +ve
+assert( 0 <= out_pwm ); // MB~ test
 
 	// Clip PWM value into 12-bit range
 	if (out_pwm > PWM_MAX_LIMIT)
@@ -253,6 +263,7 @@ unsigned scale_to_12bit( // Returns coil current converted to 12-bit unsigned
 } // scale_to_12bit
 /*****************************************************************************/
 void dq_to_pwm ( // Convert Id & Iq input values to 3 PWM output values 
+	MOTOR_DATA_TYP &motor_s, // Reference to structure containing motor data
 	unsigned out_pwm[],	// Array of PWM variables
 	int inp_id, // Input radial current from the current control PIDs
 	int inp_iq, // Input tangential currents from the current control PIDs
@@ -264,8 +275,11 @@ void dq_to_pwm ( // Convert Id & Iq input values to 3 PWM output values
 	int phase_cnt; // phase counter
 
 
+if (motor_s.id) xscope_probe_data( 0 ,inp_theta );
+
 	/* Inverse park  [d,q] to [alpha, beta] */
 inp_iq *= -1; // MB~ MMO
+// if (motor_s.id) xscope_probe_data( 1 ,inp_iq );
 	inverse_park_transform( alpha_new, beta_new, inp_id, inp_iq, inp_theta  );
 beta_new *= -1; // MB~ MMO
 
@@ -273,8 +287,12 @@ beta_new *= -1; // MB~ MMO
 /* WARNING At present (alpha beta) arguments have to be supplied to InverseClarke in reverse order,
  * to make motor control work (this creates currents that are spinning in the opposite direction!)
  */ 
-//	inverse_clarke_transform( I_coil[PHASE_A ] ,I_coil[PHASE_B] ,I_coil[PHASE_C] ,alpha_new ,beta_new ); // Correct order
-	inverse_clarke_transform( I_coil[PHASE_A ] ,I_coil[PHASE_B] ,I_coil[PHASE_C] ,beta_new ,alpha_new ); //MB~ To make it work!-(
+
+// if (motor_s.id) xscope_probe_data( 2 ,alpha_new );
+//		inverse_clarke_transform( I_coil[PHASE_A] ,I_coil[PHASE_B] ,I_coil[PHASE_C] ,alpha_new ,beta_new ); // Correct order
+inverse_clarke_transform( I_coil[PHASE_A] ,I_coil[PHASE_B] ,I_coil[PHASE_C] ,beta_new ,alpha_new ); //MB~ To make it work!-(
+// if (motor_s.id) xscope_probe_data( 1 ,I_coil[PHASE_A] );
+// if (motor_s.id) xscope_probe_data( 2 ,I_coil[PHASE_C] );
 
 	/* Scale to 12bit unsigned for PWM output */
 	for (phase_cnt = 0; phase_cnt < NUM_PHASES; phase_cnt++)
@@ -288,18 +306,29 @@ void calc_open_loop_pwm ( // Calculate open-loop PWM output values to spins magn
 	MOTOR_DATA_TYP &motor_s // reference to structure containing motor data
 )
 {
-// NB Mask correctly maps -ve values into +ve range 0 <= theta < QEI_COUNT_MAX;
 
 #if PLATFORM_REFERENCE_MHZ == 100
-assert ( 0 == 1 ); // MB~ 100 MHz Untested
-	motor_s.set_theta = (-motor_s.start_theta >> 2) & (QEI_COUNT_MAX-1);
+	assert ( 0 == 1 ); // MB~ 100 MHz Untested
+	motor_s.set_theta = motor_s.start_theta >> 2;
 #else
-	motor_s.set_theta = (-motor_s.start_theta >> 4) & (QEI_COUNT_MAX-1); //MB~ MMO
+	motor_s.set_theta = motor_s.start_theta >> 4;
 #endif
+
+	// NB Mask correctly maps -ve values into +ve range 0 <= theta < QEI_COUNT_MAX;
+	motor_s.set_theta &= (QEI_COUNT_MAX-1);
 	motor_s.out_id = ID_OPEN_LOOP;
 	motor_s.out_iq = IQ_OPEN_LOOP;
 
-	motor_s.start_theta++; // Update start position ready for next iteration
+	// Update start position ready for next iteration
+
+	if (motor_s.set_veloc < 0)
+	{
+		motor_s.start_theta--; // Step on motor in ANTI-clockwise direction
+	} // if (motor_s.set_veloc < 0)
+	else
+	{
+		motor_s.start_theta++; // Step on motor in Clockwise direction
+	} // else !(motor_s.set_veloc < 0)
 } // calc_open_loop_pwm
 /*****************************************************************************/
 void calc_foc_pwm ( // Calculate FOC PWM output values
@@ -312,9 +341,13 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 
 #pragma xta label "foc_loop_read_hardware"
 
+// if (motor_s.id) xscope_probe_data( 1 ,motor_s.meas_adc.vals[PHASE_B] );
+
 	// Bring theta into the correct phase (adjustment between QEI and motor windings)
+motor_s.set_theta = motor_s.meas_theta - motor_s.theta_offset;
+// motor_s.set_theta = motor_s.meas_theta; //MB~ Not sure whether this is required
+
 	// NB Mask correctly maps -ve values into +ve range 0 <= theta < QEI_COUNT_MAX;
-	motor_s.set_theta = motor_s.meas_theta - motor_s.theta_offset;
 	motor_s.set_theta &= (QEI_COUNT_MAX - 1);
 	assert(0 <= motor_s.set_theta ); // MB~ Check
 
@@ -327,7 +360,11 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 
 	// Calculate actual coil currents (Id & Iq) using park transform
 beta *= -1; // MB~ MMO
+// if (motor_s.id) xscope_probe_data( 2 ,alpha );
+if (motor_s.id) xscope_probe_data( 3 ,motor_s.meas_veloc );
 	park_transform( Id_in, Iq_in, alpha, beta, motor_s.set_theta  );
+if (motor_s.id) xscope_probe_data( 4 ,motor_s.meas_theta );
+if (motor_s.id) xscope_probe_data( 5 ,motor_s.set_theta );
 Iq_in *= -1; // MB~ MMO
 
 #pragma xta label "foc_loop_speed_pid"
@@ -356,9 +393,9 @@ MOTOR_STATE_TYP check_hall_state( // Inspect Hall-state and update motor-state i
  * The Sensor bits are toggled every 180 degrees. 
  * Each phase is separated by 120 degrees. This gives the following bit pattern for ABC
  * 
- *          ------------> Clock-Wise ------------>
- * (011) -> 001 -> 101 -> 100 -> 110 -> 010 -> 011 -> (001)
  *          <---------- Anti-Clockwise <----------
+ * (011) -> 001 -> 101 -> 100 -> 110 -> 010 -> 011 -> (001)
+ *          ------------> Clock-Wise ------------>
  * 
  * WARNING: Each motor manufacturer uses their own definition for spin direction.
  * So key Hall-states are implemented as defines e.g. FIRST_HALL and LAST_HALL
@@ -379,7 +416,7 @@ MOTOR_STATE_TYP check_hall_state( // Inspect Hall-state and update motor-state i
 		if (inp_hall == FIRST_HALL_STATE) 
 		{
 			// Check for correct spin direction
-			if (motor_s.prev_hall == LAST_HALL_STATE)
+			if (motor_s.prev_hall == motor_s.end_hall)
 			{ // Spinning in correct direction
 
 				// Check theta within range. MB~ I don't understand this.
@@ -387,27 +424,28 @@ MOTOR_STATE_TYP check_hall_state( // Inspect Hall-state and update motor-state i
 				{  // Find the offset between the rotor and the QEI
 
 					// Check spin direction
-					if (motor_s.meas_theta < 0)
+					if (motor_s.meas_veloc < 0)
 					{ // -ve spin
 						motor_s.theta_offset = motor_s.meas_theta - THETA_HALF_PHASE; // NB More -ve
-					} // if (motor_s.meas_theta < 0)
+					} // if (motor_s.meas_veloc < 0)
 					else
 					{ // +ve spin
-						assert( 0 == 1 ); // MB~ Untested. Unvisited branch
+//						assert( 0 == 1 ); // MB~ Untested. Unvisited branch
 						motor_s.theta_offset = motor_s.meas_theta + THETA_HALF_PHASE; // NB More +ve
-					} // else !(motor_s.meas_theta < 0)
+					} // else !(motor_s.meas_veloc < 0)
 
+// printintln( motor_s.theta_offset ); //MB~
 					motor_state = FOC; // Switch to main FOC state
 					motor_s.cnts[FOC] = 0; // Initialise FOC-state counter 
 				} // if (abs(motor_s.meas_theta) < QEI_PER_POLE) 
-			} // if (motor_s.prev_hall == LAST_HALL_STATE)
+			} // if (motor_s.prev_hall == motor_s.end_hall)
 			else
 			{ // We are probably spinning in the wrong direction!-(
 				motor_s.err_flgs |= ERROR_DIRECTION;
 				motor_state = STOP; // Switch to stop state
 				motor_s.cnts[STOP] = 0; // Initialise stop-state counter 
 if (dbg) { printint(motor_s.id); printstr( " SE- " ); printintln( motor_s.cnts[SEARCH] ); } 
-			} // else !(motor_s.prev_hall == LAST_HALL_STATE)
+			} // else !(motor_s.prev_hall == motor_s.end_hall)
 		} // if (inp_hall == FIRST_HALL_STATE)
 
 		motor_s.prev_hall = inp_hall; // Store hall state for next iteration
@@ -455,7 +493,7 @@ if (dbg) { printint(motor_s.id); printstr( " SA: " ); printintln( motor_s.cnts[S
 	
 		case FOC : // Normal FOC state
 			// Check for a stall
-// if (dbg) { printint(motor_s.id); printchar(': '); printint( motor_s.meas_speed ); printchar(' '); printint( motor_s.meas_theta ); printchar(' '); printintln( motor_s.valid ); }
+// if (dbg) { printint(motor_s.id); printchar(': '); printint( motor_s.meas_veloc ); printchar(' '); printint( motor_s.meas_theta ); printchar(' '); printintln( motor_s.valid ); }
 			if (motor_s.meas_speed < STALL_SPEED) 
 			{
 				motor_s.state = STALL; // Switch to stall state
@@ -572,21 +610,13 @@ void use_motor ( // Start motor, and run step through different motor states
 			switch(command)
 			{
 				case CMD_GET_IQ :
-					c_speed <: motor_s.meas_speed; // Need to alter display to accept -ve values
-					c_speed <: motor_s.set_speed;
+					c_speed <: motor_s.meas_veloc;
+					c_speed <: motor_s.set_veloc;
 // if (!motor_s.id) printcharln( '7' ); //MB~
 				break; // case CMD_GET_IQ
 	
 				case CMD_SET_SPEED :
-					c_speed :> motor_s.set_speed;
-					if (motor_s.set_veloc < 0)
-					{
-						motor_s.set_veloc = -motor_s.set_speed;
-					} // if (motor_s.set_veloc < 0)
-					else
-					{
-						motor_s.set_veloc = motor_s.set_speed;
-					} // else !(motor_s.set_veloc < 0)
+					c_speed :> motor_s.set_veloc;
 // printstr("V="); printintln( motor_s.set_veloc ); //MB~
 				break; // case CMD_SET_SPEED 
 	
@@ -671,8 +701,7 @@ void use_motor ( // Start motor, and run step through different motor states
 				else
 				{
 					// Convert Output DQ values to PWM values
-//					dq_to_pwm( pwm_vals ,motor_s.out_id ,motor_s.out_iq ,motor_s.set_theta ); // Convert Output DQ values to PWM values
-					dq_to_pwm( pwm_vals ,motor_s.out_id ,motor_s.out_iq ,motor_s.set_theta ); // MB~ MMO
+					dq_to_pwm( motor_s ,pwm_vals ,motor_s.out_id ,motor_s.out_iq ,motor_s.set_theta ); // Convert Output DQ values to PWM values
 
 					update_pwm_inv( c_pwm ,pwm_vals ,motor_s.id ,motor_s.cur_buf ,motor_s.mem_addr ); // Update the PWM values
 

@@ -110,14 +110,14 @@ void init_can_phy( chanend c_rxChan, chanend c_txChan, clock p_can_clk, buffered
 #ifdef USE_XSCOPE
 void xscope_user_init()
 {
-	xscope_register( 6,
-		XSCOPE_CONTINUOUS, "meas_speed", XSCOPE_INT , "n",
-		XSCOPE_CONTINUOUS, "set_iq", XSCOPE_INT , "n",
-		XSCOPE_CONTINUOUS, "pwm_A", XSCOPE_INT , "n",
-		XSCOPE_CONTINUOUS, "pwm_B", XSCOPE_INT , "n",
-		XSCOPE_CONTINUOUS, "meas_Ia", XSCOPE_INT , "n",
-		XSCOPE_CONTINUOUS, "meas_Ib", XSCOPE_INT , "n"
-//		XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT , "n",
+	xscope_register( 6
+		,XSCOPE_CONTINUOUS, "inp_theta", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "ADC_B", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "alpha", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "beta", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "Id", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "Iq", XSCOPE_INT , "n"
+//		XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT , "n"
 //		XSCOPE_CONTINUOUS, "Theta", XSCOPE_UINT , "n"
 //		XSCOPE_CONTINUOUS, "PWM[0]", XSCOPE_UINT , "n"
 	); // xscope_register 

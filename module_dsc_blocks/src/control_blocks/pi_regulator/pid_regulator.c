@@ -49,7 +49,7 @@ void initialise_pid( // Initialise PID settings
 		break; // case SPEED
 
 		default :
-			assert( 0 == 1 ); // ERROR: Unsipported PID regulator
+			assert( 0 == 1 ); // ERROR: Unsupported PID regulator
 		break; // default
 
 	} // switch( pid_id )

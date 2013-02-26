@@ -54,7 +54,7 @@ void get_adc_vals_calibrated_int16_mb(
 	} // for phase_cnt
 
 	// Calculate last ADC phase from previous phases (NB Sum of phases is zero)
-	adc_data_s.vals[USED_ADC_PHASES] = -adc_sum; 
+	adc_data_s.vals[(NUM_ADC_PHASES - 1)] = -adc_sum;
 
 	return;
 } // get_adc_vals_calibrated_int16_mb
