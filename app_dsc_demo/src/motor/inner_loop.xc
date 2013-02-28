@@ -275,7 +275,11 @@ void dq_to_pwm ( // Convert Id & Iq input values to 3 PWM output values
 	int phase_cnt; // phase counter
 
 
+if (motor_s.id) xscope_probe_data( 0 ,inp_theta );
+
 	/* Inverse park  [d,q] to [alpha, beta] */
+inp_iq *= -1; // MB~ MMO
+// if (motor_s.id) xscope_probe_data( 1 ,inp_iq );
 	inverse_park_transform( alpha_new, beta_new, inp_id, inp_iq, inp_theta  );
 
 	// Final voltages applied: 
@@ -283,7 +287,11 @@ void dq_to_pwm ( // Convert Id & Iq input values to 3 PWM output values
  * to make motor control work (this creates currents that are spinning in the opposite direction!)
  */ 
 
-	inverse_clarke_transform( I_coil[PHASE_A] ,I_coil[PHASE_B] ,I_coil[PHASE_C] ,alpha_new ,beta_new ); // Correct order
+// if (motor_s.id) xscope_probe_data( 2 ,alpha_new );
+//		inverse_clarke_transform( I_coil[PHASE_A] ,I_coil[PHASE_B] ,I_coil[PHASE_C] ,alpha_new ,beta_new ); // Correct order
+inverse_clarke_transform( I_coil[PHASE_A] ,I_coil[PHASE_B] ,I_coil[PHASE_C] ,beta_new ,alpha_new ); //MB~ To make it work!-(
+// if (motor_s.id) xscope_probe_data( 1 ,I_coil[PHASE_A] );
+// if (motor_s.id) xscope_probe_data( 2 ,I_coil[PHASE_C] );
 
 	/* Scale to 12bit unsigned for PWM output */
 	for (phase_cnt = 0; phase_cnt < NUM_PHASES; phase_cnt++)
@@ -332,11 +340,11 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 
 #pragma xta label "foc_loop_read_hardware"
 
+// if (motor_s.id) xscope_probe_data( 1 ,motor_s.meas_adc.vals[PHASE_B] );
+
 	// Bring theta into the correct phase (adjustment between QEI and motor windings)
-	// MB~ This makes set_theta approximately the same as inp_theta (used in inverse_park transform)
-	// MB~ Maybe we should use meas_theta in forward & inverse park transforms once FOC starts
-	// MB~ theta_offset appears to move theta in time by about 1/6 of a revolution (60 degrees)
-	motor_s.set_theta = motor_s.meas_theta - motor_s.theta_offset;
+motor_s.set_theta = motor_s.meas_theta - motor_s.theta_offset;
+// motor_s.set_theta = motor_s.meas_theta; //MB~ Not sure whether this is required
 
 	// NB Mask correctly maps -ve values into +ve range 0 <= theta < QEI_COUNT_MAX;
 	motor_s.set_theta &= (QEI_COUNT_MAX - 1);
@@ -351,7 +359,13 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 
 
 	// Calculate actual coil currents (Id & Iq) using park transform
+beta *= -1; // MB~ MMO
+// if (motor_s.id) xscope_probe_data( 2 ,alpha );
+if (motor_s.id) xscope_probe_data( 3 ,motor_s.meas_veloc );
 	park_transform( Id_in, Iq_in, alpha, beta, motor_s.set_theta  );
+if (motor_s.id) xscope_probe_data( 4 ,motor_s.meas_theta );
+if (motor_s.id) xscope_probe_data( 5 ,motor_s.set_theta );
+Iq_in *= -1; // MB~ MMO
 
 #pragma xta label "foc_loop_speed_pid"
 
@@ -424,9 +438,11 @@ MOTOR_STATE_TYP check_hall_state( // Inspect Hall-state and update motor-state i
 					} // if (motor_s.meas_veloc < 0)
 					else
 					{ // +ve spin
+//						assert( 0 == 1 ); // MB~ Untested. Unvisited branch
 						motor_s.theta_offset = motor_s.meas_theta + THETA_HALF_PHASE; // NB More +ve
 					} // else !(motor_s.meas_veloc < 0)
 
+// printintln( motor_s.theta_offset ); //MB~
 					motor_state = FOC; // Switch to main FOC state
 					motor_s.cnts[FOC] = 0; // Initialise FOC-state counter 
 				} // if (abs(motor_s.meas_theta) < QEI_PER_POLE)
