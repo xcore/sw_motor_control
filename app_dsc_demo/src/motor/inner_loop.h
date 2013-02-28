@@ -17,6 +17,10 @@
 #ifndef _INNER_LOOP_H_
 #define _INNER_LOOP_H_
 
+/* These defines are used to calculate offset between Hall-state origin, and QEI origin.
+ * There are 6 Hall-states per revolution, 60 degrees each, half-way through each state is therefore 30 degrees.
+ * There are 1024 QEI counts/rev (QEI_COUNT_MAX)
+ */
 #define QEI_PER_POLE (QEI_COUNT_MAX / NUM_POLE_PAIRS) // e.g. 256 No. of QEI sensors per pole 
 #define THETA_HALF_PHASE (QEI_PER_POLE / 12) // e.g. ~21 CoilSectorAngle/2 (6 sectors = 60 degrees per sector, 30 degrees per half sector)
 

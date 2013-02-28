@@ -25,7 +25,7 @@
 
 const PID_CONST_TYP pid_const_Id = { DQ_P ,DQ_I ,DQ_D ,DQ_INTEGRAL_LIMIT ,D_HI_LIM ,D_LO_LIM ,PID_RESOLUTION };
 const PID_CONST_TYP pid_const_Iq = { DQ_P ,DQ_I ,DQ_D ,DQ_INTEGRAL_LIMIT ,Q_LIMIT ,-Q_LIMIT ,PID_RESOLUTION };
-const PID_CONST_TYP pid_const_speed = { SPEED_P ,SPEED_I ,SPEED_D ,SPEED_INTEGRAL_LIMIT ,SPEED_HI_LIM ,SPEED_LO_LIM ,PID_RESOLUTION };
+const PID_CONST_TYP pid_const_speed = { SPEED_P ,SPEED_I ,SPEED_D ,SPEED_INTEGRAL_LIMIT ,SPEED_HI_LIM ,-SPEED_HI_LIM ,PID_RESOLUTION };
 
 /*****************************************************************************/
 void initialise_pid( // Initialise PID settings
@@ -49,7 +49,7 @@ void initialise_pid( // Initialise PID settings
 		break; // case SPEED
 
 		default :
-			assert( 0 == 1 ); // ERROR: Unsipported PID regulator
+			assert( 0 == 1 ); // ERROR: Unsupported PID regulator
 		break; // default
 
 	} // switch( pid_id )
@@ -63,6 +63,7 @@ void initialise_pid( // Initialise PID settings
 } // inititialise_pid
 /*****************************************************************************/
 int get_pid_regulator_correction( // Computes new PID correction based on input error
+	unsigned motor_id, // Unique Motor identifier e.g. 0 or 1
 	PID_REGULATOR_TYP * pid_regul_p, // Pointer to PID regulator data structure
 	int meas_val, // measured value
 	int requ_val // request value
@@ -70,7 +71,8 @@ int get_pid_regulator_correction( // Computes new PID correction based on input 
 #define MAX_32 0x40000000
 {
 	PID_CONST_TYP * pid_const_p = &(pid_regul_p->consts); // Local pointer to PID constants data structure
-	int inp_err = (meas_val - requ_val); // Compute input error
+//	int inp_err = (meas_val - requ_val); // Compute input error
+	int inp_err = (requ_val - meas_val); // Compute input error
 	int diff_err = (inp_err - pid_regul_p->prev_err); // Compute difference error
 	S64_T res_64; // Result at 64-bit precision
 	int res_32; // Result at 32-bit precision

@@ -65,16 +65,16 @@ void display_shared_io_manager( // Manages the display, buttons and shared ports
 )
 {
 	char my_string[50]; // array of display characters
-	unsigned int new_meas_speed[NUMBER_OF_MOTORS]; // Array containing new measured speeds
-	unsigned int old_meas_speed[NUMBER_OF_MOTORS]; // Array containing old measured speeds
-	unsigned int fault[NUMBER_OF_MOTORS]; // Array containing motor fault ids
-	unsigned int new_req_speed; // new requested speed
-	unsigned int old_req_speed = 1000; // old requested speed
+	int new_meas_speed[NUMBER_OF_MOTORS]; // Array containing new measured speeds
+	int old_meas_speed[NUMBER_OF_MOTORS]; // Array containing old measured speeds
+	int fault[NUMBER_OF_MOTORS]; // Array containing motor fault ids
+	int new_req_speed; // new requested speed
+	int old_req_speed = 1000; // old requested speed
 	int speed_change; // flag set when new speed parameters differ from old
-	unsigned cur_speed; // current speed
+	int cur_speed; // current speed
 	unsigned int btn_en = 0; // button debounce counter
 	int motor_cnt; // motor counter
-	unsigned toggle = 1; // indicates motor spin direction 
+	int toggle = 1; // indicates motor spin direction 
 	unsigned btns_val; // value that encodes state of buttons
 	int err_cnt; // error counter
 
@@ -142,15 +142,15 @@ void display_shared_io_manager( // Manages the display, buttons and shared ports
 				if (speed_change) 
 				{
 #ifdef USE_CAN
-					lcd_draw_text_row( "  XMOS Demo 2011: CAN\n", 0, p );
+					lcd_draw_text_row( "  XMOS Demo 2013: CAN\n", 0, p );
 #endif
 #ifdef USE_ETH
-					lcd_draw_text_row( "  XMOS Demo 2011: ETH\n", 0, p );
+					lcd_draw_text_row( "  XMOS Demo 2013: ETH\n", 0, p );
 #endif
 					// update old speed parameters ...
 
 					old_req_speed = new_req_speed;
-					sprintf(my_string, "  Set Speed: %04d RPM\n", old_req_speed );
+					sprintf(my_string, "  SetVeloc:%5d RPM\n", old_req_speed );
 					lcd_draw_text_row( my_string, 1, p );
 
 					for (motor_cnt=0; motor_cnt<NUMBER_OF_MOTORS; motor_cnt++) 
@@ -163,7 +163,7 @@ void display_shared_io_manager( // Manages the display, buttons and shared ports
 						} 
 						else 
 						{
-							sprintf(my_string, "  Speed%1d: %04d RPM\n" ,(motor_cnt + 1) ,old_meas_speed[motor_cnt] );
+							sprintf(my_string, "  Velocty%1d:%5d RPM\n" ,(motor_cnt + 1) ,old_meas_speed[motor_cnt] );
 						}
 
 						lcd_draw_text_row( my_string ,(motor_cnt + 2) ,p );

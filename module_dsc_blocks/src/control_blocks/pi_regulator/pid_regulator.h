@@ -101,6 +101,7 @@ void initialise_pid( // Initialise PID settings
 );
 /*****************************************************************************/
 int get_pid_regulator_correction( // Computes new PID correction based on input error
+	unsigned motor_id, // Unique Motor identifier e.g. 0 or 1
 	PID_REGULATOR_TYP &pid_regul_s, // Reference to PID regulator data structure
 	int meas_val, // measured value
 	int requ_val // request value
@@ -115,6 +116,7 @@ void inititialise_pid( // Initialise PID settings
 );
 /*****************************************************************************/
 int get_pid_regulator_correction( // Computes new PID correction based on input error
+	unsigned motor_id, // Unique Motor identifier e.g. 0 or 1
 	PID_REGULATOR_TYP * pid_regul_p, // Pointer to PID regulator data structure
 	int meas_val, // measured value
 	int requ_val // request value
