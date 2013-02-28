@@ -47,7 +47,7 @@
 #define THR_TICKS_PER_QEI (MIN_TICKS_PER_QEI >> 1) // Threshold value used to trap annomalies // 11 bits
 
 #define MAX_CONFID 2 // Maximum confidence value
-#define MAX_QEI_ERR 3 // Maximum number of consecutive QEI errors allowed
+#define MAX_QEI_ERR 8 // Maximum number of consecutive QEI errors allowed
 
 #define QEI_CNT_LIMIT (QEI_COUNT_MAX + HALF_QEI_CNT) // 540 degrees of rotation
 
