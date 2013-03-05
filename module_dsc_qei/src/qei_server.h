@@ -26,8 +26,6 @@
 #define NUMBER_OF_MOTORS 1
 #endif
 
-#define HALF_QEI_CNT (QEI_COUNT_MAX >> 1) // 180 degrees of rotation
-
 /* This is a bit of a cludge, we are using a non-standard configuration
  * where the timer on the tile for inner_loop() is running at 250 MHz,
  * but other timers are running at the default of 100 MHz.
@@ -41,7 +39,7 @@
 #endif
 
 // Calculate speed definitions, preserving precision and preventing overflow !-)
-#define TICKS_PER_SEC_PER_QEI (PLATFORM_REFERENCE_HZ / QEI_COUNT_MAX) // Ticks/sec/angular_increment // 18-bits
+#define TICKS_PER_SEC_PER_QEI (PLATFORM_REFERENCE_HZ / QEI_PER_REV) // Ticks/sec/angular_increment // 18-bits
 #define TICKS_PER_MIN_PER_QEI (60 * TICKS_PER_SEC_PER_QEI) // Ticks/min/angular_increment // 24 bits
 #define MIN_TICKS_PER_QEI (TICKS_PER_MIN_PER_QEI / MAX_SPEC_RPM) // Min. expected Ticks/QEI // 12 bits
 #define THR_TICKS_PER_QEI (MIN_TICKS_PER_QEI >> 1) // Threshold value used to trap annomalies // 11 bits
@@ -49,7 +47,7 @@
 #define MAX_CONFID 2 // Maximum confidence value
 #define MAX_QEI_ERR 8 // Maximum number of consecutive QEI errors allowed
 
-#define QEI_CNT_LIMIT (QEI_COUNT_MAX + HALF_QEI_CNT) // 540 degrees of rotation
+#define QEI_CNT_LIMIT (QEI_PER_REV + HALF_QEI_CNT) // 540 degrees of rotation
 
 #define QEI_PHASES 4	// 4 combinatations of Phases_B & Phases_A  E.g. [ 00 01 11 10 ]
 

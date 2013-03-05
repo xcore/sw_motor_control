@@ -200,20 +200,20 @@ int get_theta_value( // Calculate theta value (returned to client) from local an
 	if (0 > inp_ang)
 	{ // Negative angles
 
-		if (inp_ang > (-QEI_COUNT_MAX))
+		if (inp_ang > (-QEI_PER_REV))
 		{
 			out_theta = inp_ang; // Normal case -ve
-		} // if (inp_ang > -QEI_COUNT_MAX)
+		} // if (inp_ang > -QEI_PER_REV)
 		else 
 		{
 			if (inp_ang > (-QEI_CNT_LIMIT))
 			{
-				out_theta = inp_ang + QEI_COUNT_MAX; // False -ve counts occured
+				out_theta = inp_ang + QEI_PER_REV; // False -ve counts occured
 			} // if (inp_ang > -QEI_CNT_LIMIT)
 			else 
 			{ // Origin Missed - Correct counters
 				inp_qei_s.orig_cnt--; // Decrement origin counter
-				inp_qei_s.ang_cnt += QEI_COUNT_MAX; // Add a whole rotation
+				inp_qei_s.ang_cnt += QEI_PER_REV; // Add a whole rotation
 
 				out_theta = inp_qei_s.ang_cnt; // Now a normal case -ve
 			} // else !(inp_ang < QEI_CNT_LIMIT)
@@ -223,24 +223,24 @@ int get_theta_value( // Calculate theta value (returned to client) from local an
 	else
 	{ // Positive angles
 
-		if (inp_ang < QEI_COUNT_MAX)
+		if (inp_ang < QEI_PER_REV)
 		{
 			out_theta = inp_ang; // Normal case +ve
-		} // if (inp_ang < QEI_COUNT_MAX)
+		} // if (inp_ang < QEI_PER_REV)
 		else 
 		{
 			if (inp_ang < QEI_CNT_LIMIT)
 			{
-				out_theta = inp_ang - QEI_COUNT_MAX; // False +ve counts occured
+				out_theta = inp_ang - QEI_PER_REV; // False +ve counts occured
 			} // if (inp_ang < QEI_CNT_LIMIT)
 			else 
 			{ // Origin Missed - Correct counters
 				inp_qei_s.orig_cnt++; // Increment origin counter
-				inp_qei_s.ang_cnt -= QEI_COUNT_MAX; // Subtract a whole rotation
+				inp_qei_s.ang_cnt -= QEI_PER_REV; // Subtract a whole rotation
 
 				out_theta = inp_qei_s.ang_cnt; // Now a normal case +ve
 			} // else !(inp_ang > -QEI_CNT_LIMIT)
-		} // else !(inp_ang < QEI_COUNT_MAX)
+		} // else !(inp_ang < QEI_PER_REV)
 
 	} // else !(0 > inp_ang)
 
@@ -361,7 +361,7 @@ void service_client_request( // Send processed QEI data to client
 	// Calculate new speed estimate.
 	meas_veloc = inp_qei_s.spin_sign * TICKS_PER_MIN_PER_QEI / inp_qei_s.diff_time;
 
-	c_qei <: inp_qei_s.theta;
+	c_qei <: (inp_qei_s.theta & QEI_REV_MASK); // Send value in range [0..QEI_REV_MASK]
 	c_qei <: meas_veloc;			
 	c_qei <: inp_qei_s.orig_cnt;
 } // service_client_request

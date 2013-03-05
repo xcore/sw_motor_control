@@ -60,7 +60,7 @@
 #define ID_OPEN_LOOP 0		// Id value for open-loop mode
 #define INIT_HALL 0 // Initial Hall state
 #define INIT_THETA 0 // Initial start-up angle
-#define INIT_SPEED 2000 // Initial start-up speed
+#define INIT_SPEED 400 // Initial start-up speed
 
 #ifdef USE_XSCOPE
 	#define DEMO_LIMIT 100000 // XSCOPE
@@ -131,6 +131,7 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	unsigned end_hall; // hall state at end of cycle. I.e. next value is first value of cycle (001)
 	int set_theta;	// theta value
 	int set_veloc;	// Demand angular velocity set by the user/comms interface
+	int half_veloc;	// Half demand angular velocity
 	int set_id;	// Ideal current producing radial magnetic field.
 	int set_iq;	// Ideal current producing tangential magnetic field
 	int start_theta; // Theta start position during warm-up (START and SEARCH states)
@@ -138,6 +139,7 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 
 	int out_id;	// Output radial current value
 	int out_iq;	// Output measured tangential current value
+	int iq_start;	// Initial Iq value for starting in open-loop mode
 	int meas_theta;	// Position as measured by the QEI
 	int meas_veloc;	// angular velocity as measured by the QEI
 	int meas_speed;	// speed, i.e. magnitude of angular velocity
@@ -184,7 +186,9 @@ void init_motor( // initialise data structure for one motor
 
 	motor_s.set_theta = 0;
 	motor_s.set_veloc = -INIT_SPEED;
+	motor_s.half_veloc = (motor_s.set_veloc >> 1);
 	motor_s.start_theta = 0; // Theta start position during warm-up (START and SEARCH states)
+	motor_s.theta_offset = 0; // Offset between Hall-state and QEI origin
 	motor_s.set_id = 0;	// Ideal current producing radial magnetic field (NB never update as no radial force is required)
 	motor_s.set_iq = 0;	// Ideal current producing tangential magnetic field. (NB Updated based on the speed error)
 	motor_s.err_flgs = 0; 	// Clear fault detection flags
@@ -208,15 +212,35 @@ void init_motor( // initialise data structure for one motor
 	motor_s.meas_veloc = motor_s.set_veloc;
 	motor_s.meas_speed = abs(motor_s.set_veloc);
 
-	// Choose last Hall state of 6-state cycle NB depends on motor-type and spin-direction
-	if (LDO_MOTOR_SPIN ^ (motor_s.set_veloc < 0))
-	{
-		motor_s.end_hall = 0b101;
-	} // if (LDO_MOTOR_SPIN ^ (motor_s.set_veloc < 0))
+	// Initialise variables dependant on spin direction
+	if (0 > motor_s.set_veloc)
+	{ // Negative spin direction
+		motor_s.iq_start = -IQ_OPEN_LOOP;
+
+		// Choose last Hall state of 6-state cycle NB depends on motor-type
+		if (LDO_MOTOR_SPIN)
+		{
+			motor_s.end_hall = 0b011;
+		} // if (LDO_MOTOR_SPIN
+		else
+		{
+			motor_s.end_hall = 0b101;
+		} // else !(LDO_MOTOR_SPIN
+	} // if (0 > motor_s.set_veloc)
 	else
-	{
-		motor_s.end_hall = 0b011;
-	} // else !(LDO_MOTOR_SPIN ^ (motor_s.set_veloc < 0))
+	{ // Positive spin direction
+		motor_s.iq_start = IQ_OPEN_LOOP;
+
+		// Choose last Hall state of 6-state cycle NB depends on motor-type
+		if (LDO_MOTOR_SPIN)
+		{
+			motor_s.end_hall = 0b101;
+		} // if (LDO_MOTOR_SPIN
+		else
+		{
+			motor_s.end_hall = 0b011;
+		} // else !(LDO_MOTOR_SPIN
+	} // else !(0 > motor_s.set_veloc)
 
 	for (phase_cnt = 0; phase_cnt < NUM_PHASES; phase_cnt++)
 	{ 
@@ -247,7 +271,6 @@ unsigned scale_to_12bit( // Returns coil current converted to 12-bit unsigned
 
 
 	out_pwm = (inp_I + OFFSET_14) >> 3; // Convert coil current to PWM value. NB Always +ve
-assert( 0 <= out_pwm ); // MB~ test
 
 	// Clip PWM value into 12-bit range
 	if (out_pwm > PWM_MAX_LIMIT)
@@ -301,10 +324,10 @@ void calc_open_loop_pwm ( // Calculate open-loop PWM output values to spins magn
 	motor_s.set_theta = motor_s.start_theta >> 4;
 #endif
 
-	// NB Mask correctly maps -ve values into +ve range 0 <= theta < QEI_COUNT_MAX;
-	motor_s.set_theta &= (QEI_COUNT_MAX-1);
+	// NB QEI_REV_MASK correctly maps -ve values into +ve range 0 <= theta < QEI_PER_REV;
+	motor_s.set_theta &= QEI_REV_MASK; // Convert to base-range [0..QEI_REV_MASK]
 	motor_s.out_id = ID_OPEN_LOOP;
-	motor_s.out_iq = IQ_OPEN_LOOP;
+	motor_s.out_iq = motor_s.iq_start;
 
 	// Update start position ready for next iteration
 
@@ -328,12 +351,10 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 
 #pragma xta label "foc_loop_read_hardware"
 
-	// Bring theta into the correct phase (adjustment between QEI and motor windings)
-	motor_s.set_theta = motor_s.meas_theta - motor_s.theta_offset;
+	// Calculate driving theta value from measured value and offset
+	motor_s.set_theta = motor_s.meas_theta + motor_s.theta_offset;
 
-	// NB Mask correctly maps -ve values into +ve range 0 <= theta < QEI_COUNT_MAX;
-	motor_s.set_theta &= (QEI_COUNT_MAX - 1);
-	assert(0 <= motor_s.set_theta ); // MB~ Check
+	motor_s.set_theta &= QEI_REV_MASK; // Convert to base-range [0..QEI_REV_MASK]
 
 #pragma xta label "foc_loop_clarke"
 
@@ -342,26 +363,23 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 
 #pragma xta label "foc_loop_park"
 
-
 	// Calculate actual coil currents (Id & Iq) using park transform
 	park_transform( Id_in, Iq_in, alpha, beta, motor_s.set_theta  );
 
 #pragma xta label "foc_loop_speed_pid"
 
 	// Applying Speed PID.
+
 	motor_s.set_iq = get_pid_regulator_correction( motor_s.id ,motor_s.pids[SPEED] ,motor_s.meas_veloc ,motor_s.set_veloc );
+// if (motor_s.id) xscope_probe_data( 5 ,motor_s.pids[SPEED].sum_err );
 
 #pragma xta label "foc_loop_id_iq_pid"
 
-	motor_s.out_iq = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_Q] ,Iq_in ,motor_s.set_iq );
 
 	/* Apply PID control to Iq and Id */
-// if (motor_s.id) xscope_probe_data( 1 ,motor_s.set_id );
-// if (motor_s.id) xscope_probe_data( 2 ,Id_in );
+	motor_s.out_iq = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_Q] ,Iq_in ,motor_s.set_iq );
+
 	motor_s.out_id = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_D] ,Id_in ,motor_s.set_id );
-// if (motor_s.id) xscope_probe_data( 3 ,motor_s.out_id );
-// if (motor_s.id) xscope_probe_data( 4 ,motor_s.pids[I_D].prev_err );
-// if (motor_s.id) xscope_probe_data( 5 ,motor_s.pids[I_D].sum_err );
 
 } // calc_foc_pwm
 /*****************************************************************************/
@@ -403,27 +421,19 @@ MOTOR_STATE_TYP check_hall_state( // Inspect Hall-state and update motor-state i
 			// Check for correct spin direction
 			if (motor_s.prev_hall == motor_s.end_hall)
 			{ // Spinning in correct direction
-				// Check theta within range. MB~ I don't understand this.
-				if (abs(motor_s.meas_theta) < QEI_PER_POLE)
-				{/*	We are about to change to use FOC based motor control,
-					*	but before we do, we need to calculate the offset between the hall-state origin,
-          *	and the QEI origin.
-					*/
 
-					// Check spin direction
-					if (motor_s.meas_veloc < 0)
-					{ // -ve spin
-						motor_s.theta_offset = motor_s.meas_theta - THETA_HALF_PHASE; // NB More -ve
-					} // if (motor_s.meas_veloc < 0)
-					else
-					{ // +ve spin
-						motor_s.theta_offset = motor_s.meas_theta + THETA_HALF_PHASE; // NB More +ve
-					} // else !(motor_s.meas_veloc < 0)
+				// Check if the angular origin has been found, AND, we have done more than one revolution
+				if (1 < abs(motor_s.rev_cnt))
+				{
+					/* Calculate the offset between arbitary set_theta and actual measured theta,
+					 * NB There are multiple values of set_theta that can be used for each meas_theta, 
+           * depending on the number of pole pairs. E.g. [0, 256, 512, 768] are equivalent.
+					 */
+					motor_s.theta_offset = motor_s.set_theta - motor_s.meas_theta;
 
 					motor_state = FOC; // Switch to main FOC state
 					motor_s.cnts[FOC] = 0; // Initialise FOC-state counter 
-				} // if (abs(motor_s.meas_theta) < QEI_PER_POLE)
-				else assert(0 == 1); // MB~ test. I wondered when this was going to happen!
+				} // if (0 < motor_s.rev_cnt)
 			} // if (motor_s.prev_hall == motor_s.end_hall)
 			else
 			{ // We are probably spinning in the wrong direction!-(
@@ -440,7 +450,7 @@ if (dbg) { printint(motor_s.id); printstr( " SE- " ); printintln( motor_s.cnts[S
 	return motor_state; // Return updated motor state
 } // check_hall_state
 /*****************************************************************************/
-unsigned update_motor_state( // Update state of motor based on motor sensor data
+void update_motor_state( // Update state of motor based on motor sensor data
 	MOTOR_DATA_TYP &motor_s, // reference to structure containing motor data
 	unsigned inp_hall // Input Hall state
 )
@@ -457,7 +467,6 @@ unsigned update_motor_state( // Update state of motor based on motor sensor data
  */
 {
 	MOTOR_STATE_TYP motor_state; // local motor state
-	unsigned stop_motor;	/* Fault detection */
 
 
 	// Update motor state based on new sensor data
@@ -480,6 +489,26 @@ if (dbg) { printint(motor_s.id); printstr( " SA: " ); printintln( motor_s.cnts[S
 		case FOC : // Normal FOC state
 			// Check for a stall
 // if (dbg) { printint(motor_s.id); printchar(': '); printint( motor_s.meas_veloc ); printchar(' '); printint( motor_s.meas_theta ); printchar(' '); printintln( motor_s.valid ); }
+			// check for correct spin direction
+      if (0 > motor_s.half_veloc)
+			{
+				if (motor_s.meas_veloc > -motor_s.half_veloc)
+				{	// Spinning in wrong direction
+					motor_s.err_flgs |= ERROR_DIRECTION;
+					motor_s.state = STOP; // Switch to stop state
+					motor_s.cnts[STOP] = 0; // Initialise stop-state counter 
+				} // if (motor_s.meas_veloc > -motor_s.half_veloc)
+      } // if (0 > motor_s.half_veloc)
+			else
+			{
+				if (motor_s.meas_veloc < -motor_s.half_veloc)
+				{	// Spinning in wrong direction
+					motor_s.err_flgs |= ERROR_DIRECTION;
+					motor_s.state = STOP; // Switch to stop state
+					motor_s.cnts[STOP] = 0; // Initialise stop-state counter 
+				} // if (motor_s.meas_veloc < -motor_s.half_veloc)
+      } // if (0 > motor_s.half_veloc)
+
 			if (motor_s.meas_speed < STALL_SPEED) 
 			{
 				motor_s.state = STALL; // Switch to stall state
@@ -540,8 +569,7 @@ if (dbg) { printint(motor_s.id); printstr( " SL: " ); printintln( motor_s.cnts[S
 		break; // case STALL
 
 		case STOP : // Error state where motor stopped
-			stop_motor = 1; // Set flag to stop motor
-			return stop_motor;
+			// Nothing to do
 		break; // case STOP
 	
     default: // Unsupported
@@ -549,8 +577,7 @@ if (dbg) { printint(motor_s.id); printstr( " SL: " ); printintln( motor_s.cnts[S
     break;
 	} // switch( motor_s.state )
 
-	stop_motor = 0; // Do NOT stop motor
-	return stop_motor;
+	return;
 } // update_motor_state
 /*****************************************************************************/
 #pragma unsafe arrays
@@ -571,8 +598,6 @@ void use_motor ( // Start motor, and run step through different motor states
 	unsigned command;	// Command received from the control interface
 	unsigned new_hall;	// New Hall state
 
-	unsigned stop_motor = 0;	/* Fault detection */
-
 
 	// initialise arrays
 	for (phase_cnt = 0; phase_cnt < NUM_PHASES; phase_cnt++)
@@ -585,9 +610,8 @@ void use_motor ( // Start motor, and run step through different motor states
 #endif // #ifdef SHARED_MEM
 
 	/* Main loop */
-	while (0 == stop_motor)
+	while (STOP != motor_s.state)
 	{
-// if (!motor_s.id) printcharln( 'S' ); //MB~
 #pragma xta endpoint "foc_loop"
 		select
 		{
@@ -598,12 +622,11 @@ void use_motor ( // Start motor, and run step through different motor states
 				case CMD_GET_IQ :
 					c_speed <: motor_s.meas_veloc;
 					c_speed <: motor_s.set_veloc;
-// if (!motor_s.id) printcharln( '7' ); //MB~
 				break; // case CMD_GET_IQ
 	
 				case CMD_SET_SPEED :
 					c_speed :> motor_s.set_veloc;
-// printstr("V="); printintln( motor_s.set_veloc ); //MB~
+					motor_s.half_veloc = (motor_s.set_veloc >> 1);
 				break; // case CMD_SET_SPEED 
 	
 				case CMD_GET_FAULT :
@@ -615,12 +638,10 @@ void use_motor ( // Start motor, and run step through different motor states
 		    break; // default
 			} // switch(command)
 
-// if (!motor_s.id) printcharln( '4' ); //MB~
 		break; // case c_speed :> command:
 
 		case c_can_eth_shared :> command:		//This case responds to CAN or ETHERNET commands
 #pragma xta label "foc_loop_shared_comms"
-// if (!motor_s.id) printcharln( 'X' ); //MB~
 			if(command == CMD_GET_VALS)
 			{
 				c_can_eth_shared <: motor_s.meas_veloc;
@@ -637,6 +658,7 @@ void use_motor ( // Start motor, and run step through different motor states
 			else if (command == CMD_SET_SPEED)
 			{
 				c_can_eth_shared :> motor_s.set_veloc;
+				motor_s.half_veloc = (motor_s.set_veloc >> 1);
 			}
 			else if (command == CMD_GET_FAULT)
 			{
@@ -646,10 +668,9 @@ void use_motor ( // Start motor, and run step through different motor states
 		break; // case c_can_eth_shared :> command:
 
 		default:	// This case updates the motor state
-// if (!motor_s.id) printcharln( 'Y' ); //MB~
 			motor_s.iters++; // Increment No. of iterations 
 
-			if(stop_motor == 0)
+			if (STOP != motor_s.state)
 			{
 				// Check if it is time to stop demo
 				if (motor_s.iters > DEMO_LIMIT)
@@ -658,35 +679,39 @@ void use_motor ( // Start motor, and run step through different motor states
 					motor_s.cnts[STOP] = 0; // Initialise stop-state counter 
 				} // if (motor_s.iters > DEMO_LIMIT)
 
-// if (motor_s.id) xscope_probe_data( 0 ,motor_s.set_theta );
 				p_hall :> new_hall; // Get new hall state
+if (motor_s.id) xscope_probe_data( 5 ,(100 * (new_hall & 7)));
 
 				// Check error status
 				if (!(new_hall & 0b1000))
 				{
 					motor_s.err_flgs |= ERROR_OVERCURRENT;
-					stop_motor = 1; // Switch to stop state
+					motor_s.state = STOP; // Switch to stop state
+					motor_s.cnts[STOP] = 0; // Initialise stop-state counter 
 				} // if (!(new_hall & 0b1000))
 				else
 				{
 					/* Get the position from encoder module. NB returns rev_cnt=0 at start-up  */
 					{ motor_s.meas_veloc ,motor_s.meas_theta ,motor_s.rev_cnt } = get_qei_data( c_qei );
-// if (motor_s.id) xscope_probe_data( 1 ,motor_s.meas_theta );
-// if (motor_s.id) xscope_probe_data( 2 ,motor_s.meas_veloc );
+if (motor_s.id) xscope_probe_data( 1 ,motor_s.meas_theta );
+if (motor_s.id) xscope_probe_data( 2 ,motor_s.meas_veloc );
+if (motor_s.id) xscope_probe_data( 3 ,motor_s.rev_cnt );
 
 						motor_s.meas_speed = abs( motor_s.meas_veloc ); // NB Used to spot stalling behaviour
 					/* Get ADC readings */
 					get_adc_vals_calibrated_int16_mb( c_adc_cntrl ,motor_s.meas_adc );
 
-					stop_motor = update_motor_state( motor_s ,new_hall );
+					update_motor_state( motor_s ,new_hall );
+if (motor_s.id) xscope_probe_data( 0 ,motor_s.set_theta );
+if (motor_s.id) xscope_probe_data( 4 ,motor_s.theta_offset );
 				} // else !(!(new_hall & 0b1000))
 
 				// Check if motor needs stopping
-				if (1 == stop_motor)
+				if (STOP == motor_s.state)
 				{
 					// Set PWM values to stop motor
 					error_pwm_values( pwm_vals );
-				} // if (1 == stop_motor)
+				} // if (STOP == motor_s.state)
 				else
 				{
 					// Convert Output DQ values to PWM values
@@ -695,29 +720,28 @@ void use_motor ( // Start motor, and run step through different motor states
 					update_pwm_inv( c_pwm ,pwm_vals ,motor_s.id ,motor_s.cur_buf ,motor_s.mem_addr ); // Update the PWM values
 
 #ifdef USE_XSCOPE
-				if ((motor_s.cnts[FOC] & 0x1) == 0) // If even, (NB Forgotton why this works!-(
-				{
-					if (0 == motor_s.id) // Check if 1st Motor
+					if ((motor_s.cnts[FOC] & 0x1) == 0) // If even, (NB Forgotton why this works!-(
 					{
+						if (0 == motor_s.id) // Check if 1st Motor
+						{
 /*
-						xscope_probe_data(0, motor_s.meas_veloc );
-				    xscope_probe_data(1, motor_s.set_iq );
-	    			xscope_probe_data(2, pwm_vals[PHASE_A] );
-	    			xscope_probe_data(3, pwm_vals[PHASE_B]);
-						xscope_probe_data(4, motor_s.meas_adc.vals[PHASE_A] );
-						xscope_probe_data(5, motor_s.meas_adc.vals[PHASE_B]);
+							xscope_probe_data(0, motor_s.meas_veloc );
+				  	  xscope_probe_data(1, motor_s.set_iq );
+	    				xscope_probe_data(2, pwm_vals[PHASE_A] );
+	    				xscope_probe_data(3, pwm_vals[PHASE_B]);
+							xscope_probe_data(4, motor_s.meas_adc.vals[PHASE_A] );
+							xscope_probe_data(5, motor_s.meas_adc.vals[PHASE_B]);
 */
-					} // if (0 == motor_s.id)
-				} // if ((motor_s.cnts[FOC] & 0x1) == 0) 
+						} // if (0 == motor_s.id)
+					} // if ((motor_s.cnts[FOC] & 0x1) == 0) 
 #endif
-				} // else !(1 == stop_motor)
-			} // if(stop_motor==0)
+				} // else !(STOP == motor_s.state)
+			} // if (STOP != motor_s.state)
 		break; // default:
 
 		}	// select
 
-// if (!motor_s.id) printcharln( '0' ); //MB~
-	}	// while (0 == stop_motor)
+	}	// while (STOP != motor_s.state)
 
 } // use_motor
 /*****************************************************************************/

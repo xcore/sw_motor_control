@@ -20,6 +20,19 @@
 #ifndef __QEI_CLIENT_H__
 #define __QEI_CLIENT_H__
 
+#define HALF_QEI_CNT (QEI_PER_REV >> 1) // 180 degrees of rotation
+#define QEI_REV_MASK (QEI_PER_REV - 1) // Mask used to force QEI count into base-range [0..QEI_REV_MASK] 
+
+/* These defines are used to calculate offset between Hall-state origin, and QEI origin.
+ * There are 6 Hall-states per revolution, 60 degrees each, half-way through each state is therefore 30 degrees.
+ * There are 1024 QEI counts/rev (QEI_PER_REV)
+ */
+#define QEI_PER_POLE (QEI_PER_REV / NUM_POLE_PAIRS) // e.g. 256 No. of QEI sensors per pole 
+#define QEI_POLE_MASK (QEI_PER_POLE - 1) // Mask used to force QEI count into base-range [0..QEI_POLE_MASK] 
+
+#define THETA_HALF_PHASE (QEI_PER_POLE / 12) // e.g. ~21 CoilSectorAngle/2 (6 sectors = 60 degrees per sector, 30 degrees per half sector)
+
+
 /** \brief Get the position from the QEI server
  *
  *  \param c_qei The control channel for the QEI server

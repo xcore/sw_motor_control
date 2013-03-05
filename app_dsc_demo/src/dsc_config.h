@@ -44,10 +44,11 @@
 
 // Define the number different QEI sensors (angular positions)
 #ifdef FAULHABER_MOTOR
-#define QEI_COUNT_MAX (1024 * 4)
+#define QEI_PER_REV (1024 * 4)
 #else
-#define QEI_COUNT_MAX (256 * 4)
+#define QEI_PER_REV (256 * 4)
 #endif
+
 
 #define MAX_SPEC_RPM 4000 // Maximum specified motor speed
 

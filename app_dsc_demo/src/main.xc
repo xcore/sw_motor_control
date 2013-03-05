@@ -111,12 +111,12 @@ void init_can_phy( chanend c_rxChan, chanend c_txChan, clock p_can_clk, buffered
 void xscope_user_init()
 {
 	xscope_register( 6
-		,XSCOPE_CONTINUOUS, "s_theta", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "s_val", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "m_val", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "Out_val", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "prev_err", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "sum_err", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "o_theta", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "c_theta", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "m_theta", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "m_veloc", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "theta_off", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "rev_cnt", XSCOPE_INT , "n"
 //		XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT , "n"
 //		XSCOPE_CONTINUOUS, "Theta", XSCOPE_UINT , "n"
 //		XSCOPE_CONTINUOUS, "PWM[0]", XSCOPE_UINT , "n"
