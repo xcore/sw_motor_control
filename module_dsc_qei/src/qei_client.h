@@ -15,6 +15,10 @@
  * copyright notice above.
  *
  */
+#ifdef USE_XSCOPE
+#include <xscope.h>
+#endif
+
 #include "dsc_config.h"      
                              
 #ifndef __QEI_CLIENT_H__

@@ -76,28 +76,37 @@
 // occurs periodically, but an example can be found at around 94.8us into the simulaton.
 #define ADC_TRIGGER_DELAY 1980
 
-//MB~ Revisit this for low speeds, we need more calibration points
-// For 600RPM and 61kHz sample rate, 1 revolution is 6100 samples. Choose next highest power of 2
-#define CALIBRATION_BITS 13
-#define NUM_CALIBRATIONS (1 << CALIBRATION_BITS)	// Number of calibration points required
-#define HALF_CALIBRATIONS (NUM_CALIBRATIONS >> 1)	// Half No. of calibration points (used for rounding)
+#define ADC_SCALE_BITS 16 // Used to generate 2^n scaling factor
+#define ADC_HALF_SCALE (1 << (ADC_SCALE_BITS - 1)) // Half Scaling factor (used in rounding)
+
+#define ADC_MAX_COEF_BITS 13 // Used to generate max. filter coef divisor. coef_div = 1/2^n
+#define ADC_MAX_COEF_DIV (1 << ADC_MAX_COEF_BITS) // Max. coef divisor
 
 typedef struct ADC_PHASE_TAG // Structure containing data for one phase of ADC Trigger
 {
 	unsigned adc_val; // ADC measured current value
-	unsigned calib_val; // Calibration values
-	int rem_val; // Remainder used for error diffusion
-	int calib_acc; // Accumultor for the calibration average
+	int mean; // local mean value
+	int filt_val; // filtered value
+	int coef_err; // Coefficient diffusion error
+	int scale_err; // Scaling diffusion error 
 } ADC_PHASE_TYP;
+
+typedef struct ADC_FILT_TAG // Structure containing data for one ADC Trigger
+{
+	int coef_div; // coef = 1/coef_div 
+	int coef_bits; // coef_div = 2^coef_bits
+	int half_div; // half coef_div (used for rounding)
+} ADC_FILT_TYP;
 
 typedef struct ADC_TRIG_TAG // Structure containing data for one ADC Trigger
 {
 	ADC_PHASE_TYP phase_data[USED_ADC_PHASES];
-	int calib_cnt; // Counter used in ADC calibration
+	ADC_FILT_TYP filt; // Filter parameters. NB Need to have separate structure to satisfy XC rules on aliasing
 	timer my_timer;	// timer
 	unsigned time_stamp; 	// time-stamp
 	char guard_off;	// Guard
 	int mux_id; // Mux input identifier
+	int filt_cnt; // Counter used in filter
 } ADC_TRIG_TYP;
 
 typedef struct ADC_7265_TAG // Structure containing ADC-7265 data

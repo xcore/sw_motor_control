@@ -69,20 +69,11 @@
 /*****************************************************************************/
 void init_qei_data( // Initialise  QEI data for one motor
 	QEI_PARAM_S &inp_qei_s, // Reference to structure containing QEI parameters for one motor
-	unsigned inp_pins, // Set of raw data values on input port pins
 	int inp_id  // Input unique motor identifier
 )
 {
-	timer my_tymer;
-
-
-	my_tymer :> inp_qei_s.prev_time; // Initialise previous time-stamp
-
-	inp_qei_s.prev_orig = inp_pins & 0x4; 		// Initialise previous origin flag
-	inp_qei_s.prev_phases = inp_pins & 0x3; // Initialise previous phase values
-
+	inp_qei_s.diff_time = 0; // NB Initially this is used to count input-pin changes
 	inp_qei_s.id = inp_id; // Clear Previous phase values
-	inp_qei_s.diff_time = (int)TICKS_PER_MIN_PER_QEI; // NB Speed=1
 	inp_qei_s.orig_cnt = 0; // Reset counter indicating how many times motor has passed origin (index)
 	inp_qei_s.ang_cnt = 0; // Reset counter indicating angular position of motor (from origin)
 	inp_qei_s.theta = 0; // Reset angular position returned to client
@@ -91,8 +82,12 @@ void init_qei_data( // Initialise  QEI data for one motor
 	inp_qei_s.err_cnt = 0; // Initialise counter for invalid QEI states
 	inp_qei_s.confid = 1; // Initialise confidence value
 
+	inp_qei_s.prev_time = 0;
+	inp_qei_s.prev_orig = 0;
+	inp_qei_s.prev_phases = 0;
+
 	inp_qei_s.dbg = 0;
-} // service_client_request
+} // init_qei_data
 /*****************************************************************************/
 signed char get_spin_value( // Estimate spin value from QEI states
 	QEI_PARAM_S &inp_qei_s, // Reference to structure containing QEI parameters for one motor
@@ -283,9 +278,11 @@ static const signed char get_spin_state[QEI_PHASES][QEI_PHASES] = {
 	unsigned orig_flg; // Flag set when motor at origin position 
 	signed char cur_spin; // current spin direction
 	int cur_theta; // current theta value (returned to client)
+	int test_diff; // test time difference for sensible value
 	timer my_tymer;
 
 
+// if (inp_qei_s.id) xscope_probe_data( 5 ,(inp_pins << 10));
 	cur_phases = inp_pins & 0x3; // Extract Phase bits
 
 	// Check if phases have changed
@@ -293,13 +290,12 @@ static const signed char get_spin_state[QEI_PHASES][QEI_PHASES] = {
 	{
 		// Get new time stamp ..
 		my_tymer :> ang_time;	// Get new time stamp
-		inp_qei_s.diff_time = (int)(ang_time - inp_qei_s.prev_time);
+		test_diff = (int)(ang_time - inp_qei_s.prev_time);
 
+// if (inp_qei_s.id) xscope_probe_data( 4 ,(ang_time >> 20) );
 		// Check for sensible time
-		if (THR_TICKS_PER_QEI < inp_qei_s.diff_time)
+		if (THR_TICKS_PER_QEI < test_diff)
 		{ // Sensible time!
-			inp_qei_s.prev_time = ang_time; // Store time stamp
-	
 			// Update QEI-state
 			cur_state = get_spin_state[inp_qei_s.prev_phases][cur_phases]; // Decoded spin fom phase info. New Correct
 
@@ -333,10 +329,25 @@ static const signed char get_spin_state[QEI_PHASES][QEI_PHASES] = {
 	
 			// Update theta value
 			cur_theta = get_theta_value( inp_qei_s ,inp_qei_s.ang_cnt );
-			inp_qei_s.theta = cur_theta; // NB Dummy variable used due to XC restrictions
-	
+			inp_qei_s.theta = cur_theta; // Store angular position at new time stamp
+
+			// Check for end of start-up phase
+			if (START_UP_CHANGES <= inp_qei_s.diff_time)
+			{
+				inp_qei_s.diff_time = test_diff; // Store sensible time difference
+			} // if (START_UP_CHANGES <= inp_qei_s.diff_time)
+			else
+			{
+				inp_qei_s.diff_time++; // Update number of input pin changes
+			} // if (START_UP_CHANGES <= inp_qei_s.diff_time)
+
+			inp_qei_s.prev_time = ang_time; // Store time stamp
 			inp_qei_s.prev_phases = cur_phases; // Store old phase value
-		} // if (THR_TICKS_PER_QEI > inp_qei_s.diff_time )
+
+// if (inp_qei_s.id) xscope_probe_data( 0 ,inp_qei_s.theta );
+// if (inp_qei_s.id) xscope_probe_data( 1 ,(inp_qei_s.spin_sign << 9) );
+// if (inp_qei_s.id) xscope_probe_data( 2 ,(inp_qei_s.diff_time >> 2) );
+		} // if (THR_TICKS_PER_QEI < test_diff)
 	}	// if (cur_phases != inp_qei_s.prev_phases)
 } // service_input_pins
 /*****************************************************************************/
@@ -356,10 +367,17 @@ void service_client_request( // Send processed QEI data to client
 	int meas_veloc; // Angular velocity of motor measured in Ticks/angle_position
 
 
-	assert(0 < inp_qei_s.diff_time); // Timer error. This should always be true!-(
+	// Check if we have received sufficient data to estimate velocity
+  if (START_UP_CHANGES < inp_qei_s.diff_time)
+	{
+		meas_veloc = inp_qei_s.spin_sign * (int)TICKS_PER_MIN_PER_QEI / (int)inp_qei_s.diff_time; // Calculate new speed estimate.
+  } // if (START_UP_CHANGES < inp_qei_s.diff_time)
+	else
+	{
+		meas_veloc = inp_qei_s.spin_sign; // Default value
+  } // if else !(START_UP_CHANGES < inp_qei_s.diff_time)
 
-	// Calculate new speed estimate.
-	meas_veloc = inp_qei_s.spin_sign * TICKS_PER_MIN_PER_QEI / inp_qei_s.diff_time;
+// if (inp_qei_s.id) xscope_probe_data( 0 ,meas_veloc);
 
 	c_qei <: (inp_qei_s.theta & QEI_REV_MASK); // Send value in range [0..QEI_REV_MASK]
 	c_qei <: meas_veloc;			
@@ -377,9 +395,7 @@ void do_qei (
 	unsigned inp_pins; // Set of raw data values on input port pins
 
 
-	pQEI :> inp_pins; // Do pins-read for initialisation
-
-	init_qei_data( qei_data_s ,inp_pins ,0 ); // Initialise QEI data for motor_0
+	init_qei_data( qei_data_s ,motor_id ); // Initialise QEI data for motor_0
 
 	while (1) {
 #pragma xta endpoint "qei_main_loop"
@@ -411,11 +427,9 @@ void do_multiple_qei( // Get QEI data from motor and send to client
 	unsigned inp_pins[NUMBER_OF_MOTORS]; // Set of raw data values on input port pins
 
 
-	for (int q=0; q<NUMBER_OF_MOTORS; ++q) 
+	for (int motor_id=0; motor_id<NUMBER_OF_MOTORS; ++motor_id) 
 	{
-		pQEI[q] :> inp_pins[q]; // Do pins-read for initialisation
-
-		init_qei_data( all_qei_s[q] ,inp_pins[q] ,q ); // Initialise QEI data for current motor
+		init_qei_data( all_qei_s[motor_id] ,motor_id ); // Initialise QEI data for current motor
 	}
 
 	while (1) {
@@ -423,16 +437,16 @@ void do_multiple_qei( // Get QEI data from motor and send to client
 #pragma ordered
 		select {
 			// Service any change on input port pins
-			case (int q=0; q<NUMBER_OF_MOTORS; ++q) pQEI[q] when pinsneq(inp_pins[q]) :> inp_pins[q] :
+			case (int motor_id=0; motor_id<NUMBER_OF_MOTORS; motor_id++) pQEI[motor_id] when pinsneq(inp_pins[motor_id]) :> inp_pins[motor_id] :
 			{
-				service_input_pins( all_qei_s[q] ,inp_pins[q] );
+				service_input_pins( all_qei_s[motor_id] ,inp_pins[motor_id] );
 			} // case
 			break;
 
 			// Service any client request for data
-			case (int q=0; q<NUMBER_OF_MOTORS; ++q) c_qei[q] :> int :
+			case (int motor_id=0; motor_id<NUMBER_OF_MOTORS; motor_id++) c_qei[motor_id] :> int :
 			{
-				service_client_request( all_qei_s[q] ,c_qei[q] );
+				service_client_request( all_qei_s[motor_id] ,c_qei[motor_id] );
 			} // case
 			break;
 		} // select

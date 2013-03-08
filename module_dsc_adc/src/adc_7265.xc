@@ -24,11 +24,23 @@ void init_adc_phase( // Initialise the data for this phase of one ADC trigger
 	ADC_PHASE_TYP &phase_data_s // Reference to structure containing data for this phase of one ADC trigger
 )
 {
-	phase_data_s.calib_acc = 0;
-	phase_data_s.calib_val = 0;
+	phase_data_s.mean = 0;
+	phase_data_s.filt_val = 0;
 	phase_data_s.adc_val = 0;
-	phase_data_s.rem_val = 0;
+	phase_data_s.coef_err = 0;
+	phase_data_s.scale_err = 0;
+
 } // init_adc_phase
+/*****************************************************************************/
+void gen_filter_params( // Generates required filter parameters from 'inp_bits'
+	ADC_FILT_TYP &filt_s, // Reference to structure containing filter parameters
+	int inp_bits // used to specify filter: coef_val = 1/2^inp_bits
+)
+{
+	filt_s.coef_div = (1 << inp_bits); // coef_val = 1/coef_div
+	filt_s.half_div = (filt_s.coef_div >> 1); // Half coef_div (used for rounding)
+	filt_s.coef_bits = inp_bits; // Store to use for fast divide
+} // gen_filter_params( specify_filter 
 /*****************************************************************************/
 void init_adc_trigger( // Initialise the data for this ADC trigger
 	ADC_TRIG_TYP &trig_data_s, // Reference to structure containing data for this ADC trigger
@@ -41,10 +53,13 @@ void init_adc_trigger( // Initialise the data for this ADC trigger
 	for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
 	{
 		init_adc_phase( trig_data_s.phase_data[phase_cnt] );
-
-		trig_data_s.guard_off = 0; // Initialise guard to ON
-		trig_data_s.mux_id = inp_mux; // Assign Mux port for this trigger
 	} // for phase_cnt
+
+	gen_filter_params( trig_data_s.filt ,0 ); // Initialise filter to fast response
+
+	trig_data_s.guard_off = 0; // Initialise guard to ON
+	trig_data_s.mux_id = inp_mux; // Assign Mux port for this trigger
+	trig_data_s.filt_cnt = 0; // Initialise filter count
 
 } // init_adc_trigger
 /*****************************************************************************/
@@ -198,34 +213,39 @@ static void get_trigger_data_7265(
 
 } // get_trigger_data_7265
 /*****************************************************************************/
-void calibrate_trigger( // Do calibration for this trigger
-	ADC_TRIG_TYP &trig_data_s, // Reference to structure containing data for this ADC trigger
-	int trig_id // trigger identifier
+void filter_adc_data( // Low-pass filter generate a mean value which is used to 'calibrate' the ADC data
+	ADC_PHASE_TYP &phase_data_s, // Reference to structure containing adc phase data
+	ADC_FILT_TYP &filt_s // Reference to structure containing filter parameters
 )
+/* This is a 1st order IIR filter, it is configured as a low-pass filter, 
+ * The impulse response of the filter can have a short decay or a long decay,
+ * depending on the value of 'coef_bits'. Therefore the filter response can be changed dynamically.
+ * The input ADC value is up-scaled, to allow integer arithmetic to be used.
+ * The output mean value is down-scaled by the same amount.
+ * Error diffusion is used to keep control of systematic quantisation errors.
+ */
 {
-	int phase_cnt; // ADC Phase counter
+	int scaled_inp = ((int)phase_data_s.adc_val << ADC_SCALE_BITS); // Upscaled ADC input value
+	int diff_val; // Difference between input and filtered output
+	int increment; // new increment to filtered output value
 
 
-	trig_data_s.calib_cnt--; // Update No. of calibration points left to collect
+	// Form difference with previous filter output
+	diff_val = scaled_inp - phase_data_s.filt_val;
 
-	// Loop through used phases
-	for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
-	{
-		trig_data_s.phase_data[phase_cnt].calib_acc += trig_data_s.phase_data[phase_cnt].adc_val; // Sum ADC values
-	} // for phase_cnt
+	// Multiply difference by filter coefficient (alpha)
+	diff_val += phase_data_s.coef_err; // Add in diffusion error;
+	increment = (diff_val + filt_s.half_div) >> filt_s.coef_bits ; // Multiply by filter coef (with rounding)
+	phase_data_s.coef_err = diff_val - (increment << filt_s.coef_bits); // Evaluate new quantisation error value 
 
+	phase_data_s.filt_val += increment; // Update (up-scaled) filtered output value
 
-	// Check if we have all calibration data
-	if (trig_data_s.calib_cnt == 0) 
-	{
-		// Loop through used phases
-		for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
-		{
-			trig_data_s.phase_data[phase_cnt].calib_val = (trig_data_s.phase_data[phase_cnt].calib_acc + HALF_CALIBRATIONS) >> CALIBRATION_BITS; // Form average value
-		} // for phase_cnt
-	} // if (calib_mode == 0) 
+	// Update mean value by down-scaling filtered output value
+	phase_data_s.filt_val += phase_data_s.scale_err; // Add in diffusion error;
+	phase_data_s.mean = (phase_data_s.filt_val + ADC_HALF_SCALE) >> ADC_SCALE_BITS; // Down-scale
+	phase_data_s.scale_err = phase_data_s.filt_val - (phase_data_s.mean << ADC_SCALE_BITS); // Evaluate new remainder value 
 
-} // calibrate_trigger
+} // filter_adc_data
 /*****************************************************************************/
 void update_adc_trigger_data( // Update ADC values for this trigger
 	ADC_TRIG_TYP &trig_data_s, // Reference to structure containing data for this ADC trigger
@@ -235,13 +255,33 @@ void update_adc_trigger_data( // Update ADC values for this trigger
 	out port p4_mux	// 4-bit port used to control multiplexor on ADC chip
 )
 {
+	int phase_cnt; // ADC Phase counter
+
+
 	get_trigger_data_7265( trig_data_s ,p32_data ,p1_ready ,p4_mux );	// Get ADC values for this trigger	
 
-	// Check if we are collecting calibration data
-	if (trig_data_s.calib_cnt > 0) 
+	// Loop through used phases
+	for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
 	{
-		calibrate_trigger( trig_data_s ,trig_id );
-	} // if (calibration_mode[trig_id] > 0) 
+		filter_adc_data( trig_data_s.phase_data[phase_cnt] ,trig_data_s.filt ); // Sum ADC values
+	} // for phase_cnt
+
+	/* A low-pass filter is used to 'calibrate' the ADC values, see filter_adc_data for more detail.
+	 * The filter is initially dynamic. When there are only a few samples the filter has a fast response, 
+	 * as the number of samples increases the response gets slower, 
+	 * until the filter is producing a mean over about ADC_MAX_COEF_DIV samples (e.g. 8192)
+	 */
+	// Check if filter in 'dynamic' mode
+	if (ADC_MAX_COEF_DIV > 	trig_data_s.filt_cnt)
+	{
+		trig_data_s.filt_cnt++; // Update sample count
+
+		// Check if time to slow down filter response
+		if (trig_data_s.filt.coef_div == trig_data_s.filt_cnt)
+		{
+			gen_filter_params( trig_data_s.filt ,(trig_data_s.filt.coef_bits + 1) ); // Double decay time of filter
+		} // if (trig_data_s.filt.coef_div == trig_data_s.filt_cnt)
+	} // if (ADC_MAX_COEF_DIV > 	trig_data_s.filt_cnt)
 
 	trig_data_s.guard_off = 0; // Reset guard to ON
 } // update_adc_trigger_data
@@ -261,18 +301,11 @@ void service_data_request( // Services client command data request for this trig
 		case ADC_CMD_REQ : // Request for ADC data
 			for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
 			{
-				c_control <: (trig_data_s.phase_data[phase_cnt].adc_val - trig_data_s.phase_data[phase_cnt].calib_val);
+//MB~		c_control <: (trig_data_s.phase_data[phase_cnt].adc_val - trig_data_s.phase_data[phase_cnt].mean);
+				// ADC data appears to be inverted with respect to PWM data. Therefore do S/W fix here
+				c_control <: (trig_data_s.phase_data[phase_cnt].mean - trig_data_s.phase_data[phase_cnt].adc_val ); //Return value with zero mean
 			} // for phase_cnt
 		break; // case ADC_CMD_REQ 
-	
-		case ADC_CMD_CAL : // Start Calibration
-			trig_data_s.calib_cnt = NUM_CALIBRATIONS;
-
-			for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
-			{
-				trig_data_s.phase_data[phase_cnt].calib_val = 0;
-			} // for phase_cnt
-		break; // case ADC_CMD_CAL 
 	
     default: // Unsupported Command
 			assert(0 == 1); // Error: Received unsupported ADC command

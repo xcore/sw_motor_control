@@ -16,6 +16,7 @@
  **/
 
 #include <xs1.h>
+#include <print.h>
 
 #include "qei_commands.h"
 #include "qei_client.h"

@@ -55,7 +55,6 @@ typedef enum ADC_PHASE_ETAG
 typedef enum CMD_ADC_ETAG
 {
   ADC_CMD_REQ = 0,  // Request ADC data
-  ADC_CMD_CAL,		  // Calibrate ADC data
   NUM_ADC_CMDS    // Handy Value!-)
 } CMD_ADC_ENUM;
 

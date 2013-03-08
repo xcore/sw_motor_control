@@ -51,6 +51,8 @@
 
 #define QEI_PHASES 4	// 4 combinatations of Phases_B & Phases_A  E.g. [ 00 01 11 10 ]
 
+#define START_UP_CHANGES 3 // Must see this number of pin changes before calculating velocity
+
 /** Different Motor Phases */
 typedef enum QEI_ENUM_TAG
 {
@@ -66,7 +68,7 @@ typedef struct QEI_PARAM_TAG //
 	unsigned inp_pins; // Raw data values on input port pins
 	unsigned prev_phases; // Previous phase values
 	unsigned prev_time; // Previous angular position time stamp
-	int diff_time; // Difference between 2 adjacent time stamps
+	unsigned diff_time; // Difference between 2 adjacent time stamps. NB Must be unsigned due to clock-wrap 
 	QEI_ENUM_TYP prev_state; // Previous QEI state
 	int err_cnt; // counter for invalid QEI states
 	int orig_cnt; // Increment every time motor passes origin (index)

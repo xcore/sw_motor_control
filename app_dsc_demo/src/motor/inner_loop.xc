@@ -60,7 +60,7 @@
 #define ID_OPEN_LOOP 0		// Id value for open-loop mode
 #define INIT_HALL 0 // Initial Hall state
 #define INIT_THETA 0 // Initial start-up angle
-#define INIT_SPEED 400 // Initial start-up speed
+#define INIT_SPEED 200 // Initial start-up speed
 
 #ifdef USE_XSCOPE
 	#define DEMO_LIMIT 100000 // XSCOPE
@@ -136,6 +136,7 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	int set_iq;	// Ideal current producing tangential magnetic field
 	int start_theta; // Theta start position during warm-up (START and SEARCH states)
 	unsigned err_flgs;	// Fault detection flags
+	unsigned xscope;	// Flag set when xscope output required
 
 	int out_id;	// Output radial current value
 	int out_iq;	// Output measured tangential current value
@@ -185,13 +186,14 @@ void init_motor( // initialise data structure for one motor
 
 
 	motor_s.set_theta = 0;
-	motor_s.set_veloc = -INIT_SPEED;
+	motor_s.set_veloc = INIT_SPEED;
 	motor_s.half_veloc = (motor_s.set_veloc >> 1);
 	motor_s.start_theta = 0; // Theta start position during warm-up (START and SEARCH states)
 	motor_s.theta_offset = 0; // Offset between Hall-state and QEI origin
 	motor_s.set_id = 0;	// Ideal current producing radial magnetic field (NB never update as no radial force is required)
 	motor_s.set_iq = 0;	// Ideal current producing tangential magnetic field. (NB Updated based on the speed error)
 	motor_s.err_flgs = 0; 	// Clear fault detection flags
+	motor_s.xscope = 0; 	// Clear xscope print flag
 	motor_s.prev_time = 0; 	// previous time stamp
 	motor_s.prev_angl = 0; 	// previous angular position
 	motor_s.cur_buf = 0; 	// Initialise which double-buffer in use
@@ -326,8 +328,8 @@ void calc_open_loop_pwm ( // Calculate open-loop PWM output values to spins magn
 
 	// NB QEI_REV_MASK correctly maps -ve values into +ve range 0 <= theta < QEI_PER_REV;
 	motor_s.set_theta &= QEI_REV_MASK; // Convert to base-range [0..QEI_REV_MASK]
-	motor_s.out_id = ID_OPEN_LOOP;
-	motor_s.out_iq = motor_s.iq_start;
+	motor_s.set_id = ID_OPEN_LOOP;
+	motor_s.set_iq = motor_s.iq_start;
 
 	// Update start position ready for next iteration
 
@@ -358,8 +360,15 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 
 #pragma xta label "foc_loop_clarke"
 
+if (motor_s.xscope) xscope_probe_data( 6 ,motor_s.meas_adc.vals[PHASE_A] );
+if (motor_s.xscope) xscope_probe_data( 7 ,motor_s.meas_adc.vals[PHASE_B] );
+if (motor_s.xscope) xscope_probe_data( 8 ,motor_s.meas_adc.vals[PHASE_C] );
+
 	/* To calculate alpha and beta currents */
 	clarke_transform(motor_s.meas_adc.vals[PHASE_A], motor_s.meas_adc.vals[PHASE_B], motor_s.meas_adc.vals[PHASE_C], alpha, beta );
+//	clarke_transform(-motor_s.meas_adc.vals[PHASE_A], -motor_s.meas_adc.vals[PHASE_B], -motor_s.meas_adc.vals[PHASE_C], alpha, beta );
+
+calc_open_loop_pwm( motor_s ); // MB~ Dbg
 
 #pragma xta label "foc_loop_park"
 
@@ -370,17 +379,39 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 
 	// Applying Speed PID.
 
+// if (motor_s.xscope) xscope_probe_data( 0 ,motor_s.set_theta );
+// if (motor_s.xscope) xscope_probe_data( 1 ,motor_s.set_veloc );
+// if (motor_s.xscope) xscope_probe_data( 2 ,motor_s.meas_veloc );
+
+#ifdef MB // Dbg skip velocity PID
 	motor_s.set_iq = get_pid_regulator_correction( motor_s.id ,motor_s.pids[SPEED] ,motor_s.meas_veloc ,motor_s.set_veloc );
-// if (motor_s.id) xscope_probe_data( 5 ,motor_s.pids[SPEED].sum_err );
+// if (motor_s.xscope) xscope_probe_data( 2 ,motor_s.pids[SPEED].prev_err );
+// if (motor_s.xscope) xscope_probe_data( 3 ,(motor_s.pids[SPEED].sum_err >> 10) );
+#endif // MB // Dbg
+
+// if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.set_iq );
+// if (motor_s.xscope) xscope_probe_data( 5 ,Iq_in );
 
 #pragma xta label "foc_loop_id_iq_pid"
 
-
 	/* Apply PID control to Iq and Id */
 	motor_s.out_iq = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_Q] ,Iq_in ,motor_s.set_iq );
+// if (motor_s.xscope) xscope_probe_data( 1 ,motor_s.pids[I_Q].prev_err );
+// if (motor_s.xscope) xscope_probe_data( 7 ,motor_s.pids[I_Q].sum_err );
+// if (motor_s.xscope) xscope_probe_data( 8 ,motor_s.out_iq );
 
 	motor_s.out_id = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_D] ,Id_in ,motor_s.set_id );
+// if (motor_s.xscope) xscope_probe_data( 2 ,motor_s.pids[I_D].prev_err );
+// if (motor_s.xscope) xscope_probe_data( 3 ,motor_s.set_id );
+// if (motor_s.xscope) xscope_probe_data( 4 ,Id_in );
+// if (motor_s.xscope) xscope_probe_data( 5 ,motor_s.out_id );
+// if (motor_s.xscope) xscope_probe_data( 6 ,motor_s.set_iq );
+// if (motor_s.xscope) xscope_probe_data( 7 ,Iq_in );
+// if (motor_s.xscope) xscope_probe_data( 8 ,motor_s.out_iq );
 
+	// In Closed-loop mode. output DQ values become new set DQ values
+//MB~	motor_s.set_id = motor_s.out_id;
+//MB~	motor_s.set_iq = motor_s.out_iq;
 } // calc_foc_pwm
 /*****************************************************************************/
 MOTOR_STATE_TYP check_hall_state( // Inspect Hall-state and update motor-state if necessary
@@ -670,6 +701,17 @@ void use_motor ( // Start motor, and run step through different motor states
 		default:	// This case updates the motor state
 			motor_s.iters++; // Increment No. of iterations 
 
+			// NB There is not enough band-width to probe all xscope data
+			if ((motor_s.id) & !(motor_s.iters & 15)) // probe every 8th value
+			{
+				motor_s.xscope = 1; // Switch ON xscope probe
+			} // if ((motor_s.id) & !(motor_s.iters & 7))
+			else
+			{
+				motor_s.xscope = 0; // Switch OFF xscope probe
+			} // if ((motor_s.id) & !(motor_s.iters & 7))
+// motor_s.xscope = 0; // MB~ Crude Switch
+
 			if (STOP != motor_s.state)
 			{
 				// Check if it is time to stop demo
@@ -680,7 +722,7 @@ void use_motor ( // Start motor, and run step through different motor states
 				} // if (motor_s.iters > DEMO_LIMIT)
 
 				p_hall :> new_hall; // Get new hall state
-if (motor_s.id) xscope_probe_data( 5 ,(100 * (new_hall & 7)));
+// if (motor_s.xscope) xscope_probe_data( 5 ,(100 * (new_hall & 7)));
 
 				// Check error status
 				if (!(new_hall & 0b1000))
@@ -693,17 +735,20 @@ if (motor_s.id) xscope_probe_data( 5 ,(100 * (new_hall & 7)));
 				{
 					/* Get the position from encoder module. NB returns rev_cnt=0 at start-up  */
 					{ motor_s.meas_veloc ,motor_s.meas_theta ,motor_s.rev_cnt } = get_qei_data( c_qei );
-if (motor_s.id) xscope_probe_data( 1 ,motor_s.meas_theta );
-if (motor_s.id) xscope_probe_data( 2 ,motor_s.meas_veloc );
-if (motor_s.id) xscope_probe_data( 3 ,motor_s.rev_cnt );
+// if (motor_s.xscope) xscope_probe_data( 1 ,motor_s.meas_theta );
+// if (motor_s.xscope) xscope_probe_data( 2 ,motor_s.meas_veloc );
+// if (motor_s.xscope) xscope_probe_data( 3 ,motor_s.rev_cnt );
 
 						motor_s.meas_speed = abs( motor_s.meas_veloc ); // NB Used to spot stalling behaviour
 					/* Get ADC readings */
 					get_adc_vals_calibrated_int16_mb( c_adc_cntrl ,motor_s.meas_adc );
+if (motor_s.xscope) xscope_probe_data( 3 ,motor_s.meas_adc.vals[PHASE_A] );
+if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.meas_adc.vals[PHASE_B] );
+if (motor_s.xscope) xscope_probe_data( 5 ,motor_s.meas_adc.vals[PHASE_C] );
 
 					update_motor_state( motor_s ,new_hall );
-if (motor_s.id) xscope_probe_data( 0 ,motor_s.set_theta );
-if (motor_s.id) xscope_probe_data( 4 ,motor_s.theta_offset );
+if (motor_s.xscope) xscope_probe_data( 0 ,motor_s.set_theta );
+// if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.theta_offset );
 				} // else !(!(new_hall & 0b1000))
 
 				// Check if motor needs stopping
@@ -714,8 +759,8 @@ if (motor_s.id) xscope_probe_data( 4 ,motor_s.theta_offset );
 				} // if (STOP == motor_s.state)
 				else
 				{
-					// Convert Output DQ values to PWM values
-					dq_to_pwm( motor_s ,pwm_vals ,motor_s.out_id ,motor_s.out_iq ,motor_s.set_theta ); // Convert Output DQ values to PWM values
+					// Convert new set DQ values to PWM values
+					dq_to_pwm( motor_s ,pwm_vals ,motor_s.set_id ,motor_s.set_iq ,motor_s.set_theta ); // Convert Output DQ values to PWM values
 
 					update_pwm_inv( c_pwm ,pwm_vals ,motor_s.id ,motor_s.cur_buf ,motor_s.mem_addr ); // Update the PWM values
 
@@ -789,9 +834,6 @@ void run_motor (
 		t :> ts1;
 		t when timerafter(ts1+2*SEC+256*thread_id) :> void;
 	}
-
-	/* ADC centrepoint calibration before we start the PWM */
-	do_adc_calibration( c_adc_cntrl );
 
 	/* allow the WD to get going */
 	if (!isnull(c_wd)) 

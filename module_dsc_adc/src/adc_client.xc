@@ -28,12 +28,6 @@
 #endif
 
 /*****************************************************************************/
-void do_adc_calibration( streaming chanend c_adc_cntrl )
-{
-
-	c_adc_cntrl <: ADC_CMD_CAL; // Activate calibration
-} // do_adc_calibration
-/*****************************************************************************/
 void get_adc_vals_calibrated_int16_mb( 
 	streaming chanend c_adc_cntrl, // channel connecting to ADC thread
 	ADC_DATA_TYP &adc_data_s // Reference to structure containing ADC data

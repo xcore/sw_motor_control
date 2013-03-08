@@ -106,21 +106,35 @@ void init_can_phy( chanend c_rxChan, chanend c_txChan, clock p_can_clk, buffered
 	canPhyRxTx( c_rxChan, c_txChan, p_can_clk, p_can_rx, p_can_tx );
 } // init_can_phy 
 #endif
-/*****************************************************************************/
+
 #ifdef USE_XSCOPE
+/*****************************************************************************/
 void xscope_user_init()
 {
-	xscope_register( 6
-		,XSCOPE_CONTINUOUS, "o_theta", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "c_theta", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "m_theta", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "m_veloc", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "theta_off", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "rev_cnt", XSCOPE_INT , "n"
-//		XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT , "n"
-//		XSCOPE_CONTINUOUS, "Theta", XSCOPE_UINT , "n"
-//		XSCOPE_CONTINUOUS, "PWM[0]", XSCOPE_UINT , "n"
+	xscope_register( 9
+		,XSCOPE_CONTINUOUS, "s_theta", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "adc", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "filt", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "adc_a", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "adc_b", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "adc_c", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "adc_A", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "adc_B", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "adc_C", XSCOPE_INT , "n"
+/*
+		,XSCOPE_CONTINUOUS, "bits", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "calib", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "cnt", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "s_Iq", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "m_Iq", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "o_Iq", XSCOPE_INT , "n"
+		XSCOPE_CONTINUOUS, "Set Speed", XSCOPE_UINT , "n"
+		XSCOPE_CONTINUOUS, "Theta", XSCOPE_UINT , "n"
+		XSCOPE_CONTINUOUS, "PWM[0]", XSCOPE_UINT , "n"
+*/
 	); // xscope_register 
+
+	xscope_config_io( XSCOPE_IO_BASIC ); // Enable XScope printing
 } // xscope_user_init
 #endif
 /*****************************************************************************/

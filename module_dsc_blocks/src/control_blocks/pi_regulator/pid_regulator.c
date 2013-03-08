@@ -23,8 +23,10 @@
 
 #include "pid_regulator.h"
 
-const PID_CONST_TYP pid_const_Id = { DQ_P ,DQ_I ,DQ_D ,DQ_INTEGRAL_LIMIT ,D_HI_LIM ,D_LO_LIM ,PID_RESOLUTION };
-const PID_CONST_TYP pid_const_Iq = { DQ_P ,DQ_I ,DQ_D ,DQ_INTEGRAL_LIMIT ,Q_LIMIT ,-Q_LIMIT ,PID_RESOLUTION };
+// const PID_CONST_TYP pid_const_Id = { DQ_P ,DQ_I ,DQ_D ,DQ_INTEGRAL_LIMIT ,D_HI_LIM ,D_LO_LIM ,PID_RESOLUTION };
+// const PID_CONST_TYP pid_const_Iq = { DQ_P ,DQ_I ,DQ_D ,DQ_INTEGRAL_LIMIT ,Q_LIMIT ,-Q_LIMIT ,PID_RESOLUTION };
+const PID_CONST_TYP pid_const_Id = { DQ_P ,0 ,0 ,DQ_INTEGRAL_LIMIT ,D_HI_LIM ,D_LO_LIM ,PID_RESOLUTION };
+const PID_CONST_TYP pid_const_Iq = { (DQ_P << 2) ,0 ,0 ,DQ_INTEGRAL_LIMIT ,Q_LIMIT ,-Q_LIMIT ,PID_RESOLUTION };
 const PID_CONST_TYP pid_const_speed = { SPEED_P ,SPEED_I ,SPEED_D ,SPEED_INTEGRAL_LIMIT ,SPEED_HI_LIM ,-SPEED_HI_LIM ,PID_RESOLUTION };
 
 /*****************************************************************************/
@@ -78,24 +80,11 @@ int get_pid_regulator_correction( // Computes new PID correction based on input 
 	int res_32; // Result at 32-bit precision
 
 
-	pid_regul_p->sum_err = pid_regul_p->sum_err + inp_err; // Update Sum of errors
-
-	// If necessary, Clip Sum-of-errors 
-	if (pid_regul_p->sum_err > pid_const_p->sum_lim)
-	{
-		pid_regul_p->sum_err = pid_const_p->sum_lim;
-	} // if (pid_regul_p->sum_err > pid_const_p->sum_lim)
-	else
-	{
-		if (pid_regul_p->sum_err < -pid_const_p->sum_lim)
-		{
-			pid_regul_p->sum_err = -pid_const_p->sum_lim;
-		} // if (pid_regul_p->sum_err < -pid_const_p->sum_lim)
-	} // else !(pid_regul_p->sum_err > pid_const_p->sum_lim)
 
 	// Build 64-bit result
 	res_64 = (S64_T)pid_const_p->K_i * (S64_T)pid_regul_p->sum_err;
 	res_64 += (S64_T)pid_const_p->K_p * (S64_T)inp_err;
+
 	if (pid_const_p->K_d)
 	{
 		res_64 += (S64_T)pid_const_p->K_d * (S64_T)diff_err;
@@ -104,6 +93,10 @@ int get_pid_regulator_correction( // Computes new PID correction based on input 
 	// Convert to 32-bit result
 	res_32 = (int)((res_64 + (S64_T)pid_const_p->half_res) >> pid_const_p->resolution);
 
+	pid_regul_p->sum_err += inp_err; // Update Sum of errors
+	pid_regul_p->prev_err = inp_err; // Update previous error
+
+#ifdef MB // Do we want these clamps?
 	// If necessary, Clip res_32
 	if (res_32 > pid_const_p->max_lim)
 	{
@@ -117,7 +110,19 @@ int get_pid_regulator_correction( // Computes new PID correction based on input 
 		} // if (res_32 < pid_const_p->min_lim)
 	} // else !(res_32 > pid_const_p->mix_lim)
 
-	pid_regul_p->prev_err = inp_err; // Update previous error
+	// If necessary, Clip Sum-of-errors 
+	if (pid_regul_p->sum_err > pid_const_p->sum_lim)
+	{
+		pid_regul_p->sum_err = pid_const_p->sum_lim;
+	} // if (pid_regul_p->sum_err > pid_const_p->sum_lim)
+	else
+	{
+		if (pid_regul_p->sum_err < -pid_const_p->sum_lim)
+		{
+			pid_regul_p->sum_err = -pid_const_p->sum_lim;
+		} // if (pid_regul_p->sum_err < -pid_const_p->sum_lim)
+	} // else !(pid_regul_p->sum_err > pid_const_p->sum_lim)
+#endif //MB // Do we want these clamps?
 
 	return res_32;
 }
