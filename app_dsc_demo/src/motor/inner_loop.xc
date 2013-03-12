@@ -56,7 +56,8 @@
 
 #define FIRST_HALL_STATE 0b001 // 1st Hall state of 6-state cycle
 
-#define IQ_OPEN_LOOP 2000 // Iq value for open-loop mode
+#define IQ_OPEN_LOOP_MEAN 2000 // Mean Iq value for open-loop mode
+#define IQ_OPEN_LOOP_DIFF 0 // 1000 // Difference Iq value for open-loop mode
 #define ID_OPEN_LOOP 0		// Id value for open-loop mode
 #define INIT_HALL 0 // Initial Hall state
 #define INIT_THETA 0 // Initial start-up angle
@@ -130,17 +131,24 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	unsigned prev_hall; // previous hall state value
 	unsigned end_hall; // hall state at end of cycle. I.e. next value is first value of cycle (001)
 	int set_theta;	// theta value
-	int set_veloc;	// Demand angular velocity set by the user/comms interface
-	int half_veloc;	// Half demand angular velocity
-	int set_id;	// Ideal current producing radial magnetic field.
-	int set_iq;	// Ideal current producing tangential magnetic field
+	int req_veloc;	// Requested (target) angular velocity set by the user/comms interface
+	int half_veloc;	// Half requested angular velocity
+	int set_veloc;	// Demand angular velocity set by control loop
+	int req_id;	// Requested radial magnetic field.
+	int set_id;	// Demand 'radial' current set by control loop
+	int req_iq;	// Requested current producing tangential magnetic field
+	int set_iq;	// Demand 'tangential' current set by control loop 
 	int start_theta; // Theta start position during warm-up (START and SEARCH states)
 	unsigned err_flgs;	// Fault detection flags
 	unsigned xscope;	// Flag set when xscope output required
 
+	int corr_id;	// Correction to radial current value
+	int corr_iq;	// Correction to tangential current value
+	int corr_veloc;	// Correction to angular velocity
 	int out_id;	// Output radial current value
 	int out_iq;	// Output measured tangential current value
 	int iq_start;	// Initial Iq value for starting in open-loop mode
+	int iq_step;	// Step Iq value for tuning
 	int meas_theta;	// Position as measured by the QEI
 	int meas_veloc;	// angular velocity as measured by the QEI
 	int meas_speed;	// speed, i.e. magnitude of angular velocity
@@ -186,12 +194,16 @@ void init_motor( // initialise data structure for one motor
 
 
 	motor_s.set_theta = 0;
-	motor_s.set_veloc = INIT_SPEED;
-	motor_s.half_veloc = (motor_s.set_veloc >> 1);
+	motor_s.req_veloc = INIT_SPEED;
+	motor_s.half_veloc = (motor_s.req_veloc >> 1);
+
 	motor_s.start_theta = 0; // Theta start position during warm-up (START and SEARCH states)
 	motor_s.theta_offset = 0; // Offset between Hall-state and QEI origin
 	motor_s.set_id = 0;	// Ideal current producing radial magnetic field (NB never update as no radial force is required)
 	motor_s.set_iq = 0;	// Ideal current producing tangential magnetic field. (NB Updated based on the speed error)
+	motor_s.corr_id = 0;	// Clear Correction to radial current value
+	motor_s.corr_iq = 0;	// Clear Correction to tangential current value
+	motor_s.corr_veloc = 0;	// Clear Correction to angular velocity
 	motor_s.err_flgs = 0; 	// Clear fault detection flags
 	motor_s.xscope = 0; 	// Clear xscope print flag
 	motor_s.prev_time = 0; 	// previous time stamp
@@ -211,13 +223,15 @@ void init_motor( // initialise data structure for one motor
 	safestrcpy( motor_s.err_strs[DIRECTION].str ,"Motor Spinning In Wrong Direction!" );
 
 	// NB Display will require following variables, before we have measured them! ...
-	motor_s.meas_veloc = motor_s.set_veloc;
-	motor_s.meas_speed = abs(motor_s.set_veloc);
+	motor_s.meas_veloc = motor_s.req_veloc;
+	motor_s.meas_speed = abs(motor_s.req_veloc);
+
+	motor_s.iq_step = IQ_OPEN_LOOP_DIFF;
 
 	// Initialise variables dependant on spin direction
-	if (0 > motor_s.set_veloc)
+	if (0 > motor_s.req_veloc)
 	{ // Negative spin direction
-		motor_s.iq_start = -IQ_OPEN_LOOP;
+		motor_s.iq_start = -IQ_OPEN_LOOP_MEAN;
 
 		// Choose last Hall state of 6-state cycle NB depends on motor-type
 		if (LDO_MOTOR_SPIN)
@@ -228,10 +242,10 @@ void init_motor( // initialise data structure for one motor
 		{
 			motor_s.end_hall = 0b101;
 		} // else !(LDO_MOTOR_SPIN
-	} // if (0 > motor_s.set_veloc)
+	} // if (0 > motor_s.req_veloc)
 	else
 	{ // Positive spin direction
-		motor_s.iq_start = IQ_OPEN_LOOP;
+		motor_s.iq_start = IQ_OPEN_LOOP_MEAN;
 
 		// Choose last Hall state of 6-state cycle NB depends on motor-type
 		if (LDO_MOTOR_SPIN)
@@ -242,7 +256,10 @@ void init_motor( // initialise data structure for one motor
 		{
 			motor_s.end_hall = 0b011;
 		} // else !(LDO_MOTOR_SPIN
-	} // else !(0 > motor_s.set_veloc)
+	} // else !(0 > motor_s.req_veloc)
+
+	motor_s.req_iq = motor_s.iq_start;
+	motor_s.req_id = ID_OPEN_LOOP;	// Requested 'radial' current
 
 	for (phase_cnt = 0; phase_cnt < NUM_PHASES; phase_cnt++)
 	{ 
@@ -333,19 +350,24 @@ void calc_open_loop_pwm ( // Calculate open-loop PWM output values to spins magn
 
 	// Update start position ready for next iteration
 
-	if (motor_s.set_veloc < 0)
+	if (motor_s.req_veloc < 0)
 	{
 		motor_s.start_theta--; // Step on motor in ANTI-clockwise direction
-	} // if (motor_s.set_veloc < 0)
+	} // if (motor_s.req_veloc < 0)
 	else
 	{
 		motor_s.start_theta++; // Step on motor in Clockwise direction
-	} // else !(motor_s.set_veloc < 0)
+	} // else !(motor_s.req_veloc < 0)
 } // calc_open_loop_pwm
 /*****************************************************************************/
 void calc_foc_pwm ( // Calculate FOC PWM output values
 	MOTOR_DATA_TYP &motor_s // reference to structure containing motor data
 )
+#define PROPORTIONAL 1 // Selects between 'proportional' and 'offset' error corrections
+
+#define VELOC_CLOSED 0 // Selects fully closed loop (both velocity, Iq and Id)
+#define IQ_ID_CLOSED 1 // Selcects Iq/Id closed-loop, velocity open-loop
+
 {
 	int alpha = 0, beta = 0;	// Measured currents once transformed to a 2D vector
 	int Id_in = 0, Iq_in = 0;	/* Measured radial and tangential currents in the rotor frame of reference */
@@ -360,15 +382,18 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 
 #pragma xta label "foc_loop_clarke"
 
-if (motor_s.xscope) xscope_probe_data( 6 ,motor_s.meas_adc.vals[PHASE_A] );
-if (motor_s.xscope) xscope_probe_data( 7 ,motor_s.meas_adc.vals[PHASE_B] );
-if (motor_s.xscope) xscope_probe_data( 8 ,motor_s.meas_adc.vals[PHASE_C] );
+// if (motor_s.xscope) xscope_probe_data( 3 ,motor_s.meas_adc.vals[PHASE_A] );
+// if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.meas_adc.vals[PHASE_B] );
+// if (motor_s.xscope) xscope_probe_data( 5 ,motor_s.meas_adc.vals[PHASE_C] );
 
 	/* To calculate alpha and beta currents */
 	clarke_transform(motor_s.meas_adc.vals[PHASE_A], motor_s.meas_adc.vals[PHASE_B], motor_s.meas_adc.vals[PHASE_C], alpha, beta );
 //	clarke_transform(-motor_s.meas_adc.vals[PHASE_A], -motor_s.meas_adc.vals[PHASE_B], -motor_s.meas_adc.vals[PHASE_C], alpha, beta );
 
-calc_open_loop_pwm( motor_s ); // MB~ Dbg
+if (0 == IQ_ID_CLOSED)
+{ // Evaluate new set_theta
+	calc_open_loop_pwm( motor_s );
+} // if (0 == IQ_ID_CLOSED)
 
 #pragma xta label "foc_loop_park"
 
@@ -380,38 +405,66 @@ calc_open_loop_pwm( motor_s ); // MB~ Dbg
 	// Applying Speed PID.
 
 // if (motor_s.xscope) xscope_probe_data( 0 ,motor_s.set_theta );
-// if (motor_s.xscope) xscope_probe_data( 1 ,motor_s.set_veloc );
+// if (motor_s.xscope) xscope_probe_data( 1 ,motor_s.req_veloc );
 // if (motor_s.xscope) xscope_probe_data( 2 ,motor_s.meas_veloc );
 
-#ifdef MB // Dbg skip velocity PID
-	motor_s.set_iq = get_pid_regulator_correction( motor_s.id ,motor_s.pids[SPEED] ,motor_s.meas_veloc ,motor_s.set_veloc );
+	if (VELOC_CLOSED)
+	{ // Evaluate set IQ from velocity PID
+		motor_s.corr_veloc = get_pid_regulator_correction( motor_s.id ,motor_s.pids[SPEED] ,motor_s.meas_veloc ,motor_s.req_veloc );
+
+		if (PROPORTIONAL)
+		{ // Proportional update
+			motor_s.set_iq = motor_s.corr_veloc;
+		} // if (PROPORTIONAL)
+		else
+		{ // Offset update
+			motor_s.set_iq += motor_s.corr_iq;
+		} // else !(PROPORTIONAL)
+		motor_s.req_iq = motor_s.set_iq; // Closed loop
+
 // if (motor_s.xscope) xscope_probe_data( 2 ,motor_s.pids[SPEED].prev_err );
 // if (motor_s.xscope) xscope_probe_data( 3 ,(motor_s.pids[SPEED].sum_err >> 10) );
-#endif // MB // Dbg
+	} // if (VELOC_CLOSED)
 
 // if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.set_iq );
 // if (motor_s.xscope) xscope_probe_data( 5 ,Iq_in );
 
 #pragma xta label "foc_loop_id_iq_pid"
 
-	/* Apply PID control to Iq and Id */
-	motor_s.out_iq = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_Q] ,Iq_in ,motor_s.set_iq );
-// if (motor_s.xscope) xscope_probe_data( 1 ,motor_s.pids[I_Q].prev_err );
-// if (motor_s.xscope) xscope_probe_data( 7 ,motor_s.pids[I_Q].sum_err );
-// if (motor_s.xscope) xscope_probe_data( 8 ,motor_s.out_iq );
+	// Apply PID control to Iq and Id
+ 
+	motor_s.corr_iq = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_Q] ,Iq_in ,motor_s.req_iq );
+	motor_s.corr_id = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_D] ,Id_in ,motor_s.req_id  );
 
-	motor_s.out_id = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_D] ,Id_in ,motor_s.set_id );
-// if (motor_s.xscope) xscope_probe_data( 2 ,motor_s.pids[I_D].prev_err );
-// if (motor_s.xscope) xscope_probe_data( 3 ,motor_s.set_id );
-// if (motor_s.xscope) xscope_probe_data( 4 ,Id_in );
-// if (motor_s.xscope) xscope_probe_data( 5 ,motor_s.out_id );
-// if (motor_s.xscope) xscope_probe_data( 6 ,motor_s.set_iq );
-// if (motor_s.xscope) xscope_probe_data( 7 ,Iq_in );
-// if (motor_s.xscope) xscope_probe_data( 8 ,motor_s.out_iq );
+	if (PROPORTIONAL)
+	{ // Proportional update
+		motor_s.out_id = motor_s.corr_id;
+		motor_s.out_iq = motor_s.corr_iq;
+	} // if (PROPORTIONAL)
+	else
+	{ // Offset update
+		motor_s.out_id = motor_s.set_id + motor_s.corr_id;
+		motor_s.out_iq = motor_s.set_iq + motor_s.corr_iq;
+	} // else !(PROPORTIONAL)
 
-	// In Closed-loop mode. output DQ values become new set DQ values
-//MB~	motor_s.set_id = motor_s.out_id;
-//MB~	motor_s.set_iq = motor_s.out_iq;
+if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.req_iq );
+if (motor_s.xscope) xscope_probe_data( 5 ,Iq_in );
+if (motor_s.xscope) xscope_probe_data( 6 ,motor_s.corr_iq );
+if (motor_s.xscope) xscope_probe_data( 7 ,motor_s.pids[I_Q].prev_err );
+if (motor_s.xscope) xscope_probe_data( 8 ,motor_s.pids[I_Q].sum_err );
+
+	if (IQ_ID_CLOSED)
+	{ // Update set DQ values
+		motor_s.set_id = motor_s.out_id;
+		motor_s.set_iq = motor_s.out_iq;
+	} // if (IQ_ID_CLOSED)
+
+	// Check whether it is time to step input response MB~ Tuning
+	if (!(motor_s.cnts[FOC] & 0x3FFF))
+	{
+		motor_s.req_iq = motor_s.iq_start + motor_s.iq_step;
+		motor_s.iq_step = IQ_OPEN_LOOP_DIFF - motor_s.iq_step; // Toggle step value
+	} // if (!(motor_s.cnts[FOC] & 0xFFFF)
 } // calc_foc_pwm
 /*****************************************************************************/
 MOTOR_STATE_TYP check_hall_state( // Inspect Hall-state and update motor-state if necessary
@@ -652,12 +705,12 @@ void use_motor ( // Start motor, and run step through different motor states
 			{
 				case CMD_GET_IQ :
 					c_speed <: motor_s.meas_veloc;
-					c_speed <: motor_s.set_veloc;
+					c_speed <: motor_s.req_veloc;
 				break; // case CMD_GET_IQ
 	
 				case CMD_SET_SPEED :
-					c_speed :> motor_s.set_veloc;
-					motor_s.half_veloc = (motor_s.set_veloc >> 1);
+					c_speed :> motor_s.req_veloc;
+					motor_s.half_veloc = (motor_s.req_veloc >> 1);
 				break; // case CMD_SET_SPEED 
 	
 				case CMD_GET_FAULT :
@@ -688,8 +741,8 @@ void use_motor ( // Start motor, and run step through different motor states
 			}
 			else if (command == CMD_SET_SPEED)
 			{
-				c_can_eth_shared :> motor_s.set_veloc;
-				motor_s.half_veloc = (motor_s.set_veloc >> 1);
+				c_can_eth_shared :> motor_s.req_veloc;
+				motor_s.half_veloc = (motor_s.req_veloc >> 1);
 			}
 			else if (command == CMD_GET_FAULT)
 			{
@@ -710,7 +763,7 @@ void use_motor ( // Start motor, and run step through different motor states
 			{
 				motor_s.xscope = 0; // Switch OFF xscope probe
 			} // if ((motor_s.id) & !(motor_s.iters & 7))
-// motor_s.xscope = 0; // MB~ Crude Switch
+motor_s.xscope = 0; // MB~ Crude Switch
 
 			if (STOP != motor_s.state)
 			{
@@ -735,16 +788,16 @@ void use_motor ( // Start motor, and run step through different motor states
 				{
 					/* Get the position from encoder module. NB returns rev_cnt=0 at start-up  */
 					{ motor_s.meas_veloc ,motor_s.meas_theta ,motor_s.rev_cnt } = get_qei_data( c_qei );
-// if (motor_s.xscope) xscope_probe_data( 1 ,motor_s.meas_theta );
-// if (motor_s.xscope) xscope_probe_data( 2 ,motor_s.meas_veloc );
-// if (motor_s.xscope) xscope_probe_data( 3 ,motor_s.rev_cnt );
+if (motor_s.xscope) xscope_probe_data( 1 ,motor_s.meas_theta );
+if (motor_s.xscope) xscope_probe_data( 2 ,motor_s.meas_veloc );
+if (motor_s.xscope) xscope_probe_data( 3 ,motor_s.rev_cnt );
 
 						motor_s.meas_speed = abs( motor_s.meas_veloc ); // NB Used to spot stalling behaviour
 					/* Get ADC readings */
 					get_adc_vals_calibrated_int16_mb( c_adc_cntrl ,motor_s.meas_adc );
-if (motor_s.xscope) xscope_probe_data( 3 ,motor_s.meas_adc.vals[PHASE_A] );
-if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.meas_adc.vals[PHASE_B] );
-if (motor_s.xscope) xscope_probe_data( 5 ,motor_s.meas_adc.vals[PHASE_C] );
+// if (motor_s.xscope) xscope_probe_data( 3 ,motor_s.meas_adc.vals[PHASE_A] );
+// if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.meas_adc.vals[PHASE_B] );
+// if (motor_s.xscope) xscope_probe_data( 5 ,motor_s.meas_adc.vals[PHASE_C] );
 
 					update_motor_state( motor_s ,new_hall );
 if (motor_s.xscope) xscope_probe_data( 0 ,motor_s.set_theta );
@@ -761,6 +814,9 @@ if (motor_s.xscope) xscope_probe_data( 0 ,motor_s.set_theta );
 				{
 					// Convert new set DQ values to PWM values
 					dq_to_pwm( motor_s ,pwm_vals ,motor_s.set_id ,motor_s.set_iq ,motor_s.set_theta ); // Convert Output DQ values to PWM values
+// if (motor_s.xscope) xscope_probe_data( 6 ,pwm_vals[PHASE_A] );
+// if (motor_s.xscope) xscope_probe_data( 7 ,pwm_vals[PHASE_B] );
+// if (motor_s.xscope) xscope_probe_data( 8 ,pwm_vals[PHASE_C] );
 
 					update_pwm_inv( c_pwm ,pwm_vals ,motor_s.id ,motor_s.cur_buf ,motor_s.mem_addr ); // Update the PWM values
 

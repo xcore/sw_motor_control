@@ -86,6 +86,10 @@ void init_qei_data( // Initialise  QEI data for one motor
 	inp_qei_s.prev_orig = 0;
 	inp_qei_s.prev_phases = 0;
 
+	inp_qei_s.filt_val = 0; // filtered value
+	inp_qei_s.coef_err = 0; // Coefficient diffusion error
+	inp_qei_s.scale_err = 0; // Scaling diffusion error 
+
 	inp_qei_s.dbg = 0;
 } // init_qei_data
 /*****************************************************************************/
@@ -351,6 +355,40 @@ static const signed char get_spin_state[QEI_PHASES][QEI_PHASES] = {
 	}	// if (cur_phases != inp_qei_s.prev_phases)
 } // service_input_pins
 /*****************************************************************************/
+int filter_velocity( // Smooths velocity estimate using low-pass filter
+	QEI_PARAM_S &qei_data_s, // Reference to structure containing QEI parameters for one motor
+	int meas_veloc // Angular velocity of motor measured in Ticks/angle_position
+) // Returns filtered output value
+/* This is a 1st order IIR filter, it is configured as a low-pass filter, 
+ * The input velocity value is up-scaled, to allow integer arithmetic to be used.
+ * The output mean value is down-scaled by the same amount.
+ * Error diffusion is used to keep control of systematic quantisation errors.
+ */
+{
+	int scaled_inp = (meas_veloc << QEI_SCALE_BITS); // Upscaled QEI input value
+	int diff_val; // Difference between input and filtered output
+	int increment; // new increment to filtered output value
+	int out_val; // filtered output value
+
+
+	// Form difference with previous filter output
+	diff_val = scaled_inp - qei_data_s.filt_val;
+
+	// Multiply difference by filter coefficient (alpha)
+	diff_val += qei_data_s.coef_err; // Add in diffusion error;
+	increment = (diff_val + QEI_HALF_COEF) >> QEI_COEF_BITS ; // Multiply by filter coef (with rounding)
+	qei_data_s.coef_err = diff_val - (increment << QEI_COEF_BITS); // Evaluate new quantisation error value 
+
+	qei_data_s.filt_val += increment; // Update (up-scaled) filtered output value
+
+	// Update mean value by down-scaling filtered output value
+	qei_data_s.filt_val += qei_data_s.scale_err; // Add in diffusion error;
+	out_val = (qei_data_s.filt_val + QEI_HALF_SCALE) >> QEI_SCALE_BITS; // Down-scale
+	qei_data_s.scale_err = qei_data_s.filt_val - (out_val << QEI_SCALE_BITS); // Evaluate new remainder value 
+
+	return out_val; // return filtered output value
+} // filter_velocity
+/*****************************************************************************/
 #pragma unsafe arrays
 void service_client_request( // Send processed QEI data to client
 	QEI_PARAM_S &inp_qei_s, // Reference to structure containing QEI parameters for one motor
@@ -365,6 +403,7 @@ void service_client_request( // Send processed QEI data to client
  */
 {
 	int meas_veloc; // Angular velocity of motor measured in Ticks/angle_position
+	int smooth_veloc; // Smoothed velocity (low-pass filtered)
 
 
 	// Check if we have received sufficient data to estimate velocity
@@ -377,10 +416,12 @@ void service_client_request( // Send processed QEI data to client
 		meas_veloc = inp_qei_s.spin_sign; // Default value
   } // if else !(START_UP_CHANGES < inp_qei_s.diff_time)
 
-// if (inp_qei_s.id) xscope_probe_data( 0 ,meas_veloc);
+	smooth_veloc = filter_velocity( inp_qei_s ,meas_veloc );
+if (inp_qei_s.id) xscope_probe_data( 0 ,meas_veloc);
+if (inp_qei_s.id) xscope_probe_data( 1 ,smooth_veloc);
 
 	c_qei <: (inp_qei_s.theta & QEI_REV_MASK); // Send value in range [0..QEI_REV_MASK]
-	c_qei <: meas_veloc;			
+	c_qei <: smooth_veloc;			
 	c_qei <: inp_qei_s.orig_cnt;
 } // service_client_request
 /*****************************************************************************/

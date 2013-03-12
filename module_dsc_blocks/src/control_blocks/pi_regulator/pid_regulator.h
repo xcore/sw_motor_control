@@ -41,6 +41,7 @@
 
 #ifdef BLDC_FOC
 #define PID_RESOLUTION 13
+//MB~ #define PID_RESOLUTION 16 // tuning
 #endif
 
 #ifdef BLDC_BASIC
@@ -52,6 +53,9 @@
 #endif
 
 // PID contant definitions for Current Control (Id and Iq)
+#define MB_P 16000
+#define MB_I 1024 // 2048 // 2 // 8192
+
 #define DQ_P 2100
 #define DQ_I 6
 #define DQ_D 0
@@ -90,6 +94,8 @@ typedef struct PID_REGULATOR_TAG
 	PID_CONST_TYP consts; // Structure containing all constants for this PID regulator
 	int prev_err; // Previous error
 	int sum_err; // Sum of errors
+	int rem; // Remainder
+	int qnt_err; // Quantisation Error
 } PID_REGULATOR_TYP;
 
 #ifdef __XC__

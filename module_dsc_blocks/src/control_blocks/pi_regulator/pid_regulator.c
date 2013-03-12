@@ -25,8 +25,8 @@
 
 // const PID_CONST_TYP pid_const_Id = { DQ_P ,DQ_I ,DQ_D ,DQ_INTEGRAL_LIMIT ,D_HI_LIM ,D_LO_LIM ,PID_RESOLUTION };
 // const PID_CONST_TYP pid_const_Iq = { DQ_P ,DQ_I ,DQ_D ,DQ_INTEGRAL_LIMIT ,Q_LIMIT ,-Q_LIMIT ,PID_RESOLUTION };
-const PID_CONST_TYP pid_const_Id = { DQ_P ,0 ,0 ,DQ_INTEGRAL_LIMIT ,D_HI_LIM ,D_LO_LIM ,PID_RESOLUTION };
-const PID_CONST_TYP pid_const_Iq = { (DQ_P << 2) ,0 ,0 ,DQ_INTEGRAL_LIMIT ,Q_LIMIT ,-Q_LIMIT ,PID_RESOLUTION };
+const PID_CONST_TYP pid_const_Id = { MB_P ,MB_I ,0 ,DQ_INTEGRAL_LIMIT ,D_HI_LIM ,D_LO_LIM ,PID_RESOLUTION };
+const PID_CONST_TYP pid_const_Iq = { MB_P ,MB_I ,0 ,DQ_INTEGRAL_LIMIT ,Q_LIMIT ,-Q_LIMIT ,PID_RESOLUTION };
 const PID_CONST_TYP pid_const_speed = { SPEED_P ,SPEED_I ,SPEED_D ,SPEED_INTEGRAL_LIMIT ,SPEED_HI_LIM ,-SPEED_HI_LIM ,PID_RESOLUTION };
 
 /*****************************************************************************/
@@ -62,6 +62,8 @@ void initialise_pid( // Initialise PID settings
 	// Initialise variables
 	pid_regul_p->sum_err = 0;
 	pid_regul_p->prev_err = 0;
+	pid_regul_p->qnt_err = 0;
+	pid_regul_p->rem = 0;
 } // inititialise_pid
 /*****************************************************************************/
 int get_pid_regulator_correction( // Computes new PID correction based on input error
@@ -73,29 +75,44 @@ int get_pid_regulator_correction( // Computes new PID correction based on input 
 #define MAX_32 0x40000000
 {
 	PID_CONST_TYP * pid_const_p = &(pid_regul_p->consts); // Local pointer to PID constants data structure
-//	int inp_err = (meas_val - requ_val); // Compute input error
 	int inp_err = (requ_val - meas_val); // Compute input error
-	int diff_err = (inp_err - pid_regul_p->prev_err); // Compute difference error
+	int diff_err; // Compute difference error
+	int tmp_err; // temporary error
+	int down_err; // down-scaled error
 	S64_T res_64; // Result at 64-bit precision
 	int res_32; // Result at 32-bit precision
 
 
 
 	// Build 64-bit result
-	res_64 = (S64_T)pid_const_p->K_i * (S64_T)pid_regul_p->sum_err;
-	res_64 += (S64_T)pid_const_p->K_p * (S64_T)inp_err;
+	res_64 = (S64_T)pid_const_p->K_p * (S64_T)inp_err;
 
-	if (pid_const_p->K_d)
+	if (pid_const_p->K_i)
 	{
-		res_64 += (S64_T)pid_const_p->K_d * (S64_T)diff_err;
+		tmp_err = inp_err + pid_regul_p->rem; // Add-in previous remainder
+		down_err = (int)((tmp_err + (S64_T)pid_const_p->half_res) >> pid_const_p->resolution); // Down-scale error 
+		pid_regul_p->rem = tmp_err - (down_err << pid_const_p->resolution); // Update remainder
+
+		pid_regul_p->sum_err += down_err; // Update Sum of (down-scaled) errors
+		res_64 += (S64_T)pid_const_p->K_i * (S64_T)pid_regul_p->sum_err;
 	} // if (pid_const_p->K_d)
  
-	// Convert to 32-bit result
-	res_32 = (int)((res_64 + (S64_T)pid_const_p->half_res) >> pid_const_p->resolution);
+	if (pid_const_p->K_d)
+	{
+		diff_err = (inp_err - pid_regul_p->prev_err); // Compute difference error
 
-	pid_regul_p->sum_err += inp_err; // Update Sum of errors
-	pid_regul_p->prev_err = inp_err; // Update previous error
+		res_64 += (S64_T)pid_const_p->K_d * (S64_T)diff_err;
 
+		pid_regul_p->prev_err = inp_err; // Update previous error
+	} // if (pid_const_p->K_d)
+ 
+	// Convert to 32-bit result ...
+
+	res_64 += pid_regul_p->qnt_err; // Add-in previous quantisation (diffusion) error
+	res_32 = (int)((res_64 + (S64_T)pid_const_p->half_res) >> pid_const_p->resolution); // Down-scale result
+	pid_regul_p->qnt_err = res_64 - ((S64_T)res_32 << pid_const_p->resolution); // Update diffusion error
+
+// if (motor_id) printintln( res_32 );
 #ifdef MB // Do we want these clamps?
 	// If necessary, Clip res_32
 	if (res_32 > pid_const_p->max_lim)

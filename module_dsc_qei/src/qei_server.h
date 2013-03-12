@@ -53,6 +53,13 @@
 
 #define START_UP_CHANGES 3 // Must see this number of pin changes before calculating velocity
 
+#define QEI_SCALE_BITS 16 // Used to generate 2^n scaling factor
+#define QEI_HALF_SCALE (1 << (QEI_SCALE_BITS - 1)) // Half Scaling factor (used in rounding)
+
+#define QEI_COEF_BITS 8 // Used to generate filter coef divisor. coef_div = 1/2^n
+#define QEI_COEF_DIV (1 << QEI_COEF_BITS) // Coef divisor
+#define QEI_HALF_COEF (QEI_COEF_DIV >> 1) // Half of Coef divisor
+
 /** Different Motor Phases */
 typedef enum QEI_ENUM_TAG
 {
@@ -79,6 +86,10 @@ typedef struct QEI_PARAM_TAG //
 	int confid; // Confidence in current qei-state
 	int id; // Unique motor identifier
 	int dbg; // Debug
+
+	int filt_val; // filtered value
+	int coef_err; // Coefficient diffusion error
+	int scale_err; // Scaling diffusion error 
 } QEI_PARAM_S;
 
 /** Structure containing array of QEI parameters for all motors */
