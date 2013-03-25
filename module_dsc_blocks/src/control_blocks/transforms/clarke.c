@@ -33,7 +33,7 @@ void clarke_transform( // Do a clarke transform
 )
 {
 	*I_alpha = Ia;
-	*I_beta = (ONE_OVER_ROOT_3 * (Ib - Ic)) >> 14;
+	*I_beta = (ONE_OVER_ROOT_3 * (Ib - Ic) + 8192 ) >> 14;
 } // clarke_transform 
 /*****************************************************************************/
 void inverse_clarke_transform( // Inverse clarke transform

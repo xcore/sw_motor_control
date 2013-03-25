@@ -301,8 +301,6 @@ void service_data_request( // Services client command data request for this trig
 		case ADC_CMD_REQ : // Request for ADC data
 			for (phase_cnt=0; phase_cnt<USED_ADC_PHASES; ++phase_cnt) 
 			{
-//MB~		c_control <: (trig_data_s.phase_data[phase_cnt].adc_val - trig_data_s.phase_data[phase_cnt].mean);
-				// ADC data appears to be inverted with respect to PWM data. Therefore do S/W fix here
 				c_control <: (trig_data_s.phase_data[phase_cnt].mean - trig_data_s.phase_data[phase_cnt].adc_val ); //Return value with zero mean
 			} // for phase_cnt
 		break; // case ADC_CMD_REQ 

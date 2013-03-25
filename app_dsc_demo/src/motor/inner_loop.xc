@@ -58,13 +58,36 @@
 
 #define IQ_OPEN_LOOP_MEAN 2000 // Mean Iq value for open-loop mode
 #define IQ_OPEN_LOOP_DIFF 0 // 1000 // Difference Iq value for open-loop mode
-#define ID_OPEN_LOOP 0		// Id value for open-loop mode
+//MB~ #define ID_OPEN_LOOP 0		// Id value for open-loop mode
+#define ID_OPEN_LOOP 1		// Id value for open-loop mode
 #define INIT_HALL 0 // Initial Hall state
 #define INIT_THETA 0 // Initial start-up angle
 #define INIT_SPEED 200 // Initial start-up speed
 
+#define MB_B 0 // MB~ Dbg
+#define MB_S (5000 << MB_B) // MB~ Dbg
+#define MB_F 13000 // MB~ Dbg
+
+// Defines for evaluating 'Magic' Phase Offsets
+#define PHASE_BITS 20 // No of bits in phase offset scaling factor 
+#define PHASE_DENOM (1 << PHASE_BITS)
+#define HALF_PHASE (PHASE_DENOM >> 1)
+
+#define PHI_NUMER 34603 // 0.033 as integer ratio PHI_NUMER/PHASE_DENOM
+#define GAMMA_GRAD 7668 // 0.007313 as integer ratio GAMMA_GRAD/PHASE_DENOM
+#define GAMMA_INTERCEPT 33019658 // 31.49 as integer ratio GAMMA_INTERCEPT/PHASE_DENOM
+
+#define XTR_SCALE_BITS 16 // Used to generate 2^n scaling factor
+#define XTR_HALF_SCALE (1 << (XTR_SCALE_BITS - 1)) // Half Scaling factor (used in rounding)
+
+#define XTR_COEF_BITS 9 // Used to generate filter coef divisor. coef_div = 1/2^n
+#define XTR_COEF_DIV (1 << XTR_COEF_BITS) // Coef divisor
+#define XTR_HALF_COEF (XTR_COEF_DIV >> 1) // Half of Coef divisor
+
+
 #ifdef USE_XSCOPE
-	#define DEMO_LIMIT 100000 // XSCOPE
+//	#define DEMO_LIMIT 100000 // XSCOPE
+	#define DEMO_LIMIT 200000 // XSCOPE
 #else // ifdef USE_XSCOPE
 	#define DEMO_LIMIT 9000000
 #endif // else !USE_XSCOPE
@@ -134,19 +157,21 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	int req_veloc;	// Requested (target) angular velocity set by the user/comms interface
 	int half_veloc;	// Half requested angular velocity
 	int set_veloc;	// Demand angular velocity set by control loop
-	int req_id;	// Requested radial magnetic field.
-	int set_id;	// Demand 'radial' current set by control loop
-	int req_iq;	// Requested current producing tangential magnetic field
-	int set_iq;	// Demand 'tangential' current set by control loop 
+	int req_Id;	// Requested radial magnetic field.
+	int set_Id;	// Demand 'radial' current set by control loop
+	int req_Iq;	// Requested current producing tangential magnetic field
+	int set_Iq;	// Demand 'tangential' current set by control loop 
 	int start_theta; // Theta start position during warm-up (START and SEARCH states)
 	unsigned err_flgs;	// Fault detection flags
 	unsigned xscope;	// Flag set when xscope output required
 
-	int corr_id;	// Correction to radial current value
-	int corr_iq;	// Correction to tangential current value
+	int corr_Id;	// Correction to radial current value
+	int corr_Iq;	// Correction to tangential current value
 	int corr_veloc;	// Correction to angular velocity
-	int out_id;	// Output radial current value
-	int out_iq;	// Output measured tangential current value
+	int out_Id;	// Output radial current value
+	int out_Iq;	// Output measured tangential current value
+	int meas_Id;	// Measured radial current value
+	int meas_Iq;	// Measured tangential current value
 	int iq_start;	// Initial Iq value for starting in open-loop mode
 	int iq_step;	// Step Iq value for tuning
 	int meas_theta;	// Position as measured by the QEI
@@ -154,10 +179,22 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	int meas_speed;	// speed, i.e. magnitude of angular velocity
 	int rev_cnt;	// rev. counter (No. of origin traversals)
 	int theta_offset;	// Phase difference between the QEI and the coils
+	int phi_err;	// Error diffusion value for Phi value
+	int gamma_est;	// Estimate of leading-angle, used to 'pull' pole towards coil.
+	int gamma_off;	// Gamma value offset
+	int gamma_err;	// Error diffusion value for Gamma value
+	int adc_err;	// Error diffusion value for ADC extrema filter
 	int prev_angl; 	// previous angular position
 	unsigned prev_time; 	// previous time stamp
 	unsigned mem_addr; // Shared memory address
 	unsigned cur_buf; // Current double-buffer in use at shared memory address
+
+	int filt_val; // filtered value
+	int coef_err; // Coefficient diffusion error
+	int scale_err; // Scaling diffusion error 
+
+	int tmp; // MB~ Dbg
+	int temp; // MB~ Dbg
 } MOTOR_DATA_TYP;
 
 static int dbg = 0; // Debug variable
@@ -199,10 +236,11 @@ void init_motor( // initialise data structure for one motor
 
 	motor_s.start_theta = 0; // Theta start position during warm-up (START and SEARCH states)
 	motor_s.theta_offset = 0; // Offset between Hall-state and QEI origin
-	motor_s.set_id = 0;	// Ideal current producing radial magnetic field (NB never update as no radial force is required)
-	motor_s.set_iq = 0;	// Ideal current producing tangential magnetic field. (NB Updated based on the speed error)
-	motor_s.corr_id = 0;	// Clear Correction to radial current value
-	motor_s.corr_iq = 0;	// Clear Correction to tangential current value
+	motor_s.phi_err = 0; // Erro diffusion value for phi estimate
+	motor_s.set_Id = 0;	// Ideal current producing radial magnetic field (NB never update as no radial force is required)
+	motor_s.set_Iq = 0;	// Ideal current producing tangential magnetic field. (NB Updated based on the speed error)
+	motor_s.corr_Id = 0;	// Clear Correction to radial current value
+	motor_s.corr_Iq = 0;	// Clear Correction to tangential current value
 	motor_s.corr_veloc = 0;	// Clear Correction to angular velocity
 	motor_s.err_flgs = 0; 	// Clear fault detection flags
 	motor_s.xscope = 0; 	// Clear xscope print flag
@@ -210,6 +248,11 @@ void init_motor( // initialise data structure for one motor
 	motor_s.prev_angl = 0; 	// previous angular position
 	motor_s.cur_buf = 0; 	// Initialise which double-buffer in use
 	motor_s.mem_addr = 0; 	// Signal unassigned address
+	motor_s.coef_err = 0; // Clear Extrema Coef. diffusion error
+	motor_s.scale_err = 0; // Clear Extrema Scaling diffusion error
+	motor_s.gamma_est = 0;	// Estimate of leading-angle, used to 'pull' pole towards coil.
+	motor_s.gamma_off = 0;	// Gamma value offset
+	motor_s.gamma_err = 0;	// Error diffusion value for Gamma value
 
 	// Initialise error strings
 	for (err_cnt=0; err_cnt<NUM_ERR_TYPS; err_cnt++)
@@ -232,6 +275,7 @@ void init_motor( // initialise data structure for one motor
 	if (0 > motor_s.req_veloc)
 	{ // Negative spin direction
 		motor_s.iq_start = -IQ_OPEN_LOOP_MEAN;
+		motor_s.gamma_off = -GAMMA_INTERCEPT;
 
 		// Choose last Hall state of 6-state cycle NB depends on motor-type
 		if (LDO_MOTOR_SPIN)
@@ -246,6 +290,7 @@ void init_motor( // initialise data structure for one motor
 	else
 	{ // Positive spin direction
 		motor_s.iq_start = IQ_OPEN_LOOP_MEAN;
+		motor_s.gamma_off = GAMMA_INTERCEPT;
 
 		// Choose last Hall state of 6-state cycle NB depends on motor-type
 		if (LDO_MOTOR_SPIN)
@@ -258,14 +303,17 @@ void init_motor( // initialise data structure for one motor
 		} // else !(LDO_MOTOR_SPIN
 	} // else !(0 > motor_s.req_veloc)
 
-	motor_s.req_iq = motor_s.iq_start;
-	motor_s.req_id = ID_OPEN_LOOP;	// Requested 'radial' current
+	motor_s.filt_val = motor_s.iq_start; // Preset filtered Iq value to something sensible
+	motor_s.req_Iq = motor_s.iq_start;
+	motor_s.req_Id = ID_OPEN_LOOP;	// Requested 'radial' current
 
 	for (phase_cnt = 0; phase_cnt < NUM_PHASES; phase_cnt++)
 	{ 
 		motor_s.meas_adc.vals[phase_cnt] = -1;
 	} // for phase_cnt
 
+	motor_s.tmp = MB_S; // MB~ Dbg
+	motor_s.temp = 0; // MB~ Dbg
 } // init_motor
 /*****************************************************************************/
 void error_pwm_values( // Set PWM values to error condition
@@ -313,15 +361,19 @@ void dq_to_pwm ( // Convert Id & Iq input values to 3 PWM output values
 )
 {
 	int I_coil[NUM_PHASES];	// array of intermediate coil currents for each phase
-	int alpha_new = 0, beta_new = 0; // New Intermediate currents as a 2D vector
+	int alpha_set = 0, beta_set = 0; // New Intermediate currents as a 2D vector
 	int phase_cnt; // phase counter
 
-
 	/* Inverse park  [d,q] to [alpha, beta] */
-	inverse_park_transform( alpha_new, beta_new, inp_id, inp_iq, inp_theta  );
+if (motor_s.xscope) xscope_probe_data( 7 ,motor_s.set_theta );
+	inverse_park_transform( alpha_set, beta_set, inp_id, inp_iq, inp_theta  );
+
+// if (motor_s.xscope) xscope_probe_data( 3 ,inp_iq );
+// if (motor_s.xscope) xscope_probe_data( 4 ,alpha_set );
+// if (motor_s.xscope) xscope_probe_data( 11 ,beta_set );
 
 	// Final voltages applied: 
-	inverse_clarke_transform( I_coil[PHASE_A] ,I_coil[PHASE_B] ,I_coil[PHASE_C] ,alpha_new ,beta_new ); // Correct order
+	inverse_clarke_transform( I_coil[PHASE_A] ,I_coil[PHASE_B] ,I_coil[PHASE_C] ,alpha_set ,beta_set ); // Correct order
 
 	/* Scale to 12bit unsigned for PWM output */
 	for (phase_cnt = 0; phase_cnt < NUM_PHASES; phase_cnt++)
@@ -329,6 +381,9 @@ void dq_to_pwm ( // Convert Id & Iq input values to 3 PWM output values
 		out_pwm[phase_cnt] = scale_to_12bit( I_coil[phase_cnt] );
 	} // for phase_cnt
 
+// if (motor_s.xscope) xscope_probe_data( 0 ,out_pwm[PHASE_A] );
+// if (motor_s.xscope) xscope_probe_data( 1 ,out_pwm[PHASE_B] );
+// if (motor_s.xscope) xscope_probe_data( 2 ,out_pwm[PHASE_C] );
 } // dq_to_pwm
 /*****************************************************************************/
 void calc_open_loop_pwm ( // Calculate open-loop PWM output values to spins magnetic field around (regardless of the encoder)
@@ -345,8 +400,8 @@ void calc_open_loop_pwm ( // Calculate open-loop PWM output values to spins magn
 
 	// NB QEI_REV_MASK correctly maps -ve values into +ve range 0 <= theta < QEI_PER_REV;
 	motor_s.set_theta &= QEI_REV_MASK; // Convert to base-range [0..QEI_REV_MASK]
-	motor_s.set_id = ID_OPEN_LOOP;
-	motor_s.set_iq = motor_s.iq_start;
+	motor_s.set_Id = ID_OPEN_LOOP;
+	motor_s.set_Iq = motor_s.iq_start;
 
 	// Update start position ready for next iteration
 
@@ -360,7 +415,99 @@ void calc_open_loop_pwm ( // Calculate open-loop PWM output values to spins magn
 	} // else !(motor_s.req_veloc < 0)
 } // calc_open_loop_pwm
 /*****************************************************************************/
-void calc_foc_pwm ( // Calculate FOC PWM output values
+int filter_adc_extrema( 		// Smooths adc extrema values using low-pass filter
+	MOTOR_DATA_TYP &motor_s,	// reference to structure containing motor data
+	int extreme_val						// Either a minimum or maximum ADC value
+) // Returns filtered output value
+/* This is a 1st order IIR filter, it is configured as a low-pass filter, 
+ * The input value is up-scaled, to allow integer arithmetic to be used.
+ * The output mean value is down-scaled by the same amount.
+ * Error diffusion is used to keep control of systematic quantisation errors.
+ */
+{
+	int scaled_inp = (extreme_val << XTR_SCALE_BITS); // Upscaled QEI input value
+	int diff_val; // Difference between input and filtered output
+	int increment; // new increment to filtered output value
+	int out_val; // filtered output value
+
+
+	// Form difference with previous filter output
+	diff_val = scaled_inp - motor_s.filt_val;
+
+	// Multiply difference by filter coefficient (alpha)
+	diff_val += motor_s.coef_err; // Add in diffusion error;
+	increment = (diff_val + XTR_HALF_COEF) >> XTR_COEF_BITS ; // Multiply by filter coef (with rounding)
+	motor_s.coef_err = diff_val - (increment << XTR_COEF_BITS); // Evaluate new quantisation error value 
+
+	motor_s.filt_val += increment; // Update (up-scaled) filtered output value
+
+	// Update mean value by down-scaling filtered output value
+	motor_s.filt_val += motor_s.scale_err; // Add in diffusion error;
+	out_val = (motor_s.filt_val + XTR_HALF_SCALE) >> XTR_SCALE_BITS; // Down-scale
+	motor_s.scale_err = motor_s.filt_val - (out_val << XTR_SCALE_BITS); // Evaluate new remainder value 
+
+	return out_val; // return filtered output value
+} // filter_adc_extrema
+/*****************************************************************************/
+int smooth_adc_maxima( // Smooths maximum ADC values
+	MOTOR_DATA_TYP &motor_s // reference to structure containing motor data
+)
+{
+	int max_val = motor_s.meas_adc.vals[0]; // Initialise maximum to first phase
+	int phase_cnt; // phase counter
+	int out_val; // filtered output value
+
+
+	for (phase_cnt = 1; phase_cnt < NUM_PHASES; phase_cnt++)
+	{ 
+		if (max_val < motor_s.meas_adc.vals[phase_cnt]) max_val = motor_s.meas_adc.vals[phase_cnt]; // Update maximum
+	} // for phase_cnt
+
+	out_val = filter_adc_extrema( motor_s ,max_val );
+
+	return out_val;
+} // smooth_adc_maxima
+/*****************************************************************************/
+int smooth_adc_minima( // Smooths minimum ADC values
+	MOTOR_DATA_TYP &motor_s // reference to structure containing motor data
+)
+{
+	int min_val = motor_s.meas_adc.vals[0]; // Initialise minimum to first phase
+	int phase_cnt; // phase counter
+	int out_val; // filtered output value
+
+
+	for (phase_cnt = 1; phase_cnt < NUM_PHASES; phase_cnt++)
+	{ 
+		if (min_val > motor_s.meas_adc.vals[phase_cnt]) min_val = motor_s.meas_adc.vals[phase_cnt]; // Update minimum
+	} // for phase_cnt
+
+	out_val = filter_adc_extrema( motor_s ,min_val );
+
+	return out_val;
+} // smooth_adc_minima
+/*****************************************************************************/
+void measure_Iq( // Estimate Iq value from ADC signals. NB Assumes requested Id is Zero
+	MOTOR_DATA_TYP &motor_s // reference to structure containing motor data
+)
+{
+	int out_val; // Measured Iq output value
+
+
+	if (0 > motor_s.req_veloc)
+	{ // Iq is negative for negative velocity
+		out_val = smooth_adc_minima( motor_s );
+	} // if (0 > motor_s.req_veloc)
+	else
+	{ // Iq is positive for positive velocity
+		out_val = smooth_adc_maxima( motor_s );
+	} // if (0 > motor_s.req_veloc)
+
+	motor_s.meas_Iq = out_val;
+	motor_s.meas_Id = 0;
+} // measure_Iq
+/*****************************************************************************/
+void get_dq( // Calculate Id & Iq currents using transforms. NB Required if requested Id is NON-zero
 	MOTOR_DATA_TYP &motor_s // reference to structure containing motor data
 )
 #define PROPORTIONAL 1 // Selects between 'proportional' and 'offset' error corrections
@@ -369,44 +516,49 @@ void calc_foc_pwm ( // Calculate FOC PWM output values
 #define IQ_ID_CLOSED 1 // Selcects Iq/Id closed-loop, velocity open-loop
 
 {
-	int alpha = 0, beta = 0;	// Measured currents once transformed to a 2D vector
-	int Id_in = 0, Iq_in = 0;	/* Measured radial and tangential currents in the rotor frame of reference */
-
-
-#pragma xta label "foc_loop_read_hardware"
-
-	// Calculate driving theta value from measured value and offset
-	motor_s.set_theta = motor_s.meas_theta + motor_s.theta_offset;
-
-	motor_s.set_theta &= QEI_REV_MASK; // Convert to base-range [0..QEI_REV_MASK]
+	int alpha_meas = 0, beta_meas = 0;	// Measured currents once transformed to a 2D vector
+	int scaled_phi;	// Scaled Phi offset
+	int phi_est;	// Estimated phase difference between PWM and ADC sinusoids
+	int theta_park;	// Estimated theta value to get Max. Iq value from Park transform
 
 #pragma xta label "foc_loop_clarke"
 
-// if (motor_s.xscope) xscope_probe_data( 3 ,motor_s.meas_adc.vals[PHASE_A] );
-// if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.meas_adc.vals[PHASE_B] );
-// if (motor_s.xscope) xscope_probe_data( 5 ,motor_s.meas_adc.vals[PHASE_C] );
+	// To calculate alpha and beta currents from measured data
+	clarke_transform( motor_s.meas_adc.vals[PHASE_A], motor_s.meas_adc.vals[PHASE_B], motor_s.meas_adc.vals[PHASE_C], alpha_meas, beta_meas );
+// if (motor_s.xscope) xscope_probe_data( 6 ,beta_meas );
 
-	/* To calculate alpha and beta currents */
-	clarke_transform(motor_s.meas_adc.vals[PHASE_A], motor_s.meas_adc.vals[PHASE_B], motor_s.meas_adc.vals[PHASE_C], alpha, beta );
-//	clarke_transform(-motor_s.meas_adc.vals[PHASE_A], -motor_s.meas_adc.vals[PHASE_B], -motor_s.meas_adc.vals[PHASE_C], alpha, beta );
+	// Update Phi estimate ...
+	scaled_phi = (-motor_s.meas_veloc) * PHI_NUMER + motor_s.phi_err;
+	phi_est = (scaled_phi + HALF_PHASE) >> PHASE_BITS;
+	motor_s.phi_err = scaled_phi - (phi_est << PHASE_BITS);
+if (motor_s.xscope) xscope_probe_data( 6 ,phi_est );
 
-if (0 == IQ_ID_CLOSED)
-{ // Evaluate new set_theta
-	calc_open_loop_pwm( motor_s );
-} // if (0 == IQ_ID_CLOSED)
+	// Calculate theta value for Park transform
+	theta_park = motor_s.meas_theta + motor_s.theta_offset + phi_est;
+	theta_park &= QEI_REV_MASK; // Convert to base-range [0..QEI_REV_MASK]
 
 #pragma xta label "foc_loop_park"
 
-	// Calculate actual coil currents (Id & Iq) using park transform
-	park_transform( Id_in, Iq_in, alpha, beta, motor_s.set_theta  );
+	// Calculate coil currents (Id & Iq) using park transform
+	park_transform( motor_s.meas_Id ,motor_s.meas_Iq ,alpha_meas ,beta_meas ,theta_park );
+
+} // get_dq
+/*****************************************************************************/
+void calc_foc_pwm( // Calculate FOC PWM output values
+	MOTOR_DATA_TYP &motor_s // reference to structure containing motor data
+)
+#define PROPORTIONAL 1 // Selects between 'proportional' and 'offset' error corrections
+
+#define VELOC_CLOSED 0 // Selects fully closed loop (both velocity, Iq and Id)
+#define IQ_ID_CLOSED 1 // Selcects Iq/Id closed-loop, velocity open-loop
+
+{
+	int scaled_phase;	// Scaled Phase offset
+
 
 #pragma xta label "foc_loop_speed_pid"
 
 	// Applying Speed PID.
-
-// if (motor_s.xscope) xscope_probe_data( 0 ,motor_s.set_theta );
-// if (motor_s.xscope) xscope_probe_data( 1 ,motor_s.req_veloc );
-// if (motor_s.xscope) xscope_probe_data( 2 ,motor_s.meas_veloc );
 
 	if (VELOC_CLOSED)
 	{ // Evaluate set IQ from velocity PID
@@ -414,57 +566,79 @@ if (0 == IQ_ID_CLOSED)
 
 		if (PROPORTIONAL)
 		{ // Proportional update
-			motor_s.set_iq = motor_s.corr_veloc;
+			motor_s.set_Iq = motor_s.corr_veloc;
 		} // if (PROPORTIONAL)
 		else
 		{ // Offset update
-			motor_s.set_iq += motor_s.corr_iq;
+			motor_s.set_Iq += motor_s.corr_Iq;
 		} // else !(PROPORTIONAL)
-		motor_s.req_iq = motor_s.set_iq; // Closed loop
+		motor_s.req_Iq = motor_s.set_Iq; // Closed loop
 
-// if (motor_s.xscope) xscope_probe_data( 2 ,motor_s.pids[SPEED].prev_err );
-// if (motor_s.xscope) xscope_probe_data( 3 ,(motor_s.pids[SPEED].sum_err >> 10) );
 	} // if (VELOC_CLOSED)
 
-// if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.set_iq );
-// if (motor_s.xscope) xscope_probe_data( 5 ,Iq_in );
+
+	// Update measured Id and Iq values
+	if (0 != motor_s.req_Id)
+	{
+		get_dq( motor_s );
+	} // if (0 != motor_s.req_Id)
+	else
+	{ // Assumes meas_Id is Zero
+		measure_Iq( motor_s );
+	} // if (0 != motor_s.req_Id)
+if (motor_s.xscope) xscope_probe_data( 0 ,motor_s.meas_Iq );
+// if (motor_s.xscope) xscope_probe_data( 1 ,motor_s.meas_Id );
+
+	if (0 == IQ_ID_CLOSED)
+	{ // Evaluate new set_theta
+		calc_open_loop_pwm( motor_s );
+	} // if (0 == IQ_ID_CLOSED)
+	else
+	{ // Update 'demand' theta value ...
+
+		// Update Gamma estimate ...
+		scaled_phase = motor_s.meas_veloc * GAMMA_GRAD + motor_s.gamma_off + motor_s.gamma_err;
+		motor_s.gamma_est = (scaled_phase + HALF_PHASE) >> PHASE_BITS;
+		motor_s.gamma_err = scaled_phase - (motor_s.gamma_est << PHASE_BITS);
+
+		motor_s.set_theta = motor_s.meas_theta + motor_s.theta_offset + motor_s.gamma_est;
+		motor_s.set_theta &= QEI_REV_MASK; // Convert to base-range [0..QEI_REV_MASK]
+	} // else !(0 == IQ_ID_CLOSED)
 
 #pragma xta label "foc_loop_id_iq_pid"
 
 	// Apply PID control to Iq and Id
  
-	motor_s.corr_iq = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_Q] ,Iq_in ,motor_s.req_iq );
-	motor_s.corr_id = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_D] ,Id_in ,motor_s.req_id  );
+	motor_s.corr_Iq = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_Q] ,motor_s.meas_Iq ,motor_s.req_Iq );
+	motor_s.corr_Id = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_D] ,motor_s.meas_Id ,motor_s.req_Id  );
 
 	if (PROPORTIONAL)
 	{ // Proportional update
-		motor_s.out_id = motor_s.corr_id;
-		motor_s.out_iq = motor_s.corr_iq;
+		motor_s.out_Id = motor_s.corr_Id;
+		motor_s.out_Iq = motor_s.corr_Iq;
 	} // if (PROPORTIONAL)
 	else
 	{ // Offset update
-		motor_s.out_id = motor_s.set_id + motor_s.corr_id;
-		motor_s.out_iq = motor_s.set_iq + motor_s.corr_iq;
+		motor_s.out_Id = motor_s.set_Id + motor_s.corr_Id;
+		motor_s.out_Iq = motor_s.set_Iq + motor_s.corr_Iq;
 	} // else !(PROPORTIONAL)
-
-if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.req_iq );
-if (motor_s.xscope) xscope_probe_data( 5 ,Iq_in );
-if (motor_s.xscope) xscope_probe_data( 6 ,motor_s.corr_iq );
-if (motor_s.xscope) xscope_probe_data( 7 ,motor_s.pids[I_Q].prev_err );
-if (motor_s.xscope) xscope_probe_data( 8 ,motor_s.pids[I_Q].sum_err );
 
 	if (IQ_ID_CLOSED)
 	{ // Update set DQ values
-		motor_s.set_id = motor_s.out_id;
-		motor_s.set_iq = motor_s.out_iq;
+//MB~ 		motor_s.set_Id = motor_s.out_Id;
+//MB~ motor_s.set_Iq = motor_s.out_Iq;
+		motor_s.set_Iq = (motor_s.tmp >> MB_B); //MB~ Dbg
+		if (0 > motor_s.req_veloc) motor_s.set_Iq = -motor_s.set_Iq;    
+//		if (MB_F > motor_s.set_Iq) motor_s.tmp++; // MB~ Hack to ramp set_Iq
 	} // if (IQ_ID_CLOSED)
 
 	// Check whether it is time to step input response MB~ Tuning
 	if (!(motor_s.cnts[FOC] & 0x3FFF))
 	{
-		motor_s.req_iq = motor_s.iq_start + motor_s.iq_step;
+		motor_s.req_Iq = motor_s.iq_start + motor_s.iq_step;
 		motor_s.iq_step = IQ_OPEN_LOOP_DIFF - motor_s.iq_step; // Toggle step value
 	} // if (!(motor_s.cnts[FOC] & 0xFFFF)
+
 } // calc_foc_pwm
 /*****************************************************************************/
 MOTOR_STATE_TYP check_hall_state( // Inspect Hall-state and update motor-state if necessary
@@ -514,7 +688,6 @@ MOTOR_STATE_TYP check_hall_state( // Inspect Hall-state and update motor-state i
            * depending on the number of pole pairs. E.g. [0, 256, 512, 768] are equivalent.
 					 */
 					motor_s.theta_offset = motor_s.set_theta - motor_s.meas_theta;
-
 					motor_state = FOC; // Switch to main FOC state
 					motor_s.cnts[FOC] = 0; // Initialise FOC-state counter 
 				} // if (0 < motor_s.rev_cnt)
@@ -533,7 +706,7 @@ if (dbg) { printint(motor_s.id); printstr( " SE- " ); printintln( motor_s.cnts[S
 
 	return motor_state; // Return updated motor state
 } // check_hall_state
-/*****************************************************************************/
+/*****************************************S************************************/
 void update_motor_state( // Update state of motor based on motor sensor data
 	MOTOR_DATA_TYP &motor_s, // reference to structure containing motor data
 	unsigned inp_hall // Input Hall state
@@ -735,7 +908,7 @@ void use_motor ( // Start motor, and run step through different motor states
 			else if(command == CMD_GET_VALS2)
 			{
 				c_can_eth_shared <: motor_s.meas_adc.vals[PHASE_C];
-				c_can_eth_shared <: motor_s.set_iq;
+				c_can_eth_shared <: motor_s.set_Iq;
 				c_can_eth_shared <: id_out;
 				c_can_eth_shared <: iq_out;
 			}
@@ -763,7 +936,7 @@ void use_motor ( // Start motor, and run step through different motor states
 			{
 				motor_s.xscope = 0; // Switch OFF xscope probe
 			} // if ((motor_s.id) & !(motor_s.iters & 7))
-motor_s.xscope = 0; // MB~ Crude Switch
+// motor_s.xscope = 0; // MB~ Crude Switch
 
 			if (STOP != motor_s.state)
 			{
@@ -788,20 +961,23 @@ motor_s.xscope = 0; // MB~ Crude Switch
 				{
 					/* Get the position from encoder module. NB returns rev_cnt=0 at start-up  */
 					{ motor_s.meas_veloc ,motor_s.meas_theta ,motor_s.rev_cnt } = get_qei_data( c_qei );
-if (motor_s.xscope) xscope_probe_data( 1 ,motor_s.meas_theta );
-if (motor_s.xscope) xscope_probe_data( 2 ,motor_s.meas_veloc );
-if (motor_s.xscope) xscope_probe_data( 3 ,motor_s.rev_cnt );
-
 						motor_s.meas_speed = abs( motor_s.meas_veloc ); // NB Used to spot stalling behaviour
+if (4100 < motor_s.meas_speed) //MB~ Safety
+{ 
+	printstr("AngVel:"); printintln( motor_s.meas_veloc );
+	motor_s.state= STOP;
+} // if (5000 < motor_s.meas_veloc)
+// if (motor_s.xscope) xscope_probe_data( 0 ,motor_s.rev_cnt );
+// if (motor_s.xscope) xscope_probe_data( 10 ,motor_s.meas_theta );
+if (motor_s.xscope) xscope_probe_data( 9 ,motor_s.meas_veloc );
+
 					/* Get ADC readings */
 					get_adc_vals_calibrated_int16_mb( c_adc_cntrl ,motor_s.meas_adc );
-// if (motor_s.xscope) xscope_probe_data( 3 ,motor_s.meas_adc.vals[PHASE_A] );
-// if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.meas_adc.vals[PHASE_B] );
-// if (motor_s.xscope) xscope_probe_data( 5 ,motor_s.meas_adc.vals[PHASE_C] );
+if (motor_s.xscope) xscope_probe_data( 3 ,motor_s.meas_adc.vals[PHASE_A] );
+if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.meas_adc.vals[PHASE_B] );
+if (motor_s.xscope) xscope_probe_data( 5 ,motor_s.meas_adc.vals[PHASE_C] );
 
 					update_motor_state( motor_s ,new_hall );
-if (motor_s.xscope) xscope_probe_data( 0 ,motor_s.set_theta );
-// if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.theta_offset );
 				} // else !(!(new_hall & 0b1000))
 
 				// Check if motor needs stopping
@@ -813,10 +989,7 @@ if (motor_s.xscope) xscope_probe_data( 0 ,motor_s.set_theta );
 				else
 				{
 					// Convert new set DQ values to PWM values
-					dq_to_pwm( motor_s ,pwm_vals ,motor_s.set_id ,motor_s.set_iq ,motor_s.set_theta ); // Convert Output DQ values to PWM values
-// if (motor_s.xscope) xscope_probe_data( 6 ,pwm_vals[PHASE_A] );
-// if (motor_s.xscope) xscope_probe_data( 7 ,pwm_vals[PHASE_B] );
-// if (motor_s.xscope) xscope_probe_data( 8 ,pwm_vals[PHASE_C] );
+					dq_to_pwm( motor_s ,pwm_vals ,motor_s.set_Id ,motor_s.set_Iq ,motor_s.set_theta ); // Convert Output DQ values to PWM values
 
 					update_pwm_inv( c_pwm ,pwm_vals ,motor_s.id ,motor_s.cur_buf ,motor_s.mem_addr ); // Update the PWM values
 
@@ -827,7 +1000,7 @@ if (motor_s.xscope) xscope_probe_data( 0 ,motor_s.set_theta );
 						{
 /*
 							xscope_probe_data(0, motor_s.meas_veloc );
-				  	  xscope_probe_data(1, motor_s.set_iq );
+				  	  xscope_probe_data(1, motor_s.set_Iq );
 	    				xscope_probe_data(2, pwm_vals[PHASE_A] );
 	    				xscope_probe_data(3, pwm_vals[PHASE_B]);
 							xscope_probe_data(4, motor_s.meas_adc.vals[PHASE_A] );
