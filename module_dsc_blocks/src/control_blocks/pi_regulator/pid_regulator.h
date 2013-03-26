@@ -53,8 +53,10 @@
 #endif
 
 // PID contant definitions for Current Control (Id and Iq)
-#define MB_P 28000
-#define MB_I (1 << 13) // 2048 // 2 // 8192
+// #define MB_P 12380
+// #define MB_I 0
+#define MB_P 6190  // 0.1889 * 2^15
+#define MB_I (8 << PID_RESOLUTION) // 8 * 2^15
 
 #define DQ_P 2100
 #define DQ_I 6

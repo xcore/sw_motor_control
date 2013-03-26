@@ -105,6 +105,7 @@ int get_pid_regulator_correction( // Computes new PID correction based on input 
 
 		pid_regul_p->prev_err = inp_err; // Update previous error
 	} // if (pid_const_p->K_d)
+pid_regul_p->prev_err = inp_err; // MB~ Dbg
  
 	// Convert to 32-bit result ...
 
