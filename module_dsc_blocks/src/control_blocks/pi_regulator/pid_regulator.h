@@ -20,6 +20,9 @@
  *
  **/
 
+#ifndef __PI_REGULATOR_H__
+#define __PI_REGULATOR_H__
+
 #include <stdio.h>
 #include <assert.h>
 
@@ -27,8 +30,9 @@
 #include <dsc_config.h>
 #endif
 
-#ifndef __PI_REGULATOR_H__
-#define __PI_REGULATOR_H__
+#ifdef USE_XSCOPE
+#include <xscope.h>
+#endif
 
 #define DQ_INTEGRAL_LIMIT 8192
 #define Q_LIMIT 12000
@@ -52,20 +56,30 @@
 #define PID_RESOLUTION 15
 #endif
 
-// PID contant definitions for Current Control (Id and Iq)
-// #define MB_P 12380
-// #define MB_I 0
-#define MB_P 6190  // 0.1889 * 2^15
-#define MB_I (8 << PID_RESOLUTION) // 8 * 2^15
+// Test/tuning values
+#define MB_P 20000
+#define MB_I (3 << PID_RESOLUTION)
+#define MB_D 0
 
-#define DQ_P 2100
-#define DQ_I 6
+// PID contant definitions for Current Control (Id and Iq)
+//--------------------------------------------------------
+/* values based on Velocity Estimated Iq
+#define DQ_P 6190
+#define DQ_I (8 << PID_RESOLUTION) // 8
+*/
+
+// Values based on Measured Iq
+// #define DQ_P 400000
+// #define DQ_I (256 << PID_RESOLUTION)
+#define DQ_P 400000
+#define DQ_I (256 << PID_RESOLUTION)
 #define DQ_D 0
 
 // PID contant definitions for Speed Control
-#define SPEED_P 5000
-#define SPEED_I 100
-#define SPEED_D 40
+//------------------------------------------
+#define SPEED_P 20000
+#define SPEED_I (3 << PID_RESOLUTION)
+#define SPEED_D 0
 
 /** Different PID Regulators */
 typedef enum PID_ETAG

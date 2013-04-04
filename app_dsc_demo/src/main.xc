@@ -111,19 +111,16 @@ void init_can_phy( chanend c_rxChan, chanend c_txChan, clock p_can_clk, buffered
 /*****************************************************************************/
 void xscope_user_init()
 {
-	xscope_register( 12
+	xscope_register( 9
+		,XSCOPE_CONTINUOUS, "s_theta", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "m_theta", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "m_veloc", XSCOPE_INT , "n"
 		,XSCOPE_CONTINUOUS, "req_Iq", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "est_Iq", XSCOPE_INT , "n"
 		,XSCOPE_CONTINUOUS, "p_err", XSCOPE_INT , "n"
 		,XSCOPE_CONTINUOUS, "s_err", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "meas_Iq", XSCOPE_INT , "n"
 		,XSCOPE_CONTINUOUS, "out_Iq", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "set_Iq", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "error", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "s_theta", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "Iq_m", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "m_veloc", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "m_theta", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "theta_s", XSCOPE_INT , "n"
+		,XSCOPE_CONTINUOUS, "targ_Iq", XSCOPE_INT , "n"
 /*
 		,XSCOPE_CONTINUOUS, "rev_cnt", XSCOPE_INT , "n"
 		,XSCOPE_CONTINUOUS, "r_Iq", XSCOPE_INT , "n"
@@ -132,9 +129,6 @@ void xscope_user_init()
 		,XSCOPE_CONTINUOUS, "p_err", XSCOPE_INT , "n"
 		,XSCOPE_CONTINUOUS, "s_err", XSCOPE_INT , "n"
 		,XSCOPE_CONTINUOUS, "s_err", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "adc_a", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "adc_b", XSCOPE_INT , "n"
-		,XSCOPE_CONTINUOUS, "adc_c", XSCOPE_INT , "n"
 		,XSCOPE_CONTINUOUS, "pwm_A", XSCOPE_INT , "n"
 		,XSCOPE_CONTINUOUS, "pwm_B", XSCOPE_INT , "n"
 		,XSCOPE_CONTINUOUS, "pwm_C", XSCOPE_INT , "n"

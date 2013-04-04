@@ -417,7 +417,7 @@ void service_client_request( // Send processed QEI data to client
   } // if else !(START_UP_CHANGES < inp_qei_s.diff_time)
 
 	smooth_veloc = filter_velocity( inp_qei_s ,meas_veloc );
-// if (inp_qei_s.id) xscope_probe_data( 0 ,meas_veloc);
+// if (inp_qei_s.id) xscope_probe_data( 1 ,smooth_veloc);
 // if (inp_qei_s.id) xscope_probe_data( 1 ,smooth_veloc);
 
 	c_qei <: (inp_qei_s.theta & QEI_REV_MASK); // Send value in range [0..QEI_REV_MASK]
