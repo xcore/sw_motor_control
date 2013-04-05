@@ -25,7 +25,10 @@
 
 const PID_CONST_TYP pid_const_Id = { DQ_P ,DQ_I ,DQ_D ,DQ_INTEGRAL_LIMIT ,D_HI_LIM ,D_LO_LIM ,PID_RESOLUTION };
 const PID_CONST_TYP pid_const_Iq = { DQ_P ,DQ_I ,DQ_D ,DQ_INTEGRAL_LIMIT ,Q_LIMIT ,-Q_LIMIT ,PID_RESOLUTION };
-const PID_CONST_TYP pid_const_speed = { SPEED_P ,SPEED_I ,SPEED_D ,SPEED_INTEGRAL_LIMIT ,SPEED_HI_LIM ,-SPEED_HI_LIM ,PID_RESOLUTION };
+// const PID_CONST_TYP pid_const_Id = { MB_P ,MB_I ,MB_D ,DQ_INTEGRAL_LIMIT ,D_HI_LIM ,D_LO_LIM ,PID_RESOLUTION };
+// const PID_CONST_TYP pid_const_Iq = { MB_P ,MB_I ,MB_D ,DQ_INTEGRAL_LIMIT ,Q_LIMIT ,-Q_LIMIT ,PID_RESOLUTION };
+// const PID_CONST_TYP pid_const_speed = { SPEED_P ,SPEED_I ,SPEED_D ,SPEED_INTEGRAL_LIMIT ,SPEED_HI_LIM ,-SPEED_HI_LIM ,PID_RESOLUTION };
+const PID_CONST_TYP pid_const_speed = { MB_P ,MB_I ,MB_D ,SPEED_INTEGRAL_LIMIT ,SPEED_HI_LIM ,-SPEED_HI_LIM ,PID_RESOLUTION };
 
 /*****************************************************************************/
 void initialise_pid( // Initialise PID settings

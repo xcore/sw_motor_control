@@ -56,14 +56,12 @@
 
 #define FIRST_HALL_STATE 0b001 // 1st Hall state of 6-state cycle
 
-#define IQ_OPEN_LOOP_MEAN 3000 // Mean Iq value for open-loop mode
-#define IQ_OPEN_LOOP_DIFF 0 // 1000 // Difference Iq value for open-loop mode
-#define ID_OPEN_LOOP 0		// Id value for open-loop mode
 #define INIT_HALL 0 // Initial Hall state
 #define INIT_THETA 0 // Initial start-up angle
 
 #define REQ_VELOCITY 4000 // Initial start-up speed
-#define REQ_IQ_OPENLOOP 700 // Used in tuning
+#define REQ_IQ_OPENLOOP 2000 // Used in tuning
+#define REQ_ID_OPENLOOP 0		// Id value for open-loop mode
 
 // Set-up defines for scaling ...
 #define SHIFT_20 20
@@ -80,10 +78,7 @@
 #define GAMMA_GRAD 7668 // 0.007313 as integer ratio GAMMA_GRAD/PHASE_DENOM
 #define GAMMA_INTERCEPT 33019658 // 31.49 as integer ratio GAMMA_INTERCEPT/PHASE_DENOM
 
-#define IQ_BITS SHIFT_16 // Used to generate 2^n scaling factor
-#define IQ_DENOM (1 << IQ_BITS) // IQ Divisor
-#define HALF_IQ (IQ_DENOM >> 1) // Half of IQ divisor
-#define IQ_GRAD 8710390 // 132.91 as integer ratio IQ_GRAD/IQ_DENOM
+#define VEL_GRAD 10000 // (Estimated_Current)^2 = VEL_GRAD * Angular_Velocity
 
 #define XTR_SCALE_BITS SHIFT_16 // Used to generate 2^n scaling factor
 #define XTR_HALF_SCALE (1 << (XTR_SCALE_BITS - 1)) // Half Scaling factor (used in rounding)
@@ -178,6 +173,8 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	int req_Iq;	// Requested current producing tangential magnetic field
 	int req_veloc;	// Requested (target) angular velocity set by the user/comms interface
 	int half_veloc;	// Half requested angular velocity
+	int Id_openloop;	// Requested Id value when tuning open-loop
+	int Iq_openloop;	// Requested Iq value when tuning open-loop
 	int pid_veloc;	// Output of angular velocity PID
 	int pid_Id;	// Output of 'radial' current PID
 	int pid_Iq;	// Output of 'tangential' current PID
@@ -194,10 +191,6 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	unsigned err_flgs;	// Fault detection flags
 	unsigned xscope;	// Flag set when xscope output required
 
-	int iq_start;	// Initial Iq value for starting in open-loop mode
-	int iq_step;	// Step Iq value for tuning
-	int Id_openloop; // 'demand' Id value when tuning open-loop
-	int Iq_openloop; // 'demand' Iq value when tuning open-loop
 	int rev_cnt;	// rev. counter (No. of origin traversals)
 	int theta_offset;	// Phase difference between the QEI and the coils
 	int phi_err;	// Error diffusion value for Phi value
@@ -254,7 +247,8 @@ void init_motor( // initialise data structure for one motor
 	motor_s.req_veloc = REQ_VELOCITY;
 	motor_s.half_veloc = (motor_s.req_veloc >> 1);
 
-	motor_s.Iq_alg = EXTREMA; // Assign algorithm used to estimate coil current Iq (and Id)
+//MB~	motor_s.Iq_alg = EXTREMA; // Assign algorithm used to estimate coil current Iq (and Id)
+	motor_s.Iq_alg = VELOCITY; // Assign algorithm used to estimate coil current Iq (and Id)
 	motor_s.set_theta = 0;
 	motor_s.start_theta = 0; // Theta start position during warm-up (START and SEARCH states)
 	motor_s.theta_offset = 0; // Offset between Hall-state and QEI origin
@@ -293,15 +287,13 @@ void init_motor( // initialise data structure for one motor
 	motor_s.meas_veloc = motor_s.req_veloc;
 	motor_s.meas_speed = abs(motor_s.req_veloc);
 
-	motor_s.iq_step = IQ_OPEN_LOOP_DIFF;
-
 	// Initialise variables dependant on spin direction
 	if (0 > motor_s.req_veloc)
 	{ // Negative spin direction
-		motor_s.iq_start = -IQ_OPEN_LOOP_MEAN;
 		motor_s.gamma_off = -GAMMA_INTERCEPT;
 		motor_s.phi_off = -PHI_INTERCEPT;
-		motor_s.Iq_openloop = -REQ_IQ_OPENLOOP; // 'demand' Iq value when tuning open-loop
+		motor_s.Id_openloop = -REQ_ID_OPENLOOP; // Requested Id value when tuning open-loop
+		motor_s.Iq_openloop = -REQ_IQ_OPENLOOP; // Requested Iq value when tuning open-loop
 
 		// Choose last Hall state of 6-state cycle NB depends on motor-type
 		if (LDO_MOTOR_SPIN)
@@ -315,10 +307,10 @@ void init_motor( // initialise data structure for one motor
 	} // if (0 > motor_s.req_veloc)
 	else
 	{ // Positive spin direction
-		motor_s.iq_start = IQ_OPEN_LOOP_MEAN;
 		motor_s.gamma_off = GAMMA_INTERCEPT;
 		motor_s.phi_off = PHI_INTERCEPT;
-		motor_s.Iq_openloop = REQ_IQ_OPENLOOP; // 'demand' Iq value when tuning open-loop
+		motor_s.Id_openloop = REQ_ID_OPENLOOP; // Requested Id value when tuning open-loop
+		motor_s.Iq_openloop = REQ_IQ_OPENLOOP; // Requested Iq value when tuning open-loop
 
 		// Choose last Hall state of 6-state cycle NB depends on motor-type
 		if (LDO_MOTOR_SPIN)
@@ -331,16 +323,15 @@ void init_motor( // initialise data structure for one motor
 		} // else !(LDO_MOTOR_SPIN
 	} // else !(0 > motor_s.req_veloc)
 
-	motor_s.filt_val = motor_s.iq_start; // Preset filtered Iq value to something sensible
-	motor_s.req_Iq = motor_s.iq_start;
-	motor_s.req_Id = ID_OPEN_LOOP;	// Requested 'radial' current
+	motor_s.req_Id = motor_s.Id_openloop; // Requested 'radial' current
+	motor_s.req_Iq = motor_s.Iq_openloop; // Requested 'tangential' current
+	motor_s.filt_val = motor_s.Iq_openloop; // Preset filtered Iq value to something sensible
 
 	for (phase_cnt = 0; phase_cnt < NUM_PHASES; phase_cnt++)
 	{ 
 		motor_s.meas_adc.vals[phase_cnt] = -1;
 	} // for phase_cnt
 
-	motor_s.Id_openloop = 0; // 'demand' Id value when tuning open-loop
 	motor_s.temp = 0; // MB~ Dbg
 } // init_motor
 /*****************************************************************************/
@@ -454,26 +445,21 @@ void estimate_Iq_from_velocity( // Estimates tangential coil current from measur
 	MOTOR_DATA_TYP &motor_s // reference to structure containing motor data
 )
 /* This function uses the following relationship
- * est_Iq = GRAD * sqrt( meas_veloc )   where GRAD = 132.91  was found by experiment.
+ * est_Iq = GRAD * sqrt( meas_veloc )   where GRAD was found by experiment.
  * WARNING: GRAD will be different for different motors.
  */
 {
-	int tmp_Iq;	// temporary value used in Iq scaling
+	int scaled_vel = VEL_GRAD * motor_s.meas_veloc; // scaled angular velocity
 
 
 	if (0 > motor_s.meas_veloc)
 	{
-		tmp_Iq = -sqrtuint( -motor_s.meas_veloc );
+		motor_s.est_Iq = -sqrtuint( -scaled_vel );
 	} // if (0 > motor_s.meas_veloc)
 	else
 	{
-		tmp_Iq = sqrtuint( motor_s.meas_veloc );
+		motor_s.est_Iq = sqrtuint( scaled_vel );
 	} // if (0 > motor_s.meas_veloc)
-
-	tmp_Iq = IQ_GRAD * tmp_Iq + motor_s.Iq_err;
-	motor_s.est_Iq = (tmp_Iq + HALF_IQ) >> IQ_BITS;
-	motor_s.Iq_err = tmp_Iq - (motor_s.est_Iq << IQ_BITS);
-
 } // estimate_Iq_from_velocity
 /*****************************************************************************/
 void estimate_Iq_using_transforms( // Calculate Id & Iq currents using transforms. NB Required if requested Id is NON-zero
@@ -566,6 +552,8 @@ void calc_open_loop_pwm ( // Calculate open-loop PWM output values to spins magn
 	MOTOR_DATA_TYP &motor_s // reference to structure containing motor data
 )
 {
+	motor_s.set_Vd = motor_s.Id_openloop;
+	motor_s.set_Vq = motor_s.Iq_openloop;
 
 #if PLATFORM_REFERENCE_MHZ == 100
 	assert ( 0 == 1 ); // MB~ 100 MHz Untested
@@ -576,11 +564,6 @@ void calc_open_loop_pwm ( // Calculate open-loop PWM output values to spins magn
 
 	// NB QEI_REV_MASK correctly maps -ve values into +ve range 0 <= theta < QEI_PER_REV;
 	motor_s.set_theta &= QEI_REV_MASK; // Convert to base-range [0..QEI_REV_MASK]
-	motor_s.set_Vd = ID_OPEN_LOOP;
-	motor_s.set_Vq = motor_s.iq_start;
-
-		motor_s.set_Vd = motor_s.req_Id;
-		motor_s.set_Vq = motor_s.req_Iq;
 
 	// Update start position ready for next iteration
 
@@ -597,45 +580,24 @@ void calc_open_loop_pwm ( // Calculate open-loop PWM output values to spins magn
 void calc_foc_pwm( // Calculate FOC PWM output values
 	MOTOR_DATA_TYP &motor_s // reference to structure containing motor data
 )
+/* The estimated tangential coil current (Iq), is much less than the requested value (Iq)
+ * (The ratio is between 25..42 for the LDO motors)
+ * The estimated and requested values fed into the Iq PID must be simliar to ensure correct operation
+ * Therefore, the requested value is scaled down by a factor of 32.
+ */
 {
+	int targ_Iq;	// target measured Iq (scaled down requested Iq value)
 	int corr_Id;	// Correction to radial current value
 	int corr_Iq;	// Correction to tangential current value
 	int corr_veloc;	// Correction to angular velocity
 	int scaled_phase;	// Scaled Phase offset
-	int targ_Iq;	// target measured Iq
 
 #pragma xta label "foc_loop_speed_pid"
 
-	// Select algorithm for estimateing coil current Iq (and Id)
-	// WARNING: Changing algorithm will require re-tuning of PID values
-	switch ( motor_s.Iq_alg )
-	{
-		case TRANSFORM : // Use Park/Clarke transforms
-			estimate_Iq_using_transforms( motor_s );
-		break; // case TRANSFORM
-	
-		case EXTREMA : // Use Extrema of measured ADC values
-			estimate_Iq_from_ADC_extrema( motor_s );
-		break; // case EXTREMA 
-	
-		case VELOCITY : // Use measured velocity
-			estimate_Iq_from_velocity( motor_s );
-		break; // case VELOCITY 
-	
-    default: // Unsupported
-			printstr("ERROR: Unsupported Iq Estimation algorithm > "); 
-			printintln( motor_s.Iq_alg );
-			assert(0 == 1);
-    break;
-	} // switch (motor_s.Iq_alg)
-
-if (motor_s.xscope) xscope_probe_data( 6 ,motor_s.est_Iq );
-
 	// Applying Speed PID.
 
+if (motor_s.xscope) xscope_probe_data( 5 ,motor_s.req_veloc );
 	corr_veloc = get_pid_regulator_correction( motor_s.id ,motor_s.pids[SPEED] ,motor_s.meas_veloc ,motor_s.req_veloc );
-if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.pids[SPEED].prev_err );
-if (motor_s.xscope) xscope_probe_data( 5 ,motor_s.pids[SPEED].sum_err );
 
 	// Calculate velocity PID output
 	if (PROPORTIONAL)
@@ -647,6 +609,8 @@ if (motor_s.xscope) xscope_probe_data( 5 ,motor_s.pids[SPEED].sum_err );
 		motor_s.pid_veloc = motor_s.req_Iq + corr_veloc;
 	} // else !(PROPORTIONAL)
 
+if (motor_s.xscope) xscope_probe_data( 4 ,motor_s.pid_veloc );
+
 	if (VELOC_CLOSED)
 	{ // Evaluate set IQ from velocity PID
 		motor_s.req_Iq = motor_s.pid_veloc;
@@ -655,18 +619,39 @@ if (motor_s.xscope) xscope_probe_data( 5 ,motor_s.pids[SPEED].sum_err );
 	{ 
 		motor_s.req_Iq = motor_s.Iq_openloop;
 	} // if (VELOC_CLOSED)
-if (motor_s.xscope) xscope_probe_data( 3 ,motor_s.req_Iq );
 
 #pragma xta label "foc_loop_id_iq_pid"
 
+	// Select algorithm for estimateing coil current Iq (and Id)
+	// WARNING: Changing algorithm will require re-tuning of PID values
+	switch ( motor_s.Iq_alg )
+	{
+		case TRANSFORM : // Use Park/Clarke transforms
+			estimate_Iq_using_transforms( motor_s );
+			targ_Iq = (motor_s.req_Iq + 16) >> 5; // Scale requested value to be of same order as estimated value
+		break; // case TRANSFORM
+	
+		case EXTREMA : // Use Extrema of measured ADC values
+			estimate_Iq_from_ADC_extrema( motor_s );
+			targ_Iq = (motor_s.req_Iq + 16) >> 5; // Scale requested value to be of same order as estimated value
+		break; // case EXTREMA 
+	
+		case VELOCITY : // Use measured velocity
+			estimate_Iq_from_velocity( motor_s );
+			targ_Iq = motor_s.req_Iq; // NB No scaling required
+		break; // case VELOCITY 
+	
+    default: // Unsupported
+			printstr("ERROR: Unsupported Iq Estimation algorithm > "); 
+			printintln( motor_s.Iq_alg );
+			assert(0 == 1);
+    break;
+	} // switch (motor_s.Iq_alg)
+
+if (motor_s.xscope) xscope_probe_data( 6 ,motor_s.est_Iq );
+
 	// Apply PID control to Iq and Id
 
-	/* The estimated tangential coil current (Iq), is much less than the requested value (Iq)
-	 * (The ratio is between 25..42 for the LDO motors)
-	 * The estimated and requested values fed into the Iq PID must be simliar to ensure correct operation
-	 * Therefore, the requested value is scaled down by a factor of 32.
-	 */
-	targ_Iq = (motor_s.req_Iq + 16) >> 5; // Scale requested value to be of same order as estimated value
 if (motor_s.xscope) xscope_probe_data( 8 ,targ_Iq );
 	corr_Iq = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_Q] ,motor_s.est_Iq ,targ_Iq );
 	corr_Id = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_D] ,motor_s.est_Id ,motor_s.req_Id  );
@@ -687,12 +672,15 @@ if (motor_s.xscope) xscope_probe_data( 7 ,motor_s.pid_Iq );
 	{ // Update set DQ values
 		motor_s.set_Vd = motor_s.pid_Id; //MB~ Dbg
 		motor_s.set_Vd = motor_s.req_Id;
+
 		motor_s.set_Vq = motor_s.pid_Iq;
 	} // if (IQ_ID_CLOSED)
 	else
 	{
 		calc_open_loop_pwm( motor_s );
 	} // if (IQ_ID_CLOSED)
+
+if (motor_s.xscope) xscope_probe_data( 3 ,motor_s.set_Vq );
 
 	// Update Gamma estimate ...
 	scaled_phase = motor_s.meas_veloc * GAMMA_GRAD + motor_s.gamma_off + motor_s.gamma_err;
@@ -703,15 +691,6 @@ if (motor_s.xscope) xscope_probe_data( 7 ,motor_s.pid_Iq );
 	motor_s.set_theta = motor_s.meas_theta + motor_s.theta_offset + motor_s.gamma_est;
 	motor_s.set_theta &= QEI_REV_MASK; // Convert to base-range [0..QEI_REV_MASK]
 if (motor_s.xscope) xscope_probe_data( 0 ,motor_s.set_theta );
-
-#ifdef MB
-	// Check whether it is time to step input response MB~ Tuning
-	if (!(motor_s.cnts[FOC] & 0x3FFF))
-	{
-		motor_s.req_Iq = motor_s.iq_start + motor_s.iq_step;
-		motor_s.iq_step = IQ_OPEN_LOOP_DIFF - motor_s.iq_step; // Toggle step value
-	} // if (!(motor_s.cnts[FOC] & 0xFFFF)
-#endif //MB~
 
 } // calc_foc_pwm
 /*****************************************************************************/

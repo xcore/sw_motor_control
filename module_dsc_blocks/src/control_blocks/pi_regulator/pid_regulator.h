@@ -57,23 +57,24 @@
 #endif
 
 // Test/tuning values
-#define MB_P 20000
-#define MB_I (3 << PID_RESOLUTION)
+#define MB_P 11200
+#define MB_I (8 << PID_RESOLUTION)
+// #define MB_I 0
 #define MB_D 0
 
 // PID contant definitions for Current Control (Id and Iq)
 //--------------------------------------------------------
-/* values based on Velocity Estimated Iq
-#define DQ_P 6190
-#define DQ_I (8 << PID_RESOLUTION) // 8
-*/
+// values based on Velocity Estimated Iq
+#define DQ_P 12000
+#define DQ_I (8 << PID_RESOLUTION)
+#define DQ_D 0
 
 // Values based on Measured Iq
-// #define DQ_P 400000
-// #define DQ_I (256 << PID_RESOLUTION)
+/*
 #define DQ_P 400000
 #define DQ_I (256 << PID_RESOLUTION)
 #define DQ_D 0
+*/
 
 // PID contant definitions for Speed Control
 //------------------------------------------
