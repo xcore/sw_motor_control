@@ -161,7 +161,8 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 {
 	STRING_TYP err_strs[NUM_ERR_TYPS]; // Array of error messages
 	MOTOR_STATE_TYP state; // Current motor state
-	PID_REGULATOR_TYP pids[NUM_PIDS]; // array of pid regulators used for motor control
+	PID_CONST_TYP pid_consts[NUM_IQ_ESTIMATES][NUM_PIDS]; // array of PID const data for different IQ Estimate algorithms 
+	PID_REGULATOR_TYP pid_regs[NUM_PIDS]; // array of pid regulators used for motor control
 	int cnts[NUM_MOTOR_STATES]; // array of counters for each motor state	
 	ADC_DATA_TYP meas_adc; // Structure containing measured data from ADC
 	int meas_theta;	// Position as measured by the QEI
@@ -225,10 +226,20 @@ void init_motor( // initialise data structure for one motor
 	int pid_cnt; // PID counter
 
 
-	/* PID control initialisation... */
+	// Initialise PID constants [ K_p ,K_i ,Kd, ,resolution ] ...
+
+	init_pid_consts( motor_s.pid_consts[EXTREMA][I_D]		,400000 ,(256 << PID_RESOLUTION)	,0 ,PID_RESOLUTION );
+	init_pid_consts( motor_s.pid_consts[EXTREMA][I_Q]		,400000 ,(256 << PID_RESOLUTION)	,0 ,PID_RESOLUTION );
+	init_pid_consts( motor_s.pid_consts[EXTREMA][SPEED]	,20000	,(3 << PID_RESOLUTION)		,0 ,PID_RESOLUTION );
+
+	init_pid_consts( motor_s.pid_consts[VELOCITY][I_D]		,12000 ,(8 << PID_RESOLUTION) ,0 ,PID_RESOLUTION );
+	init_pid_consts( motor_s.pid_consts[VELOCITY][I_Q]		,12000 ,(8 << PID_RESOLUTION) ,0 ,PID_RESOLUTION );
+	init_pid_consts( motor_s.pid_consts[VELOCITY][SPEED]	,11200 ,(8 << PID_RESOLUTION) ,0 ,PID_RESOLUTION );
+
+	// Initialise PID regulators
 	for (pid_cnt = 0; pid_cnt < NUM_PIDS; pid_cnt++)
 	{ 
-		initialise_pid( motor_s.pids[pid_cnt] ,pid_cnt );
+		initialise_pid( motor_s.pid_regs[pid_cnt] );
 	} // for pid_cnt
 	
 	motor_s.id = motor_id; // Unique Motor identifier e.g. 0 or 1
@@ -247,8 +258,7 @@ void init_motor( // initialise data structure for one motor
 	motor_s.req_veloc = REQ_VELOCITY;
 	motor_s.half_veloc = (motor_s.req_veloc >> 1);
 
-//MB~	motor_s.Iq_alg = EXTREMA; // Assign algorithm used to estimate coil current Iq (and Id)
-	motor_s.Iq_alg = VELOCITY; // Assign algorithm used to estimate coil current Iq (and Id)
+	motor_s.Iq_alg = EXTREMA; // [TRANSFORM VELOCITY EXTREMA] Assign algorithm used to estimate coil current Iq (and Id)
 	motor_s.set_theta = 0;
 	motor_s.start_theta = 0; // Theta start position during warm-up (START and SEARCH states)
 	motor_s.theta_offset = 0; // Offset between Hall-state and QEI origin
@@ -592,12 +602,15 @@ void calc_foc_pwm( // Calculate FOC PWM output values
 	int corr_veloc;	// Correction to angular velocity
 	int scaled_phase;	// Scaled Phase offset
 
+
+	assert(motor_s.Iq_alg != TRANSFORM ); // Currently Unsupported. (PID tuning required for TRANSFORM)
+
 #pragma xta label "foc_loop_speed_pid"
 
 	// Applying Speed PID.
 
 if (motor_s.xscope) xscope_probe_data( 5 ,motor_s.req_veloc );
-	corr_veloc = get_pid_regulator_correction( motor_s.id ,motor_s.pids[SPEED] ,motor_s.meas_veloc ,motor_s.req_veloc );
+	corr_veloc = get_pid_regulator_correction( motor_s.id ,motor_s.pid_regs[SPEED] ,motor_s.pid_consts[motor_s.Iq_alg][SPEED] ,motor_s.meas_veloc ,motor_s.req_veloc );
 
 	// Calculate velocity PID output
 	if (PROPORTIONAL)
@@ -653,8 +666,8 @@ if (motor_s.xscope) xscope_probe_data( 6 ,motor_s.est_Iq );
 	// Apply PID control to Iq and Id
 
 if (motor_s.xscope) xscope_probe_data( 8 ,targ_Iq );
-	corr_Iq = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_Q] ,motor_s.est_Iq ,targ_Iq );
-	corr_Id = get_pid_regulator_correction( motor_s.id ,motor_s.pids[I_D] ,motor_s.est_Id ,motor_s.req_Id  );
+	corr_Iq = get_pid_regulator_correction( motor_s.id ,motor_s.pid_regs[I_Q] ,motor_s.pid_consts[motor_s.Iq_alg][I_Q] ,motor_s.est_Iq ,targ_Iq );
+	corr_Id = get_pid_regulator_correction( motor_s.id ,motor_s.pid_regs[I_D] ,motor_s.pid_consts[motor_s.Iq_alg][I_D] ,motor_s.est_Id ,motor_s.req_Id  );
 
 	if (PROPORTIONAL)
 	{ // Proportional update
@@ -860,6 +873,7 @@ if (dbg) { printint(motor_s.id); printstr( " SL: " ); printintln( motor_s.cnts[S
 	motor_s.cnts[motor_s.state]++; // Update counter for new motor state 
 
 	// Select correct method of calculating DQ values
+#pragma fallthrough
 	switch( motor_s.state )
 	{
 		case START : // Intial entry state
@@ -873,7 +887,7 @@ if (dbg) { printint(motor_s.id); printstr( " SL: " ); printintln( motor_s.cnts[S
 		case FOC : // Normal FOC state
 			calc_foc_pwm( motor_s );
 		break; // case FOC
-	
+
 		case STALL : // state where motor stalled
 			calc_foc_pwm( motor_s );
 		break; // case STALL
