@@ -21,6 +21,8 @@
 
 #include "dsc_config.h"      
                              
+#include "qei_commands.h"
+
 #ifndef __QEI_CLIENT_H__
 #define __QEI_CLIENT_H__
 

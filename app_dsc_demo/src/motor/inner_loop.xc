@@ -30,7 +30,7 @@
 
 #include "mathuint.h"
 #include "pid_regulator.h"
-#include "qei_commands.h"
+#include "hall_client.h"
 #include "qei_client.h"
 #include "adc_client.h"
 #include "pwm_cli_inv.h"
@@ -709,7 +709,7 @@ if (motor_s.xscope) xscope_probe_data( 0 ,motor_s.set_theta );
 /*****************************************************************************/
 MOTOR_STATE_TYP check_hall_state( // Inspect Hall-state and update motor-state if necessary
 	MOTOR_DATA_TYP &motor_s, // Reference to structure containing motor data
-	unsigned inp_hall // Input Hall state
+	unsigned hall_inp // Input Hall state
 ) // Returns new motor-state
 /* The input pins from the Hall port hold the following data
  * Bit_3: Over-current flag (NB Value zero is over-current)
@@ -734,13 +734,13 @@ MOTOR_STATE_TYP check_hall_state( // Inspect Hall-state and update motor-state i
 	MOTOR_STATE_TYP motor_state = motor_s.state; // Initialise to old motor state
 
 
-	inp_hall &= 0x7; // Clear Over-Current bit
+	hall_inp &= 0x7; // Clear Over-Current bit
 
 	// Check for change in Hall state
-	if (motor_s.prev_hall != inp_hall)
+	if (motor_s.prev_hall != hall_inp)
 	{
 		// Check for 1st Hall state, as we only do this check once a revolution
-		if (inp_hall == FIRST_HALL_STATE) 
+		if (hall_inp == FIRST_HALL_STATE) 
 		{
 			// Check for correct spin direction
 			if (motor_s.prev_hall == motor_s.end_hall)
@@ -765,17 +765,17 @@ MOTOR_STATE_TYP check_hall_state( // Inspect Hall-state and update motor-state i
 				motor_s.cnts[STOP] = 0; // Initialise stop-state counter 
 if (dbg) { printint(motor_s.id); printstr( " SE- " ); printintln( motor_s.cnts[SEARCH] ); } 
 			} // else !(motor_s.prev_hall == motor_s.end_hall)
-		} // if (inp_hall == FIRST_HALL_STATE)
+		} // if (hall_inp == FIRST_HALL_STATE)
 
-		motor_s.prev_hall = inp_hall; // Store hall state for next iteration
-	} // if (motor_s.prev_hall != inp_hall)
+		motor_s.prev_hall = hall_inp; // Store hall state for next iteration
+	} // if (motor_s.prev_hall != hall_inp)
 
 	return motor_state; // Return updated motor state
 } // check_hall_state
 /*****************************************S************************************/
 void update_motor_state( // Update state of motor based on motor sensor data
 	MOTOR_DATA_TYP &motor_s, // reference to structure containing motor data
-	unsigned inp_hall // Input Hall state
+	unsigned hall_inp // Input Hall state
 )
 /* This routine is inplemented as a Finite-State-Machine (FSM) with the following 5 states:-
  *	START:	Initial entry state
@@ -805,7 +805,7 @@ if (dbg) { printint(motor_s.id); printstr( " SA: " ); printintln( motor_s.cnts[S
 		break; // case START
 
 		case SEARCH : // Turn motor using Hall state, and update motor state
-			motor_state = check_hall_state( motor_s ,inp_hall ); 
+			motor_state = check_hall_state( motor_s ,hall_inp ); 
  			motor_s.state = motor_state; // NB Required due to XC compiler rules
 		break; // case SEARCH 
 	
@@ -908,10 +908,10 @@ if (dbg) { printint(motor_s.id); printstr( " SL: " ); printintln( motor_s.cnts[S
 void use_motor ( // Start motor, and run step through different motor states
 	MOTOR_DATA_TYP &motor_s, // reference to structure containing motor data
 	chanend c_pwm, 
+	streaming chanend c_hall, 
 	streaming chanend c_qei, 
 	streaming chanend c_adc_cntrl, 
 	chanend c_speed, 
-	port in p_hall, 
 	chanend c_can_eth_shared 
 )
 {
@@ -1013,7 +1013,7 @@ void use_motor ( // Start motor, and run step through different motor states
 					motor_s.cnts[STOP] = 0; // Initialise stop-state counter 
 				} // if (motor_s.iters > DEMO_LIMIT)
 
-				p_hall :> new_hall; // Get new hall state
+				new_hall = get_hall_data( c_hall ); // Get new hall state
 // if (motor_s.xscope) xscope_probe_data( 5 ,(100 * (new_hall & 7)));
 
 				// Check error status
@@ -1114,10 +1114,10 @@ void run_motor (
 	unsigned motor_id,
 	chanend? c_wd,
 	chanend c_pwm,
+	streaming chanend c_hall, 
 	streaming chanend c_qei, 
 	streaming chanend c_adc_cntrl, 
 	chanend c_speed, 
-	port in p_hall, 
 	chanend c_can_eth_shared 
 )
 {
@@ -1151,7 +1151,7 @@ void run_motor (
 	if (0 == motor_id) printstrln( "Demo Starts" ); // NB Prevent duplicate display lines
 
 	// start-and-run motor
-	use_motor( motor_s ,c_pwm ,c_qei ,c_adc_cntrl ,c_speed ,p_hall ,c_can_eth_shared );
+	use_motor( motor_s ,c_pwm ,c_hall ,c_qei ,c_adc_cntrl ,c_speed ,c_can_eth_shared );
 
 	if (1 == motor_id)
 	{

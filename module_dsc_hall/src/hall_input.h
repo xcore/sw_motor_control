@@ -22,6 +22,10 @@
 
 #include <xs1.h>
 
+#ifndef NUMBER_OF_POLES       
+#define NUMBER_OF_POLES       4
+#endif // NUMBER_OF_POLES       
+
 // Indicates an invalid hall state
 #define HALL_INV	99
 

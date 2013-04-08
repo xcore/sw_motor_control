@@ -17,9 +17,8 @@
 #ifndef _INNER_LOOP_H_
 #define _INNER_LOOP_H_
 
-
 /* run the motor inner loop */
-void run_motor ( unsigned motor_id ,chanend? c_wd ,chanend c_pwm ,streaming chanend c_qei 
-	,streaming chanend c_adc ,chanend c_speed ,port in p_hall ,chanend c_can_eth_shared );
+void run_motor ( unsigned motor_id ,chanend? c_wd ,chanend c_pwm ,streaming chanend c_hall 
+	,streaming chanend c_qei ,streaming chanend c_adc ,chanend c_speed ,chanend c_can_eth_shared );
 
 #endif /* _INNER_LOOP_H_ */

@@ -1,6 +1,4 @@
 /**
- * Module:  module_dsc_qei
- *
  * The copyrights, all other intellectual and industrial 
  * property rights are retained by XMOS and/or its licensors. 
  * Terms and conditions covering the use of this code can
@@ -13,22 +11,10 @@
  * below. The modifications to the code are still covered by the 
  * copyright notice above.
  *
- **/
+ **/                                   
+#ifndef _HALL_COMMANDS_H_
+#define _HALL_COMMANDS_H_
 
-#include <xs1.h>
-#include <print.h>
+#define HALL_CMD_DATA_REQ 1 // Request new hall sensor data
 
-#include "qei_client.h"
-
-{int ,int ,int} get_qei_data( streaming chanend c_qei )
-{
-	int new_angl, meas_veloc, orig_cnt;
-
-
-	c_qei <: QEI_CMD_POS_REQ;
-	c_qei :> new_angl;
-	c_qei :> meas_veloc;
-	c_qei :> orig_cnt;
-
-	return {meas_veloc, new_angl, orig_cnt};
-}
+#endif /* _HALL_COMMANDS_H_ */
