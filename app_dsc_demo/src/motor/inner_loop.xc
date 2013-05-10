@@ -44,7 +44,10 @@
 #include <xscope.h>
 #endif
 
-#define SEC 100000000
+// Timing definitions
+#define MILLI_400_SECS (400 * MILLI_SEC) // 400 ms. Start-up settling time
+#define OPEN_LOOP_PERIOD (262 * MICRO_SEC) // 262us. Time between open-loop theta increments
+
 #define PWM_MAX_LIMIT 3800
 #define PWM_MIN_LIMIT 200
 #define OFFSET_14 16383
@@ -59,7 +62,7 @@
 #define INIT_HALL 0 // Initial Hall state
 #define INIT_THETA 0 // Initial start-up angle
 
-#define REQ_VELOCITY 4000 // Initial start-up speed
+#define REQ_VELOCITY 2000 // Initial start-up speed
 #define REQ_IQ_OPENLOOP 2000 // Used in tuning
 #define REQ_ID_OPENLOOP 0		// Id value for open-loop mode
 
@@ -202,7 +205,7 @@ typedef struct MOTOR_DATA_TAG // Structure containing motor state data
 	int Iq_err;	// Error diffusion value for scaling of measured Iq
 	int adc_err;	// Error diffusion value for ADC extrema filter
 	int prev_angl; 	// previous angular position
-	unsigned prev_time; 	// previous time stamp
+	unsigned prev_time; 	// previous open-loop time stamp
 	unsigned mem_addr; // Shared memory address
 	unsigned cur_buf; // Current double-buffer in use at shared memory address
 
@@ -271,7 +274,7 @@ void init_motor( // initialise data structure for one motor
 	motor_s.est_Iq = 0;	// Clear Iq value estimated from measured angular velocity
 	motor_s.err_flgs = 0; 	// Clear fault detection flags
 	motor_s.xscope = 0; 	// Clear xscope print flag
-	motor_s.prev_time = 0; 	// previous time stamp
+	motor_s.prev_time = 0; 	// previous open-loop time stamp
 	motor_s.prev_angl = 0; 	// previous angular position
 	motor_s.cur_buf = 0; 	// Initialise which double-buffer in use
 	motor_s.mem_addr = 0; 	// Signal unassigned address
@@ -562,15 +565,25 @@ void calc_open_loop_pwm ( // Calculate open-loop PWM output values to spins magn
 	MOTOR_DATA_TYP &motor_s // reference to structure containing motor data
 )
 {
+	timer chronometer; // timer
+	unsigned cur_time; // current time value
+	int diff_time; // time since last theta update
+
+
 	motor_s.set_Vd = motor_s.Id_openloop;
 	motor_s.set_Vq = motor_s.Iq_openloop;
 
-#if PLATFORM_REFERENCE_MHZ == 100
-	assert ( 0 == 1 ); // MB~ 100 MHz Untested
-	motor_s.set_theta = motor_s.start_theta >> 2;
-#else
-	motor_s.set_theta = motor_s.start_theta >> 4;
-#endif
+	chronometer :> cur_time;
+	diff_time = (int)(cur_time - motor_s.prev_time); 
+
+	// Check if theta needs incrementing
+	if (OPEN_LOOP_PERIOD < diff_time)
+	{
+		motor_s.set_theta++; // Increment demand theta value
+
+		motor_s.prev_time = cur_time; // Update previous time
+	} // if (OPEN_LOOP_PERIOD < diff_time)
+
 
 	// NB QEI_REV_MASK correctly maps -ve values into +ve range 0 <= theta < QEI_PER_REV;
 	motor_s.set_theta &= QEI_REV_MASK; // Convert to base-range [0..QEI_REV_MASK]
@@ -1067,6 +1080,12 @@ if (motor_s.xscope) xscope_probe_data( 0 ,motor_s.set_theta );
 					{
 						if (0 == motor_s.id) // Check if 1st Motor
 						{
+							xscope_probe_data(0, motor_s.meas_veloc );
+				  	  xscope_probe_data(1, motor_s.set_Vq );
+	    				xscope_probe_data(2, pwm_vals[PHASE_A] );
+	    				xscope_probe_data(3, pwm_vals[PHASE_B]);
+							xscope_probe_data(4, motor_s.meas_adc.vals[PHASE_A] );
+							xscope_probe_data(5, motor_s.meas_adc.vals[PHASE_B]);
 /*
 							xscope_probe_data(0, motor_s.meas_veloc );
 				  	  xscope_probe_data(1, motor_s.set_Vq );
@@ -1130,7 +1149,7 @@ void run_motor (
 	{
 		unsigned thread_id = get_logical_core_id();
 		t :> ts1;
-		t when timerafter(ts1+2*SEC+256*thread_id) :> void;
+		t when timerafter(ts1 + (MILLI_400_SECS << 1) + (256 * thread_id)) :> void;
 	}
 
 	/* allow the WD to get going */
@@ -1143,7 +1162,7 @@ void run_motor (
 	{
 		unsigned thread_id = get_logical_core_id();
 		t :> ts1;
-		t when timerafter(ts1+1*SEC) :> void;
+		t when timerafter(ts1 + MILLI_400_SECS) :> void;
 	}
 
 	init_motor( motor_s ,motor_id );	// Initialise motor data

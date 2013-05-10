@@ -59,5 +59,20 @@
 //MB~ #define MIN_USER_RPM 500
 #define MIN_USER_RPM 50 //MB~
 
+/* This is a bit of a cludge, we are using a non-standard configuration
+ * where the timer on the tile for inner_loop() is running at 250 MHz,
+ * but other timers are running at the default of 100 MHz.
+ * Currently this flexibility to define timer frequencies for each tile does not exist.
+ * Therefore, we set up the timer frequency here.
+ */
+#ifndef PLATFORM_REFERENCE_MHZ
+#define PLATFORM_REFERENCE_MHZ 250
+#define PLATFORM_REFERENCE_KHZ (1000 * PLATFORM_REFERENCE_MHZ) 
+#define PLATFORM_REFERENCE_HZ  (1000 * PLATFORM_REFERENCE_KHZ) // NB Uses 28-bits
+#endif
+
+#define SECOND PLATFORM_REFERENCE_HZ // One Second in Clock ticks
+#define MILLI_SEC (PLATFORM_REFERENCE_KHZ) // One milli-second in clock ticks
+#define MICRO_SEC (PLATFORM_REFERENCE_MHZ) // One micro-second in clock ticks
 
 #endif /* _DSC_CONFIG__H_ */
